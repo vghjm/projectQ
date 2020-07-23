@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { AsyncStorage, ImageBackground, Text, View, StyleSheet, TouchableOpacity, TextInput, CheckBox, KeyboardAvoidingView, Alert, Button, ScrollView, SafeAreaView, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer, getFocusedRouteNameFromRoute, useNavigation } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Ionicons, MaterialCommunityIcons, Feather, FontAwesome } from '@expo/vector-icons';
@@ -14,6 +15,7 @@ const introImage3 = {uri: "https://previews.123rf.com/images/kittikornphongok/ki
 const defaultImg = {uri: "https://t1.daumcdn.net/cfile/tistory/24283C3858F778CA2E"};
 const AuthContext = React.createContext();
 const Tab = createMaterialTopTabNavigator();
+const BottomTab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 
@@ -73,23 +75,13 @@ function SignInScreen({navigation}){
           <Text>로그인</Text>
         </TouchableOpacity>
         <View style={{flexDirection: 'row', justifyContent: 'center'}}>
-          <TouchableOpacity onPress={()=>navigation.navigate('FindPassword')}><Text style={{fontSize: 12, margin: 5}}>비밀번호 찾기</Text></TouchableOpacity>
+          <TouchableOpacity onPress={()=>{}}><Text style={{fontSize: 12, margin: 5}}>비밀번호 찾기</Text></TouchableOpacity>
           <Text style={{marginTop: 2}}> | </Text>
           <TouchableOpacity onPress={()=>navigation.navigate('SignUp')}><Text style={{fontSize: 12, margin: 5, marginRight: 30}}>회원 가입</Text></TouchableOpacity>
         </View>
       </View>
     </View>
   )
-}
-function FindPasswordScreen({navigation}){
-  return (
-    <View style={{flex:1, alignItems: 'center', justifyContent:'space-between'}}>
-      <Text>비밀번호 찾기 페이지</Text>
-      <TouchableOpacity onPress={()=>navigation.popToTop()}>
-        <Text>뒤로가기</Text>
-      </TouchableOpacity>
-    </View>
-  );
 }
 function SignUpScreen({navigation}){
   const [email, setEmail] = React.useState('');
@@ -122,9 +114,9 @@ function SignUpScreen({navigation}){
       </View>
       <View style={{flexDirection: 'row'}}>
         <Text style={styles.smallText}>회원가입 시 </Text>
-        <TouchableOpacity onPress={()=>Alert.alert('이용약관', '이용약관은 다음과 같음 ~~, 다음 사항에 동의합니다.', [{text: '동의'}])}><Text style={[styles.smallText, {color: '#22D'}]}>이용약관</Text></TouchableOpacity>
+        <TouchableOpacity><Text style={[styles.smallText, {color: '#22D'}]}>이용약관</Text></TouchableOpacity>
         <Text style={styles.smallText}>과 </Text>
-        <TouchableOpacity onPress={()=>Alert.alert('개인정보 처리방침', '개인정보 처리방침은 다음과 같음 ~~, 다음 사항에 동의합니다.', [{text: '동의'}])}><Text style={[styles.smallText, {color: '#22D'}]}>개인정보 처리방침</Text></TouchableOpacity>
+        <TouchableOpacity><Text style={[styles.smallText, {color: '#22D'}]}>개인정보 처리방침</Text></TouchableOpacity>
         <Text style={styles.smallText}>을 확인하였으며, 동의합니다. </Text>
       </View>
       <View>
@@ -155,61 +147,108 @@ function UserNameSettingScreen({navigation}) {
     </KeyboardAvoidingView>
   );
 }
-
-// 메인 페이지
-function MainPageScreen(){
+function SubscribeListHeader(){
   return (
-    <Tab.Navigator
-      backBehavior={'initialRoute'} initialRouteName={'MyChatListScreen'}
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, tintcolor  }) => {
-          let iconName;
-          let size = 24;
-          if (route.name === 'SubscribeListScreen') {
-            iconName = focused ? 'help-circle' : 'help-circle-outline';
-            return <MaterialCommunityIcons name={iconName} size={size} color={tintcolor } />;
-          } else if (route.name === 'MyChatListScreen') {
-            iconName = focused ? 'chat' : 'chat-outline';
-            return <MaterialCommunityIcons name={iconName} size={size} color={tintcolor } />;
-          } else if (route.name === 'MyDiaryScreen') {
-            if (focused) {
-              return <FontAwesome name="bookmark" size={size} color={tintcolor } />;
-            }else {
-              return <Feather name="bookmark" size={size} color={tintcolor } />;
-            }
-          }
-
-          // You can return any component that you like here!
-        },
-      })}
-      tabBarPosition='bottom'
-      tabBarOptions={{
-        activeTintColor: 'black',
-        inactiveTintColor: 'gray',
-        showIcon: true,
-        showLabel: false,
-        style: {
-          backgroundColor: '#DDD',
-        },
-      }}
-    >
-      <Tab.Screen name="SubscribeListScreen" component={SubscribeListScreen}/>
-      <Tab.Screen name="MyChatListScreen" component={MyChatListScreen}/>
-      <Tab.Screen name="MyDiaryScreen" component={MyDiaryScreen} />
-    </Tab.Navigator>
+    <Stack.Navigator>
+      <Stack.Screen
+        name='MyDiaryHeader'
+        options={{
+          title: "구독상품",
+          headerTitleAlign:'left',
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          headerRight: (props) => (
+            <TouchableOpacity
+              onPress={() => Alert.alert('This is a button!')}
+            >
+            <Text style={{fontWeight: 'bold', marginRight: 20, fontSize: 20, color: 'gray'}}>My</Text>
+            </TouchableOpacity>
+          ),}
+        }
+        component={SubscribeListScreen}
+      />
+    </Stack.Navigator>
   );
 }
-function SubscribeListScreen({navigation}){
+function MyChatListHeader({navigation, route}){
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name='MyChatListScreen'
+        options={{
+          title: "채팅",
+          headerTitleAlign:'left',
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          headerRight: (props) => (
+            <TouchableOpacity
+              onPress={() => Alert.alert('This is Button!', '아직 값을 할당하지 않음')}
+            >
+            <Text style={{fontWeight: 'bold', marginRight: 20, fontSize: 20, color: 'gray'}}>My</Text>
+            </TouchableOpacity>
+          ),}
+        }
+        component={MyChatListScreen}
+      />
+      <Stack.Screen
+        name='MyChatRoomScreen'
+        options={{
+          title: "임시 채팅방명",
+          headerTitleAlign:'center',
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          headerRight: (props) => (
+            <TouchableOpacity
+              onPress={() => Alert.alert('This is Button!', '아직 값을 할당하지 않음')}
+            >
+            <Text style={{fontWeight: 'bold', marginRight: 20, fontSize: 20, color: 'gray'}}>=</Text>
+            </TouchableOpacity>
+          ),}
+        }
+        component={MyChatRoomScreen}
+        options={({route}) => ({
+          tabBarOptions: {
+            showIcon: false,
+          }
+        })}
+      />
+    </Stack.Navigator>
+  );
+}
+function MyDiaryHeader(){
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name='MyDiaryHeader'
+        options={{
+          title: "내 다이어리",
+          headerTitleAlign:'left',
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          gestureDirection: 'horizontal',
+          headerRight: (props) => (
+            <TouchableOpacity
+              onPress={() => Alert.alert('This is a button!')}
+            >
+            <Text style={{fontWeight: 'bold', marginRight: 20, fontSize: 20, color: 'gray'}}>편집</Text>
+            </TouchableOpacity>
+          ),}
+        }
+        component={MyDiaryScreen}
+      />
+    </Stack.Navigator>
+  );
+}
+function SubscribeListScreen(){
   return (
     <SafeAreaView style={{flex:1}}>
       <ScrollView styles={{marginHorizontal: 20}} centerContent={true}>
         <Text style={{margin:10}}>내 구독 상품</Text>
         <ContentLayout />
         <ContentLayout />
+        <ContentLayout />
+        <ContentLayout />
+        <ContentLayout />
+        <ContentLayout />
+        <ContentLayout />
         <Text style={{margin:10, borderTopWidth: 1, borderColor: 'gray'}}>구독 가능한 상품</Text>
-        <TouchableOpacity onPress={()=>navigation.navigate('contentScreen', {itemId: '구독상품명 1', otherParams: ''})}>
-          <ContentLayout title='구독 상품명 1' thumbnail={defaultImg}/>
-        </TouchableOpacity>
+        <ContentLayout />
         <ContentLayout />
         <ContentLayout />
         <ContentLayout />
@@ -226,12 +265,10 @@ function MyChatListScreen({navigation}){
     <SafeAreaView style={{flex:1}}>
       <ScrollView styles={{marginHorizontal: 20}} centerContent={true} >
         {!numberOfSubscribe ? NoSubscribeInform(navigation) : <Text/>}
-        <TouchableOpacity onPress={()=>navigation.navigate('chatroom', {itemId: '구독상품명 1', otherParams: '오늘 뭐 했어?'})}>
-          <ContentLayout title='구독상품명 1' thumbnail={introImage1} lastUpdateTime={time} newItemCount={'3'}/>
-        </TouchableOpacity>
-        <ContentLayout title='구독상품명 2' thumbnail={introImage2} lastUpdateTime={'오전 11:59'} newItemCount={'0'}/>
-        <ContentLayout title='구독상품명 3' thumbnail={introImage3} lastUpdateTime={'오전 11:59'} newItemCount={'1'}/>
-        <ContentLayout title='구독상품명 4' thumbnail={defaultImg} lastUpdateTime={'오전 11:59'} newItemCount={'0'}/>
+        <ContentLayout title='구독상품명 1' thumbnail={introImage1} lastUpdateTime={time} newItemCount={'3'} nav={navigation}/>
+        <ContentLayout title='구독상품명 2' thumbnail={introImage2} lastUpdateTime={'오전 11:59'} newItemCount={'0'} nav={navigation}/>
+        <ContentLayout title='구독상품명 3' thumbnail={introImage3} nav={navigation}/>
+        <ContentLayout title='구독상품명 4' thumbnail={defaultImg} nav={navigation}/>
         <ContentLayout title='이미지 없음'/>
         <ContentLayout title='글자길이 테스트으으으으ㅡㅇ으으 15' lastUpdateTime={'오후 11:09'} newItemCount={'18'}/>
         <ContentLayout />
@@ -252,7 +289,6 @@ function MyDiaryScreen(){
   );
 }
 
-// 글로벌 구성품
 class ContentLayout extends React.Component {
   constructor(props){
     super(props);
@@ -267,72 +303,34 @@ class ContentLayout extends React.Component {
 
   render() {
     return (
-      <View style={{flexDirection: 'row', height: 56, margin: 3, borderWidth: 0, borderColor: 'gray'}}>
-        <Image source={this.state.thumbnail} style={{height: 46, width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
-        <Text style={{marginLeft: 10, marginTop: 4, fontSize: 17, width: 220}}>{this.state.titleText ? this.state.titleText : "임시 구독상품 명"}</Text>
-        <View style={{flex:1, flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'flex-end'}}>
-          {this.state.lastUpdateTime && <Text style={{fontSize: 10, marginRight: 6, marginTop: 0}}>{this.state.lastUpdateTime}</Text>}
-          {
-              this.state.newItemCount && this.state.newItemCount !== '0'
-                ? <View style={{height: 20, width: 20, borderRadius: 10, backgroundColor: 'red', margin: 6, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 11}}>{this.state.newItemCount}</Text></View>
-                : <View style={{height: 20, width: 20, borderRadius: 10, margin: 6, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}/>
-          }
+      <TouchableOpacity onPress={()=>{
+        try{
+          this.props.nav.navigate('MyChatRoomScreen', {
+            itemId: this.props.title,
+            otherParams: '오늘 뭐 했어',
+          });
+        }catch {
+          Alert.alert('방 연결 필요', '곧 추가할 예정');
+        }}}>
+        <View style={{flexDirection: 'row', height: 56, margin: 3, borderWidth: 0, borderColor: 'gray'}}>
+          <Image source={this.state.thumbnail} style={{height: 46, width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
+          <Text style={{marginLeft: 10, marginTop: 4, fontSize: 17, width: 220}}>{this.state.titleText ? this.state.titleText : "임시 구독상품 명"}</Text>
+          <View style={{flex:1, flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'flex-end'}}>
+            {this.state.lastUpdateTime && <Text style={{fontSize: 10, marginRight: 6, marginTop: 0}}>{this.state.lastUpdateTime}</Text>}
+            {
+                this.state.newItemCount && this.state.newItemCount !== '0'
+                  ? <View style={{height: 20, width: 20, borderRadius: 10, backgroundColor: 'red', margin: 6, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 11}}>{this.state.newItemCount}</Text></View>
+                  : <View style={{height: 20, width: 20, borderRadius: 10, margin: 6, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}/>
+            }
+          </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   }
 }
-function getHeaderTitle(route, initialName) {
-  // If the focused route is not found, we need to assume it's the initial screen
-  // This can happen during if there hasn't been any navigation inside the screen
-  // In our case, it's "Feed" as that's the first screen inside the navigator
-  const routeName = getFocusedRouteNameFromRoute(route) ?? initialName;
-  switch (routeName) {
-    case 'MyChatListScreen':
-      return '채팅';
-    case 'MyDiaryScreen':
-      return '내 다이어리'
-    case 'SubscribeListScreen':
-      return '구독 상품';
-  }
-
-  return routeName;
-}
-
-// 구독 구성품
-function SubscribeContentScreen({route, navigation}){
-  const {itemId, otherParams} = route.params;
-
-  React.useLayoutEffect(() => {
-    navigation.setOptions({ headerTitle: itemId });
-  }, [navigation, route]);
-
-  return (
-    <SafeAreaView style={{flex:1}}>
-      <ScrollView centerContent={true} >
-        <Image source={defaultImg} style={{height: 200}} resizeMode='cover'/>
-        <View style={{height: 160, backgroundColor: '#EEE', justifyContent: 'space-around', alignItems: 'center'}}>
-          <Image source={defaultImg} style={{position:'absolute', alignSelf: 'center', top:-80, height: 100, width: 100, borderRadius: 50}}/>
-          <Text style={{fontSize: 20, fontWeight:'bold', marginTop: 15}}>구독상품 제목</Text>
-          <Text style={{marginLeft: 20, marginRight: 20}}>구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, 디자인 상품 로고 제작, 디자인 상품 소개 이미지 정방형 디자인 상품 소개 끝</Text>
-        </View>
-        <Image source={defaultImg} style={{height: 1200}} resizeMode='cover'/>
-        <View style={{flex:1, backgroundColor: '#EEE', justifyContent: 'space-around'}}>
-          <TouchableOpacity style={{position:'absolute', right:30, top:80, height: 30, width: 130, backgroundColor: 'blue'}}>
-            <Text>ON</Text>
-          </TouchableOpacity>
-          <Text>구독 하기</Text>
-          <Text>정시 메시지 수신 시간</Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
-// 채팅 구성품
 function NoSubscribeInform(navigation){
   return (
-    <TouchableOpacity onPress={()=>{ navigation.navigate('SubscribeListScreen'); Alert.alert('상품을 구독해 보세요', '구독한 상품정보를 받을 수 있습니다.', [{text: '확인'}])}}>
+    <TouchableOpacity onPress={()=>{Alert.alert('등록된 상품이 없어요!', ' - 상품 구독 페이지로 전송할 예정')}}>
       <View style={{flexDirection: 'row', height: 56, margin: 10, borderWidth: 1, borderRadius: 8, borderColor: 'gray', alignItems: 'center'}}>
         <Image source={null} style={{height: 40, width: 40, margin: 16, borderRadius: 8, backgroundColor: '#DDD'}}/>
         <Text style={{marginLeft: 15, fontSize: 17, width: 220}}>원하는 상품을 구독해보세요!</Text>
@@ -340,36 +338,37 @@ function NoSubscribeInform(navigation){
     </TouchableOpacity>
   );
 }
+
 function MyChatRoomScreen({route, navigation}) {
   const [messages, setMessages] = useState([]);
   const {itemId, otherParams} = route.params;
+
+  React.useLayoutEffect(() => {
+    navigation.setOptions({ headerTitle: itemId });
+  }, [navigation, route]);
 
   useEffect(() => {
     setMessages([
       {
         _id: 1,
-        text: otherParams,
+        text: otherParams + '?',
         createdAt: new Date(),
         user: {
+          _id: 2,
+          name: '구독과 좋아요 눌러주세요.',
           avatar: 'https://placeimg.com/140/140/any',
-        }
+        },
       },
       {
         _id: 2,
         text: itemId + ' 채팅방입니다.',
         createdAt: new Date(),
         user: {
-          _id:2,
-          name: 'system',
-          avatar: 'https://placeimg.com/140/140/any',
+          _id: 2,
         },
       },
     ])
   }, [])
-
-  React.useLayoutEffect(() => {
-    navigation.setOptions({ headerTitle: itemId });
-  }, [navigation, route]);
 
   const onSend = useCallback((messages = []) => {
     setMessages(previousMessages => GiftedChat.append(previousMessages, messages))
@@ -517,57 +516,50 @@ export default function App() {
         <NavigationContainer>
           <Stack.Navigator mode={'modal'} headerMode={'none'}>
             <Stack.Screen name="SignIn" component={SignInScreen}/>
-            <Stack.Screen name="FindPassword" component={FindPasswordScreen}/>
             <Stack.Screen name="SignUp" component={SignUpScreen}/>
             <Stack.Screen name="SetUsername" component={UserNameSettingScreen}/>
           </Stack.Navigator>
         </NavigationContainer>
       ) : (
         <NavigationContainer>
-          <Stack.Navigator>
-            <Stack.Screen
-              name="MainPage"
-              options={({route})=>({
-                headerTitle: getHeaderTitle(route, '채팅'),
-                headerTitleAlign: 'left',
-                headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
-                headerRight: (props) => (
-                  <TouchableOpacity
-                    onPress={() => Alert.alert('This is a button!', ' - 기능 추가할 예정')}
-                  >
-                  <Text style={{fontWeight: 'bold', marginRight: 20, fontSize: 20, color: 'gray'}}>My</Text>
-                  </TouchableOpacity>
-                )})
-              }
-              component={MainPageScreen}
-            />
-            <Stack.Screen
-              name="chatroom"
-              options={{
-                title: "chatroom",
-                headerTitleAlign: 'center',
-                headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
-                headerRight: (props) => (
-                  <TouchableOpacity
-                    onPress={() => Alert.alert('This is a button!')}
-                  >
-                  <Text style={{fontWeight: 'bold', marginRight: 20, fontSize: 20, color: 'gray'}}>=</Text>
-                  </TouchableOpacity>
-                )}
-              }
-              component={MyChatRoomScreen}
-            />
-            <Stack.Screen
-              name="contentScreen"
-              options={{
-                title: "content screen",
-                headerTitleAlign: 'center',
-                headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
-                headerTransparent: true,
-              }}
-              component={SubscribeContentScreen}
-            />
-          </Stack.Navigator>
+          <Tab.Navigator
+            backBehavior={'initialRoute'} initialRouteName={'MyChatListScreen'}
+            screenOptions={({ route }) => ({
+              tabBarIcon: ({ focused, tintcolor  }) => {
+                let iconName;
+                let size = 24;
+                if (route.name === 'SubscribeListScreen') {
+                  iconName = focused ? 'help-circle' : 'help-circle-outline';
+                  return <MaterialCommunityIcons name={iconName} size={size} color={tintcolor } />;
+                } else if (route.name === 'MyChatListScreen') {
+                  iconName = focused ? 'chat' : 'chat-outline';
+                  return <MaterialCommunityIcons name={iconName} size={size} color={tintcolor } />;
+                } else if (route.name === 'MyDiaryScreen') {
+                  if (focused) {
+                    return <FontAwesome name="bookmark" size={size} color={tintcolor } />;
+                  }else {
+                    return <Feather name="bookmark" size={size} color={tintcolor } />;
+                  }
+                }
+
+                // You can return any component that you like here!
+              },
+            })}
+            tabBarPosition='bottom'
+            tabBarOptions={{
+              activeTintColor: 'black',
+              inactiveTintColor: 'gray',
+              showIcon: true,
+              showLabel: false,
+              style: {
+                backgroundColor: '#DDD',
+              },
+            }}
+          >
+            <Tab.Screen name="SubscribeListScreen" component={SubscribeListHeader}/>
+            <Tab.Screen name="MyChatListScreen" component={MyChatListHeader}/>
+            <Tab.Screen name="MyDiaryScreen" component={MyDiaryHeader} />
+          </Tab.Navigator>
         </NavigationContainer>
       )}
     </AuthContext.Provider>
