@@ -5,8 +5,10 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, getFocusedRouteNameFromRoute, useNavigation } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { createDrawerNavigator } from '@react-navigation/drawer';  //  https://reactnavigation.org/docs/drawer-based-navigation/
-import { Ionicons, MaterialCommunityIcons, Feather, FontAwesome, EvilIcons, AntDesign } from '@expo/vector-icons'; // https://icons.expo.fyi/
+import {
+  createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem,
+} from '@react-navigation/drawer';  //  https://reactnavigation.org/docs/drawer-based-navigation/
+import { Ionicons, MaterialCommunityIcons, Feather, FontAwesome, EvilIcons, AntDesign, MaterialIcons, Octicons } from '@expo/vector-icons'; // https://icons.expo.fyi/
 import { GiftedChat } from 'react-native-gifted-chat' // https://github.com/FaridSafi/react-native-gifted-chat
 import DateTimePicker from '@react-native-community/datetimepicker'; // https://github.com/react-native-community/datetimepicker
 import * as Animatable from 'react-native-animatable'; // https://github.com/oblador/react-native-animatable
@@ -23,6 +25,8 @@ const AuthContext = React.createContext();
 const ControllContext = React.createContext();
 const Tab = createMaterialTopTabNavigator();
 const Stack = createStackNavigator();
+const MyServiceStack = createStackNavigator();
+const ServiceCenterStack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 
 // 컨트롤 변수
@@ -347,15 +351,13 @@ function mainHeaderRightHandler(route, navigation){
     </TouchableOpacity>
   );
 }
-function myButtonHandler(route, navigation) {return navigation.push('MyPage');}
-function chatSettingButtonHandler(){
-  return Alert.alert('채팅창의 Setting 버튼을 눌렀습니다.', '기능 차후 추가 예정');
-}
+function myButtonHandler(route, navigation) {return navigation.navigate('MyPage');}
+function chatSettingButtonHandler(navigation) {return navigation.openDrawer();}
 function editDiaryButtonHandler(route, navigation){
   pressDiaryEditButton = true;
   navigation.navigate('MyDiaryScreen');
 
-  return Alert.alert('다이어리창의  편집버튼을 눌렀습니다.', '기능 차후 추가 예정');
+  return bounce;
 }
 function completeDiaryButtonHandler(route, navigation){
   pressDiaryEditButton = false;
@@ -402,6 +404,8 @@ function getHeaderTitle(route, initialName) {
   // This can happen during if there hasn't been any navigation inside the screen
   // In our case, it's "Feed" as that's the first screen inside the navigator
   const routeName = getFocusedRouteNameFromRoute(route) ?? initialName;
+  console.log(routeName);
+
   switch (routeName) {
     case 'MyChatListScreen':
       return '채팅';
@@ -409,6 +413,22 @@ function getHeaderTitle(route, initialName) {
       return '내 다이어리'
     case 'SubscribeListScreen':
       return '구독 상품';
+    case 'MyServicePage':
+      return 'My';
+    case 'ChangePassword':
+      return '비밀번호 변경';
+    case 'UserHistory':
+      return '이용내역';
+    case 'ServiceCenter':
+      return '고객센터';
+    case 'Help':
+      return '도움말';
+    case 'Notice':
+      return '공지사항';
+    case 'Question':
+      return '문의';
+    case 'ServiceIntroduction':
+      return '서비스 소개';
   }
 
   return routeName;
@@ -528,28 +548,18 @@ function NoSubscribeInform(navigation){
     </TouchableOpacity>
   );
 }
-function ChatRoomSidebarComponent(navigation){
+function CustomDrawerContent({navigation}) {
   return (
-    <View style={{flex:1, margin:15, flexDirection: 'column', backgroundColor: '#DDD'}}>
-      <View style={{flexDirection: 'row', padding: 5}}>
-        <Image source={null} style={{height: 40, width: 40, backgroundColor: 'gray', margin: 5}}/>
-        <TouchableOpacity onPress={()=>navigation.push('Diary')} style={{justifyContent: 'center'}}>
-          <Text>다이어리 보기</Text>
-        </TouchableOpacity>
-      </View>
-      <View style={{flexDirection: 'row', padding: 5}}>
-        <Image source={null} style={{height: 40, width: 40, backgroundColor: 'gray', margin: 5}}/>
-        <TouchableOpacity onPress={()=>navigation.navigate('contentScreen', {itemId: '구독상품명 1', otherParams: ''})} style={{justifyContent: 'center'}}>
-          <Text>푸시 메세지 설정</Text>
-        </TouchableOpacity>
-      </View>
-      <View style={{flexDirection: 'row', padding: 5}}>
-        <Image source={null} style={{height: 40, width: 40, backgroundColor: 'gray', margin: 5}}/>
-        <TouchableOpacity onPress={()=>{Alert.alert('정말 채팅방을 나가시겠습니까?', '채팅방을 나가면 채팅 내용과 채팅목록은 사라지고 다이어리에서만 기록을 확인 할 수 있습니다.', [{text:'나가기', onPress: ()=>navigation.popToTop()}])}} style={{justifyContent: 'center'}}>
-          <Text>채팅방 나가기</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <DrawerContentScrollView>
+      <TouchableOpacity onPress={()=>navigation.closeDrawer()}>
+        <Octicons name="three-bars" style={{marginLeft:20, marginTop:10, marginBottom: 30}} size={30} color="black" />
+      </TouchableOpacity>
+      <DrawerItem label="다이어리 보기"  icon={()=><MaterialCommunityIcons name="bookmark-outline" size={30} color="black" />} onPress={() => navigation.navigate('Diary')} />
+      <DrawerItem label="푸시 메세지 설정" icon={()=><Ionicons name="md-time" style={{marginLeft: 3}} size={30} color="black" />} onPress={() => navigation.navigate('contentScreen', {itemId: '상품제목', otherParams: ''})} />
+      <DrawerItem label="채팅방 나가기" icon={()=><MaterialIcons name="exit-to-app" size={30} color="black" />}
+        onPress={() => {
+          Alert.alert('정말 채팅방을 나가시겠습니까?', '채팅방을 나가면 채팅 내용과 채팅 목록은 사라지고 다이어리에서만 기록을 확인할 수 있습니다.', [{text: '나가기', onPress: ()=>navigation.navigate('MainPage')}, {text:'취소'}]);}} />
+    </DrawerContentScrollView>
   );
 }
 function MyChatRoomScreen({route, navigation}) {
@@ -612,39 +622,14 @@ class DiaryComponent extends React.Component{
         day: this.props.updateDate.getDay(),
       }:{year: 2020, month: 11, day: 21},
       updateCount: this.props.updateCount?this.props.updateCount:0,
-      animation: this.props.animation,
     };
   }
-
-  componentDidUpdate(prevProps, prevState){
-    //if(pressDiaryEditButton !== animation){
-
-      this.setState({animation: this.props.animation});
-      console.log(this.state.animation);
-    //}
-  }
+  handleViewRef = ref => this.view = ref;
+  bounce = () => this.view.bounce(800).then(endState => console.log(endState.finished ? 'bounce finished' : 'bounce cancelled'));
 
   render(){
-
-    if(this.state.animation){
-      return (
-      <Animatable.View animation="swing" iterationCount={'infinite'}>
-      <TouchableOpacity style={{margin: 20, marginBottom: 0, marginTop: 10}} onPress={()=>{this.props.nav.navigate('Diary')}}>
-        <View style={{margin: 5}}>
-          <Image style={{height: 190, width: 130, marginBottom: 5}} source={diaryImg} resizeMode='contain'/>
-          <View style={{}}>
-            <Text style={{fontSize: 20, color: 'black', fontWeight:'bold', alignSelf: 'center'}}>{this.state.title}</Text>
-            <View style={{flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5}}>
-              <Text style={{fontSize: 8, color: 'gray'}}>{this.state.updateDate.year}년 {this.state.updateDate.month}월 {this.state.updateDate.day}일</Text>
-              <Text style={{fontSize: 8, color: 'gray'}}>{this.state.updateCount}회 기록</Text>
-            </View>
-          </View>
-        </View>
-      </TouchableOpacity>
-      </Animatable.View>
-    );
-    } else {
-      return (
+    return (
+      <Animatable.View ref={this.handleViewRef}>
         <TouchableOpacity style={{margin: 20, marginBottom: 0, marginTop: 10}} onPress={()=>{this.props.nav.navigate('Diary')}}>
           <View style={{margin: 5}}>
             <Image style={{height: 190, width: 130, marginBottom: 5}} source={diaryImg} resizeMode='contain'/>
@@ -657,8 +642,8 @@ class DiaryComponent extends React.Component{
             </View>
           </View>
         </TouchableOpacity>
-      );
-    }
+      </Animatable.View>
+    );
   }
 }
 function DailyDiaryContent({text, last}){
@@ -716,6 +701,29 @@ function DynamicDiaryScreen(){
 }
 
 // 마이페이지
+function MyServiceStackFunction({navigation}){
+  return (
+    <MyServiceStack.Navigator initialRouteName={'MyServicePage'}>
+      <MyServiceStack.Screen
+        name='MyServicePage'
+        component={MyPageScreen}
+      />
+      <MyServiceStack.Screen
+        name='ChangePassword'
+        component={MyChangePasswordPage}
+      />
+      <MyServiceStack.Screen
+        name='UserHistory'
+        component={UserHistoryPage}
+      />
+      <MyServiceStack.Screen
+        name='ServiceCenter'
+        headerTitle='aa'
+        component={ServiceCenterStackFunction}
+      />
+    </MyServiceStack.Navigator>
+  );
+}
 function MyPageScreen({navigation}) {
   const [myDiaryCount, setMyDiaryCount] = React.useState(10);
   const [totalCount, setTotalCount] = React.useState(256);
@@ -737,20 +745,23 @@ function MyPageScreen({navigation}) {
       <View style={{}}>
         <View style={{marginHorizontal: 15, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#DDD'}}>
           <EvilIcons name="lock" color="black" size={45} style={{marginVertical: 15, marginLeft: -10}}/>
-          <TouchableOpacity onPress={()=>{}}>
+          <TouchableOpacity onPress={()=>{
+            Alert.alert('정말 로그아웃 하시겠습니까?','로그인 페이지로 이동합니다.',[{text:'취소'}, {text:'확인', onPress:()=>{
+              Alert.alert('아직 미구현', '로그인 페이지로 이동할 예정');
+            }}])}}>
             <Text style={{fontSize: 22, marginLeft: 3}}>로그아웃</Text>
           </TouchableOpacity>
         </View>
         <View style={{marginHorizontal: 15, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#DDD'}}>
           <AntDesign name="key" color="black" size={30} style={{marginVertical: 15, marginLeft: 0}}/>
-          <TouchableOpacity onPress={()=>{}}>
+          <TouchableOpacity onPress={()=>navigation.navigate('ChangePassword')}>
             <Text style={{fontSize: 22, marginLeft: 9}}>비밀번호 변경</Text>
           </TouchableOpacity>
         </View>
         <View style={{marginHorizontal: 15, borderBottomWidth: 1, borderBottomColor: '#DDD'}}>
           <View style={{ flexDirection: 'row', alignItems: 'center'}}>
             <AntDesign name="filetext1" color="black" size={30} style={{marginVertical: 15, marginLeft: 0}}/>
-            <TouchableOpacity onPress={()=>{}}>
+            <TouchableOpacity onPress={()=>navigation.navigate('UserHistory')}>
               <Text style={{fontSize: 22, marginLeft: 9}}>이용 내역</Text>
             </TouchableOpacity>
           </View>
@@ -760,7 +771,7 @@ function MyPageScreen({navigation}) {
         </View>
         <View style={{marginHorizontal: 15, flexDirection: 'row', alignItems: 'center'}}>
           <Feather name="info" color="black" size={30} style={{marginVertical: 15, marginLeft: 0}}/>
-          <TouchableOpacity onPress={()=>{}}>
+          <TouchableOpacity onPress={()=>navigation.navigate('ServiceCenter')}>
             <Text style={{fontSize: 22, marginLeft: 9}}>고객센터</Text>
           </TouchableOpacity>
         </View>
@@ -768,7 +779,161 @@ function MyPageScreen({navigation}) {
     </View>
   );
 }
+function MyChangePasswordPage({navigation}) {
+  const [prevPassword, setPrevPassword] = useState('');
+  const [nextPassword, setNextPassword] = useState('');
+  const [nextAdditionalPassword, setAdditionalNextPassword] = useState('');
+  const [warnPrevPasswordError, setWarnPrevPasswordError] = useState(false);
+  const [warnNextPasswordError, setWarnNextPasswordError] = useState(true);
+  const [warnNotCorrectPasswordError, setWarnNotCorrectPasswordError] = useState(false);
 
+  return (
+    <ScrollView>
+    <View style={{flex:1, flexDirection: 'column', justifyContent: 'space-around'}}>
+      <View style={{margin: 20}}>
+        <Text style={{marginVertical: 5, fontWeight:'bold', fontSize: 20}}>현재 비밀번호</Text>
+        <TextInput value={prevPassword} style={{borderWidth: 1, backgroundColor: '#DDD', fontSize: 30}} secureTextEntry={true} onChange={(text)=>setPrevPassword(text)}/>
+        <Text style={{color: warnPrevPasswordError? '#D00f':'#D000', fontSize: 11, marginLeft: 15, marginVertical: 5}}>올바른 비밀번호를 입력해주세요. 현재 비밀번호와 다릅니다.</Text>
+      </View>
+      <View style={{margin: 20}}>
+        <Text style={{marginVertical: 5, fontWeight:'bold', fontSize: 20}}>새 비밀번호</Text>
+        <TextInput value={nextPassword} style={{borderWidth: 1, backgroundColor: '#DDD', fontSize: 30}} secureTextEntry={true} onChange={(text)=>setNextPassword(text)}/>
+        <Text style={{fontSize: 11, marginLeft: 15, marginVertical: 5}}>6~16자 영문, 소문자, 숫자만 사용 가능 합니다.</Text>
+        <Text style={{color: warnNextPasswordError? '#D00f':'#D000', fontSize: 11, marginLeft: 15, marginVertical: 5}}>비밀번호를 올바른 형식으로 입력해주세요.</Text>
+      </View>
+      <View style={{margin: 20}}>
+        <Text style={{marginVertical: 5, fontWeight:'bold', fontSize: 20}}>새 비밀번호 확인</Text>
+        <TextInput value={nextAdditionalPassword} style={{borderWidth: 1, backgroundColor: '#DDD', fontSize: 30}} secureTextEntry={true} onChange={(text)=>setAdditionalNextPassword(text)}/>
+        <Text style={{color: warnNotCorrectPasswordError? '#D00f':'#D000', fontSize: 11, marginLeft: 15, marginVertical: 5}}>새 비밀번호와 동일하게 입력해주세요.</Text>
+      </View>
+      <View style={{margin: 20}}>
+        <TouchableOpacity onPress={()=>{Alert.alert('비밀번호가 변경되었습니다.', '다시 로그인 해주세요.', [{text: '확인'}])}} style={{borderRadius: 1, backgroundColor: '#CCC', alignItems: 'center', justifyContent: 'center', flex:1}}>
+          <Text style={{margin:10, fontSize: 22}}>변경완료</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+    </ScrollView>
+  );
+}
+class SubscribeContentBoxComponent extends React.Component{
+  constructor(props){
+    super(props);
+  }
+
+  render(){
+    return (
+      <View style={{borderWidth: 1, borderRadius: 2, borderColor: '#AAA', flex:1, marginHorizontal: 20, marginVertical: 5}}>
+        <Text style={{marginLeft: 20, marginVertical: 10, fontSize: 20, fontWeight: 'bold'}}>{this.props.title}</Text>
+        <Text style={{marginLeft:40, marginVertical: 0, fontSize: 20, fontWeight: 'bold'}}>내 기록   <Text style={{fontSize: 25, fontWeight: 'normal'}}>{this.props.count}</Text></Text>
+        <Text style={{marginLeft:40, marginVertical: 4, marginBottom: 10, fontSize: 20, fontWeight: 'bold'}}>기간        <Text style={{fontSize: 13, fontWeight: 'normal'}}>{this.props.startDate} ~ {'2020.6.10'}</Text></Text>
+      </View>
+    );
+  }
+}
+function UserHistoryPage({navigation}) {
+  return (
+    <ScrollView>
+    <View style={{flex:1, flexDirection: 'column', justifyContent: 'space-around'}}>
+      <Text style={{margin:20, fontWeight:'bold', fontSize: 20}}>나의 구독 내역</Text>
+      <SubscribeContentBoxComponent title={'구독 상품명1'} count={51} startDate={'2020.3.12'}/>
+      <SubscribeContentBoxComponent title={'구독 상품명2'} count={5} startDate={'2020.4.12'}/>
+      <SubscribeContentBoxComponent title={'구독 상품명3'} count={123} startDate={'2020.3.30'}/>
+      <SubscribeContentBoxComponent title={'구독 상품명4'} count={17} startDate={'2020.7.28'}/>
+    </View>
+    </ScrollView>
+  );
+}
+
+// 서비스센터 페이지들
+function ServiceCenterStackFunction({navigation}) {
+  return (
+    <ServiceCenterStack.Navigator initialRouteName={'ServiceCenter'}>
+      <ServiceCenterStack.Screen
+        name='ServiceCenter'
+        component={ServiceCenterPage}
+      />
+      <ServiceCenterStack.Screen
+        name='ServiceIntroduction'
+        component={ServiceIntroductionPage}
+      />
+      <ServiceCenterStack.Screen
+        name='Help'
+        component={HelpPage}
+      />
+      <ServiceCenterStack.Screen
+        name='Notice'
+        component={NoticePage}
+      />
+      <ServiceCenterStack.Screen
+        name='Question'
+        component={QuestionPage}
+      />
+    </ServiceCenterStack.Navigator>
+  );
+}
+function ServiceCenterPage({navigation}) {
+  return (
+    <View style={{flex:1, flexDirection: 'column', borderTopWidth: 1, marginHorizontal: 10}}>
+      <TouchableOpacity style={{height: 90, justifyContent: 'center', borderBottomWidth: 1, borderColor: '#DDD'}} onPress={()=>navigation.push('ServiceIntroduction')}>
+        <Text style={{marginLeft: 30, fontSize: 20}}>서비스 소개</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={{height: 90, justifyContent: 'center', borderBottomWidth: 1, borderColor: '#DDD'}} onPress={()=>navigation.push('Help')}>
+        <Text style={{marginLeft: 30, fontSize: 20}}>도움말</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={{height: 90, justifyContent: 'center', borderBottomWidth: 1, borderColor: '#DDD'}} onPress={()=>navigation.push('Notice')}>
+        <Text style={{marginLeft: 30, fontSize: 20}}>공지사항</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={{height: 90, justifyContent: 'center'}} onPress={()=>navigation.push('Question')}>
+        <Text style={{marginLeft: 30, fontSize: 20}}>문의하기</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+function ServiceIntroductionPage({navigation}) {
+  return (
+    <View style={{flex:1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+      <Text>서비스 소개</Text>
+    </View>
+  );
+}
+function HelpPage({navigation}) {
+  return (
+    <View style={{flex:1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+      <Text>도움말 페이지</Text>
+    </View>
+  );
+}
+function NoticePage({navigation}) {
+  return (
+    <View style={{flex:1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+      <Text>공지사항 페이지</Text>
+    </View>
+  );
+}
+function QuestionPage({navigation}) {
+  return (
+    <View style={{flex:1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+      <Text>문의사항 페이지</Text>
+    </View>
+  );
+}
+
+function MyStackComp({navigation}){
+  return(
+    <>
+    <ServiceCenterStack.Screen
+      name='ServiceCenter'
+      component={ServiceCenterPage}
+    />
+    <ServiceCenterStack.Screen
+      name='ServiceIntroduction'
+      component={ServiceIntroductionPage}
+    />
+    </>
+  );
+}
+
+// 메인스택
 function MainStackHomePage({navigation}) {
 
   return (
@@ -790,9 +955,9 @@ function MainStackHomePage({navigation}) {
           headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
           headerRight: (props) => (
             <TouchableOpacity
-            onPress={() => chatSettingButtonHandler()}
+            onPress={() => chatSettingButtonHandler(navigation)}
             >
-            <Text style={{fontWeight: 'bold', marginRight: 20, fontSize: 20, color: 'gray'}}>=</Text>
+            <Octicons name="three-bars" style={{marginRight:10}} size={30} color="black" />
             </TouchableOpacity>
           )}}
         component={MyChatRoomScreen}
@@ -817,22 +982,25 @@ function MainStackHomePage({navigation}) {
             <TouchableOpacity
             onPress={() => optionDiaryButtonHandler()}
             >
-            <Text style={{fontWeight: 'bold', marginRight: 20, fontSize: 20, color: 'gray'}}>+</Text>
+            <MaterialCommunityIcons name="arrow-down-circle-outline" style={{marginRight: 20}} size={40} color="black" />
             </TouchableOpacity>
           )}}
         component={DynamicDiaryScreen}
       />
       <Stack.Screen
         name="MyPage"
-        options={{
-          title: "My",
+        options={({route, navigation})=>({
+          headerTitle: getHeaderTitle(route, 'My'),
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 25}}}
-        component={MyPageScreen}
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 25}})}
+        component={MyServiceStackFunction}
       />
     </Stack.Navigator>
   );
 }
+
+
+
 
 // 메인 앱
 export default function App() {
@@ -978,8 +1146,8 @@ export default function App() {
         </NavigationContainer>
       ) : (
         <NavigationContainer>
-          <Drawer.Navigator>
-            <Drawer.Screen name='sidebar' component={MainStackHomePage}/>
+          <Drawer.Navigator drawerPosition='right' drawerStyle={{backgroundColor: '#CCC'}} drawerContent={props => <CustomDrawerContent {...props}/>}>
+            <Drawer.Screen name='sidebar' component={MainStackHomePage} options={{swipeEnabled: false}}/>
           </Drawer.Navigator>
         </NavigationContainer>
       )}
