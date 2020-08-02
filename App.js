@@ -17,8 +17,6 @@ import Constants from 'expo-constants';
 import * as Permissions from 'expo-permissions';
 import Moment from 'moment';
 
-console.log(Moment());
-
 // 추가기능 리스트
 // 그림자 https://www.npmjs.com/package/react-native-shadow
 
@@ -51,7 +49,7 @@ var message = [
     },
   },
 ];
-var productList = [
+var productListData = [
   { p_id:1, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: false, title: '구독상품명 1', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, 디자인 상품 로고 제작, 디자인 상품 소개 이미지 정방형 디자인 상품 소개', },
   { p_id:2, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: true, title: '구독상품명 2', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, 디자인 상품 로고 제작, 디자인 상품 소개 이미지 ', },
   { p_id:3, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: false, title: '구독상품명 3', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, 디자인 상품 로고 제작, 디자인 ', },
@@ -60,44 +58,28 @@ var productList = [
   { p_id:6, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: true, title: '구독상품명 6', text: '구독상품 소개 문구, 50자 이내 25자씩 ', },
   { p_id:7, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: false, title: '구독상품명 7', text: '구독상품 소개 문구', },
 ];
-var mySubscribeList = [
+var subscribeListData = [
   { p_id: 2, pushStartTime: Moment('2019-06-18 09:34'), pushEndTime: Moment('2019-06-18 09:34'), },
   { p_id: 4, pushStartTime: Moment('2019-06-13 19:34'), pushEndTime: Moment('2019-06-18 19:34'), },
   { p_id: 6, pushStartTime: Moment('2020-06-26 20:32'), pushEndTime: Moment('2020-06-26 20:32'), },
 ];
-var chatMessageList = [
+var chatMessageListData = [
   {p_id: 2, message: message},
   {p_id: 4, message: message},
   {p_id: 6, message: message},
 ];
-var pushList = [
+var pushListData = [
   {p_id:2, lastUpdateTime: new Date(), newItemCount: 3},
   {p_id:4, lastUpdateTime: new Date(), newItemCount: 3},
   {p_id:6, lastUpdateTime: new Date(), newItemCount: 3},
 ];
-var userInfo = {
-  user_id: 'default_user',
-  user_name: '임시 사용자명',
-  user_email: 'temp@email.com',
-  user_password: '215d5x7a!5a5$',
-  subscribeCount: 3,
-  chatMessageList: chatMessageList,
-  pushList: pushList,
-  diary: diaryList,
-  mySubscribeList: mySubscribeList,
-};
 var diaryList = [
   {},
 ];
-var myData = {
-  productList: productList,
-  userInfo: userInfo,
-};
-console.log(myData);
 
 // 컨트롤 변수
 var pressDiaryEditButton = false;  // diary 편집 버튼 누름
-var now_p_id = 0;
+var global_p_id = 0;
 
 // 인증 페이지
 function IntroScreen1() {
@@ -317,40 +299,37 @@ function MainPageScreen(){
   );
 }
 function SubscribeListScreen({navigation}){
-  const [productList, setProductList] = React.useState(myData.productList);
-  const [mySubscribeList, setMySubscribeList] = React.useState(myData.userInfo.mySubscribeList);
+  const [productList, setProductList] = React.useState(productListData);
+  const [subscribeList, setSubscribeList] = React.useState(subscribeListData);
+
+  useEffect(()=>{
+    console.log('useEffect');
+    setSubscribeList(subscribeListData);
+  },[subscribeListData]);
 
   return (
     <SafeAreaView>
       <ScrollView styles={{marginHorizontal: 20}} centerContent={true}>
         <Text style={{margin:10}}>내 구독 상품</Text>
         {productList.map((product, i)=>{
-          var subscribe;
-          return mySubscribeList.some((mySub)=>{
-            if(product.p_id === mySub.p_id){
-              subscribe = mySub;
-              return true;
-            }
-          }) && <TouchableContentLayout key={i.toString()} product={product} nav={()=>navigation.navigate('contentScreen', {product: product, subscribe:subscribe})}/>
+          return subscribeList.some((subscribe)=>{
+            return product.p_id === subscribe.p_id
+          }) && <TouchableContentLayout key={i.toString()} id={product.p_id}  nav={()=>navigation.navigate('contentScreen', {id:product.p_id})}/>
         })}
         <Text style={{margin:10, borderTopWidth: 1, borderColor: 'gray', marginTop:23}}>구독 가능한 상품</Text>
         {productList.map((product, i)=>{
-          return mySubscribeList.every((subscribe)=>{
+          return subscribeList.every((subscribe)=>{
             return product.p_id != subscribe.p_id
-          }) && <TouchableContentLayout key={i.toString()} product={product} nav={()=>navigation.navigate('contentScreen', {product: product})}/>
+          }) && <TouchableContentLayout key={i.toString()} id={product.p_id} nav={()=>navigation.navigate('contentScreen', {id:product.p_id})}/>
         })}
       </ScrollView>
     </SafeAreaView>
   );
 }
 function MyChatListScreen({navigation}){
-  const [productList, setProductList] = React.useState(myData.productList);
-  const [mySubscribeList, setMySubscribeList] = React.useState(myData.userInfo.mySubscribeList);
-  const [chatMessageList, setChatMessageList] = React.useState(myData.userInfo.chatMessageList);
-  const [pushList, setPushList] = React.useState(myData.userInfo.pushList);
+  const [mySubscribeList, setMySubscribeList] = React.useState(subscribeListData);
   const [zeroSubscribe, setZeroSubscribe] = React.useState(true);
 
-  console.log('mySubscribeList.length', mySubscribeList.length);
   useEffect(()=>{
     if(mySubscribeList.length===0) {
       setZeroSubscribe(true);
@@ -359,32 +338,12 @@ function MyChatListScreen({navigation}){
     }
   }, []);
 
-
   return (
     <SafeAreaView style={{flex:1}}>
       <ScrollView styles={{marginHorizontal: 20}} centerContent={true} >
         {zeroSubscribe ? NoSubscribeInform(navigation) : <Text/>}
         {mySubscribeList.map((subscribe, i)=>{
-          var product_info, chatroom_info, push_info;
-          productList.some((product)=>{
-            if(subscribe.p_id===product.p_id){
-              product_info = product;
-              return true;
-            }
-          });
-          chatMessageList.some((chatMessage)=>{
-            if(subscribe.p_id===chatMessage.p_id){
-              chatroom_info = chatMessage;
-              return true;
-            }
-          });
-          pushList.some((push)=>{
-            if(subscribe.p_id===push.p_id){
-              push_info = push;
-              return true;
-            }
-          });
-          return <TouchableContentLayout key={i.toString()} pushInfo={push_info} product={product_info} nav={()=>navigation.navigate('chatroom', {product: product_info, chatroom:chatroom_info})}/>
+          return <TouchableContentLayout key={i.toString()} id={subscribe.p_id} chatroom={true} nav={()=>navigation.navigate('chatroom', {id: subscribe.p_id})}/>
         })}
       </ScrollView>
     </SafeAreaView>
@@ -507,7 +466,7 @@ class TouchableContentLayout extends React.Component{
   render(){
     return (
       <TouchableOpacity onPress={this.props.nav}>
-        <ContentLayout pushInfo={this.props.pushInfo} product={this.props.product}/>
+        <ContentLayout id={this.props.id} chatroom={this.props.chatroom??false}/>
       </TouchableOpacity>
     );
   };
@@ -516,47 +475,40 @@ class ContentLayout extends React.Component {
   constructor(props){
     super(props);
     this.state={
-      lastUpdateTime: this.props.pushInfo?this.props.pushInfo.lastUpdateTime:false,
-      newItemCount: this.props.pushInfo?this.props.pushInfo.newItemCount:0,
+      id: this.props.id,
+      lastUpdateTime: false,
+      newItemCount: 0,
+    };
+    productListData.some((product)=>{
+      if(product.p_id===this.state.id){
+        this.state = {
+          ...this.state,
+          product: product,
+        };
+        return true;
+      }
+    });
+    if(this.props.chatroom){
+      pushListData.some((push)=>{
+        if(push.p_id===this.state.id){
+          this.state = {
+            ...this.state,
+            lastUpdateTime: push.lastUpdateTime,
+            newItemCount: push.newItemCount,
+          };
+          return true;
+        }
+      });
     }
   }
 
   render() {
     return (
       <View style={{flexDirection: 'row', height: 56, margin: 3, borderWidth: 0, borderColor: 'gray'}}>
-        <Image source={this.props.product.thumbnailImg} style={{height: 46, width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
-        <Text style={{marginLeft: 10, marginTop: 4, fontSize: 17, width: 220}}>{this.props.product.title ?? "임시 구독상품 명"}</Text>
+        <Image source={this.state.product.thumbnailImg} style={{height: 46, width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
+        <Text style={{marginLeft: 10, marginTop: 4, fontSize: 17, width: 220}}>{this.state.product.title ?? "임시 구독상품 명"}</Text>
         <View style={{flex:1, flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'flex-end'}}>
         {this.state.lastUpdateTime && <Text style={{fontSize: 10, marginRight: 6, marginTop: 0}}>{this.state.lastUpdateTime.getHours()}시 {this.state.lastUpdateTime.getMinutes()}분</Text>}
-          {
-              this.state.newItemCount && this.state.newItemCount !== '0'
-                ? <View style={{height: 20, width: 20, borderRadius: 10, backgroundColor: 'red', margin: 6, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 11}}>{this.state.newItemCount}</Text></View>
-                : <View style={{height: 20, width: 20, borderRadius: 10, margin: 6, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}/>
-          }
-        </View>
-      </View>
-    );
-  }
-}
-class ContentLayout_backup extends React.Component {
-  constructor(props){
-    super(props);
-
-    this.state = {
-      titleText: this.props.title,
-      thumbnail: this.props.thumbnail,
-      lastUpdateTime: this.props.lastUpdateTime,
-      newItemCount: this.props.newItemCount,
-    }
-  }
-
-  render() {
-    return (
-      <View style={{flexDirection: 'row', height: 56, margin: 3, borderWidth: 0, borderColor: 'gray'}}>
-        <Image source={this.state.thumbnail} style={{height: 46, width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
-        <Text style={{marginLeft: 10, marginTop: 4, fontSize: 17, width: 220}}>{this.state.titleText ? this.state.titleText : "임시 구독상품 명"}</Text>
-        <View style={{flex:1, flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'flex-end'}}>
-          {this.state.lastUpdateTime && <Text style={{fontSize: 10, marginRight: 6, marginTop: 0}}>{this.state.lastUpdateTime}</Text>}
           {
               this.state.newItemCount && this.state.newItemCount !== '0'
                 ? <View style={{height: 20, width: 20, borderRadius: 10, backgroundColor: 'red', margin: 6, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 11}}>{this.state.newItemCount}</Text></View>
@@ -629,25 +581,42 @@ const DateTimePickerExample = () => {
   );
 };
 function SubscribeContentScreen({route, navigation}){
-  const {product, subscribe} = route.params;
-  const [isSubscribe, setIsSubscribe] = React.useState(subscribe?true:false);
+  const {id} = route.params;
+  var productInfo = false;
+  productListData.some((product)=>{
+    if(id===product.p_id){
+      productInfo = product;
+      return true;
+    }
+  });
+  console.log('id', id);
+  console.log('SubscribeContentScreen-productInfo', productInfo);
+  var subscribeInfo = false;
+  subscribeListData.some((subscribe)=>{
+    if(id===subscribe.p_id){
+      subscribeInfo = subscribe;
+      return true;
+    }
+  });
+  console.log('SubscribeContentScreen-subscribeInfo', subscribeInfo);
+  const [isSubscribe, setIsSubscribe] = React.useState(subscribeInfo?true:false);
   const [pushTime, setPushTime] = React.useState({
-    pushStartTime: subscribe?subscribe.pushStartTime: Moment(),
-    pushEndTime: subscribe?subscribe.pushEndTime: Moment(),
+    pushStartTime: subscribeInfo?subscribeInfo.pushStartTime: Moment(),
+    pushEndTime: subscribeInfo?subscribeInfo.pushEndTime: Moment(),
   });
 
   return (
     <SafeAreaView>
       <ScrollView centerContent={true} onScroll={(event)=>{
-        event.nativeEvent.contentOffset.y > 260.0 ? navigation.setOptions({ headerTitle: product.title, headerTransparent: false}) : navigation.setOptions({ headerTitle: '', headerTransparent: true})
+        event.nativeEvent.contentOffset.y > 260.0 ? navigation.setOptions({ headerTitle: productInfo.title, headerTransparent: false}) : navigation.setOptions({ headerTitle: '', headerTransparent: true})
       }}>
-        <Image source={product.bannerImg} style={{height: 200}} resizeMode='cover'/>
+        <Image source={productInfo.bannerImg} style={{height: 200}} resizeMode='cover'/>
         <View style={{backgroundColor: '#EEE', justifyContent: 'space-around', alignItems: 'center'}}>
-          <Image source={product.thumbnailImg} style={{position:'absolute', alignSelf: 'center', top:-80, height: 100, width: 100, borderRadius: 50}}/>
-          <Text style={{fontSize: 20, fontWeight:'bold', marginTop: 35, marginBottom: 10}}>{product.title}</Text>
-          <Text style={{margin: 20}}>{product.text}</Text>
+          <Image source={productInfo.thumbnailImg} style={{position:'absolute', alignSelf: 'center', top:-80, height: 100, width: 100, borderRadius: 50}}/>
+          <Text style={{fontSize: 20, fontWeight:'bold', marginTop: 35, marginBottom: 10}}>{productInfo.title}</Text>
+          <Text style={{margin: 20}}>{productInfo.text}</Text>
         </View>
-        <Image source={product.mainImg} style={{height: 1200}} resizeMode='cover'/>
+        <Image source={productInfo.mainImg} style={{height: 1200}} resizeMode='cover'/>
         <View style={{height: 400, backgroundColor: '#EEE'}}>
           <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
             <View style={{flexDirection: 'column'}}>
@@ -699,8 +668,8 @@ function CustomDrawerContent({navigation}) {
       <TouchableOpacity onPress={()=>navigation.closeDrawer()}>
         <Octicons name="three-bars" style={{marginLeft:20, marginTop:10, marginBottom: 30}} size={30} color="black" />
       </TouchableOpacity>
-      <DrawerItem label="다이어리 보기"  icon={()=><MaterialCommunityIcons name="bookmark-outline" size={30} color="black" />} onPress={() => navigation.navigate('Diary')} />
-      <DrawerItem label="푸시 메세지 설정" icon={()=><Ionicons name="md-time" style={{marginLeft: 3}} size={30} color="black" />} onPress={() => navigation.navigate('contentScreen', {product: product, subscribe:subscribe})} />
+      <DrawerItem label="다이어리 보기"  icon={()=><MaterialCommunityIcons name="bookmark-outline" size={30} color="black" />} onPress={() => navigation.navigate('Diary', {id:global_p_id})} />
+      <DrawerItem label="푸시 메세지 설정" icon={()=><Ionicons name="md-time" style={{marginLeft: 3}} size={30} color="black" />} onPress={() => {console.log(navigation); navigation.navigate('contentScreen', {id:global_p_id})}} />
       <DrawerItem label="채팅방 나가기" icon={()=><MaterialIcons name="exit-to-app" size={30} color="black" />}
         onPress={() => {
           Alert.alert('정말 채팅방을 나가시겠습니까?', '채팅방을 나가면 채팅 내용과 채팅 목록은 사라지고 다이어리에서만 기록을 확인할 수 있습니다.', [{text: '나가기', onPress: ()=>navigation.navigate('MainPage')}, {text:'취소'}]);}} />
@@ -709,14 +678,29 @@ function CustomDrawerContent({navigation}) {
 }
 function MyChatRoomScreen({route, navigation}) {
   const [messages, setMessages] = useState([]);
-  const {product, chatroom} = route.params;
+  const {id} = route.params;
+  var productInfo = false;
+  productListData.some((product)=>{
+    if(id===product.p_id){
+      productInfo = product;
+      return true;
+    }
+  });
+  var chatroomInfo = false;
+  chatMessageListData.some((chatMessage)=>{
+    if(id===chatMessage.p_id){
+      chatroomInfo = chatMessage;
+      return true;
+    }
+  });
 
   useEffect(() => {
-    setMessages(chatroom.message);
+    setMessages(chatroomInfo.message);
+    global_p_id = id;
   }, [])
 
   React.useLayoutEffect(() => {
-    navigation.setOptions({ headerTitle: product.title });
+    navigation.setOptions({ headerTitle: productInfo.title });
   }, [navigation, route]);
 
   const onSend = useCallback((messages = []) => {
