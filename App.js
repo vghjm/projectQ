@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Platform, AsyncStorage, ImageBackground, Text, View, StyleSheet, TouchableOpacity, TextInput, CheckBox, KeyboardAvoidingView, Alert, Button, ScrollView, SafeAreaView, Image }
 from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer, getFocusedRouteNameFromRoute, useNavigation } from '@react-navigation/native';
+import { NavigationContainer, getFocusedRouteNameFromRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import {
@@ -15,6 +15,9 @@ import * as Animatable from 'react-native-animatable'; // https://github.com/obl
 import * as ImagePicker from 'expo-image-picker';      // https://docs.expo.io/versions/latest/sdk/imagepicker/
 import Constants from 'expo-constants';
 import * as Permissions from 'expo-permissions';
+import Moment from 'moment';
+
+console.log(Moment());
 
 // 추가기능 리스트
 // 그림자 https://www.npmjs.com/package/react-native-shadow
@@ -32,8 +35,69 @@ const MyServiceStack = createStackNavigator();
 const ServiceCenterStack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 
+// 데이터
+var message = [
+  { _id: 1, text: '오늘 뭐 했어?', createdAt: new Date(),
+    user: {
+      _id:3,
+      avatar: 'https://placeimg.com/140/140/any',
+    }
+  },
+  {
+    _id: 2, text: '상품정보명' + ' 채팅방입니다.', createdAt: new Date(),
+    user: {
+      _id:2,
+      avatar: 'https://placeimg.com/140/140/any',
+    },
+  },
+];
+var productList = [
+  { p_id:1, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: false, title: '구독상품명 1', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, 디자인 상품 로고 제작, 디자인 상품 소개 이미지 정방형 디자인 상품 소개', },
+  { p_id:2, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: true, title: '구독상품명 2', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, 디자인 상품 로고 제작, 디자인 상품 소개 이미지 ', },
+  { p_id:3, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: false, title: '구독상품명 3', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, 디자인 상품 로고 제작, 디자인 ', },
+  { p_id:4, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: true, title: '구독상품명 4', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, ', },
+  { p_id:5, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: false, title: '구독상품명 5', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 ', },
+  { p_id:6, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: true, title: '구독상품명 6', text: '구독상품 소개 문구, 50자 이내 25자씩 ', },
+  { p_id:7, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: false, title: '구독상품명 7', text: '구독상품 소개 문구', },
+];
+var mySubscribeList = [
+  { p_id: 2, pushStartTime: Moment('2019-06-18 09:34'), pushEndTime: Moment('2019-06-18 09:34'), },
+  { p_id: 4, pushStartTime: Moment('2019-06-13 19:34'), pushEndTime: Moment('2019-06-18 19:34'), },
+  { p_id: 6, pushStartTime: Moment('2020-06-26 20:32'), pushEndTime: Moment('2020-06-26 20:32'), },
+];
+var chatMessageList = [
+  {p_id: 2, message: message},
+  {p_id: 4, message: message},
+  {p_id: 6, message: message},
+];
+var pushList = [
+  {p_id:2, lastUpdateTime: new Date(), newItemCount: 3},
+  {p_id:4, lastUpdateTime: new Date(), newItemCount: 3},
+  {p_id:6, lastUpdateTime: new Date(), newItemCount: 3},
+];
+var userInfo = {
+  user_id: 'default_user',
+  user_name: '임시 사용자명',
+  user_email: 'temp@email.com',
+  user_password: '215d5x7a!5a5$',
+  subscribeCount: 3,
+  chatMessageList: chatMessageList,
+  pushList: pushList,
+  diary: diaryList,
+  mySubscribeList: mySubscribeList,
+};
+var diaryList = [
+  {},
+];
+var myData = {
+  productList: productList,
+  userInfo: userInfo,
+};
+console.log(myData);
+
 // 컨트롤 변수
 var pressDiaryEditButton = false;  // diary 편집 버튼 누름
+var now_p_id = 0;
 
 // 인증 페이지
 function IntroScreen1() {
@@ -253,32 +317,80 @@ function MainPageScreen(){
   );
 }
 function SubscribeListScreen({navigation}){
+  const [productList, setProductList] = React.useState(myData.productList);
+  const [mySubscribeList, setMySubscribeList] = React.useState(myData.userInfo.mySubscribeList);
+
   return (
-    <SafeAreaView style={{flex:1}}>
+    <SafeAreaView>
       <ScrollView styles={{marginHorizontal: 20}} centerContent={true}>
         <Text style={{margin:10}}>내 구독 상품</Text>
-        <ContentLayout />
-        <ContentLayout />
-        <Text style={{margin:10, borderTopWidth: 1, borderColor: 'gray'}}>구독 가능한 상품</Text>
-        <TouchableOpacity onPress={()=>navigation.navigate('contentScreen', {itemId: '구독상품명 1', otherParams: ''})}>
-          <ContentLayout title='구독 상품명 1' thumbnail={defaultImg}/>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={()=>navigation.navigate('contentScreen', {itemId: '구독상품명 2', otherParams: ''})}>
-          <ContentLayout title='구독 상품명 2' thumbnail={defaultImg}/>
-        </TouchableOpacity>
-        <ContentLayout />
-        <ContentLayout />
-        <ContentLayout />
-        <ContentLayout />
-        <ContentLayout />
-        <ContentLayout />
-        <ContentLayout />
-        <ContentLayout />
+        {productList.map((product, i)=>{
+          var subscribe;
+          return mySubscribeList.some((mySub)=>{
+            if(product.p_id === mySub.p_id){
+              subscribe = mySub;
+              return true;
+            }
+          }) && <TouchableContentLayout key={i.toString()} product={product} nav={()=>navigation.navigate('contentScreen', {product: product, subscribe:subscribe})}/>
+        })}
+        <Text style={{margin:10, borderTopWidth: 1, borderColor: 'gray', marginTop:23}}>구독 가능한 상품</Text>
+        {productList.map((product, i)=>{
+          return mySubscribeList.every((subscribe)=>{
+            return product.p_id != subscribe.p_id
+          }) && <TouchableContentLayout key={i.toString()} product={product} nav={()=>navigation.navigate('contentScreen', {product: product})}/>
+        })}
       </ScrollView>
     </SafeAreaView>
   );
 }
 function MyChatListScreen({navigation}){
+  const [productList, setProductList] = React.useState(myData.productList);
+  const [mySubscribeList, setMySubscribeList] = React.useState(myData.userInfo.mySubscribeList);
+  const [chatMessageList, setChatMessageList] = React.useState(myData.userInfo.chatMessageList);
+  const [pushList, setPushList] = React.useState(myData.userInfo.pushList);
+  const [zeroSubscribe, setZeroSubscribe] = React.useState(true);
+
+  console.log('mySubscribeList.length', mySubscribeList.length);
+  useEffect(()=>{
+    if(mySubscribeList.length===0) {
+      setZeroSubscribe(true);
+    } else {
+      setZeroSubscribe(false);
+    }
+  }, []);
+
+
+  return (
+    <SafeAreaView style={{flex:1}}>
+      <ScrollView styles={{marginHorizontal: 20}} centerContent={true} >
+        {zeroSubscribe ? NoSubscribeInform(navigation) : <Text/>}
+        {mySubscribeList.map((subscribe, i)=>{
+          var product_info, chatroom_info, push_info;
+          productList.some((product)=>{
+            if(subscribe.p_id===product.p_id){
+              product_info = product;
+              return true;
+            }
+          });
+          chatMessageList.some((chatMessage)=>{
+            if(subscribe.p_id===chatMessage.p_id){
+              chatroom_info = chatMessage;
+              return true;
+            }
+          });
+          pushList.some((push)=>{
+            if(subscribe.p_id===push.p_id){
+              push_info = push;
+              return true;
+            }
+          });
+          return <TouchableContentLayout key={i.toString()} pushInfo={push_info} product={product_info} nav={()=>navigation.navigate('chatroom', {product: product_info, chatroom:chatroom_info})}/>
+        })}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+function MyChatListScreen_backup({navigation}){
   var time =  (new Date().getMonth() + 1) + '월 ' + new Date().getDate() + '일';
   var numberOfSubscribe = 0;
 
@@ -304,23 +416,38 @@ function MyChatListScreen({navigation}){
     </SafeAreaView>
   );
 }
-function MyDiaryScreen({navigation}){
+function MyDiaryScreen({route, navigation}){
   const [diaryCount, setDiaryCount] = React.useState(0);
   const [animation, setAnimation] = React.useState(false);
+  const [editMode, setEditMode] = React.useState(false);
   const date = new Date();
+
+
+  useFocusEffect(()=>{
+    setEditMode(pressDiaryEditButton);
+  });
 
   return (
     <SafeAreaView>
     <ScrollView>
       <View style={{flex:1, flexDirection: 'column', alignItems: 'center'}}>
         <View style={{flex:1, flexDirection: 'row', justifyContent: 'flex-start', flexWrap: 'wrap'}}>
-          <DiaryComponent title='구독 상품명 1' updateDate={date} updateCount={3} id={1} nav={navigation}/>
-          <DiaryComponent title='구독 상품명 2' updateDate={date} updateCount={37} id={2} nav={navigation}/>
-          <DiaryComponent/>
-          <DiaryComponent/>
-          <DiaryComponent/>
-          <DiaryComponent/>
-          <DiaryComponent/>
+          {editMode ?
+            <AnimatableDiaryComponent title='구독 상품명 1' updateDate={date} updateCount={3} id={1} nav={navigation}/> :
+            <DiaryComponent title='구독 상품명 1' updateDate={date} updateCount={3} id={1} nav={navigation}/>
+          }
+          {editMode ?
+            <AnimatableDiaryComponent title='구독 상품명 2' updateDate={date} updateCount={3} id={1} nav={navigation}/> :
+            <DiaryComponent title='구독 상품명 2' updateDate={date} updateCount={3} id={1} nav={navigation}/>
+          }
+          {editMode ?
+            <AnimatableDiaryComponent title='구독 상품명 3' updateDate={date} updateCount={3} id={1} nav={navigation}/> :
+            <DiaryComponent title='구독 상품명 3' updateDate={date} updateCount={3} id={1} nav={navigation}/>
+          }
+          {editMode ?
+            <AnimatableDiaryComponent title='구독 상품명 4' updateDate={date} updateCount={3} id={1} nav={navigation}/> :
+            <DiaryComponent title='구독 상품명 4' updateDate={date} updateCount={3} id={1} nav={navigation}/>
+          }
         </View>
       </View>
     </ScrollView>
@@ -358,22 +485,60 @@ function myButtonHandler(route, navigation) {return navigation.navigate('MyServi
 function chatSettingButtonHandler(navigation) {return navigation.openDrawer();}
 function editDiaryButtonHandler(route, navigation){
   pressDiaryEditButton = true;
-  navigation.navigate('MyDiaryScreen');
 
-  return bounce;
+  return navigation.navigate('MyDiaryScreen', {editMode: true});
 }
 function completeDiaryButtonHandler(route, navigation){
   pressDiaryEditButton = false;
-  navigation.navigate('MyDiaryScreen');
 
-  return Alert.alert('다이어리창의  완료버튼을 눌렀습니다.', '기능 차후 추가 예정');
+  return navigation.navigate('MyDiaryScreen', {editMode: false});
 }
 function optionDiaryButtonHandler(){
   return Alert.alert('다이어리내의 옵션 버튼을 눌렀습니다.', '기능 차후 추가 예정');
 }
 
+
 // 글로벌 구성품
+class TouchableContentLayout extends React.Component{
+  constructor(props){
+    super(props);
+  };
+
+  render(){
+    return (
+      <TouchableOpacity onPress={this.props.nav}>
+        <ContentLayout pushInfo={this.props.pushInfo} product={this.props.product}/>
+      </TouchableOpacity>
+    );
+  };
+}
 class ContentLayout extends React.Component {
+  constructor(props){
+    super(props);
+    this.state={
+      lastUpdateTime: this.props.pushInfo?this.props.pushInfo.lastUpdateTime:false,
+      newItemCount: this.props.pushInfo?this.props.pushInfo.newItemCount:0,
+    }
+  }
+
+  render() {
+    return (
+      <View style={{flexDirection: 'row', height: 56, margin: 3, borderWidth: 0, borderColor: 'gray'}}>
+        <Image source={this.props.product.thumbnailImg} style={{height: 46, width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
+        <Text style={{marginLeft: 10, marginTop: 4, fontSize: 17, width: 220}}>{this.props.product.title ?? "임시 구독상품 명"}</Text>
+        <View style={{flex:1, flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'flex-end'}}>
+        {this.state.lastUpdateTime && <Text style={{fontSize: 10, marginRight: 6, marginTop: 0}}>{this.state.lastUpdateTime.getHours()}시 {this.state.lastUpdateTime.getMinutes()}분</Text>}
+          {
+              this.state.newItemCount && this.state.newItemCount !== '0'
+                ? <View style={{height: 20, width: 20, borderRadius: 10, backgroundColor: 'red', margin: 6, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 11}}>{this.state.newItemCount}</Text></View>
+                : <View style={{height: 20, width: 20, borderRadius: 10, margin: 6, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}/>
+          }
+        </View>
+      </View>
+    );
+  }
+}
+class ContentLayout_backup extends React.Component {
   constructor(props){
     super(props);
 
@@ -464,40 +629,34 @@ const DateTimePickerExample = () => {
   );
 };
 function SubscribeContentScreen({route, navigation}){
-  const {itemId, otherParams} = route.params;
-  const [subscribe, setSubscribe] = React.useState(false);
+  const {product, subscribe} = route.params;
+  const [isSubscribe, setIsSubscribe] = React.useState(subscribe?true:false);
   const [pushTime, setPushTime] = React.useState({
-    from: {
-      hour: 0,
-      minute: 0,
-    },
-    to: {
-      hour: 23,
-      minute: 59,
-    },
+    pushStartTime: subscribe?subscribe.pushStartTime: Moment(),
+    pushEndTime: subscribe?subscribe.pushEndTime: Moment(),
   });
 
   return (
-    <SafeAreaView style={{flex:1}}>
+    <SafeAreaView>
       <ScrollView centerContent={true} onScroll={(event)=>{
-        event.nativeEvent.contentOffset.y > 260.0 ? navigation.setOptions({ headerTitle: itemId, headerTransparent: false}) : navigation.setOptions({ headerTitle: '', headerTransparent: true})
+        event.nativeEvent.contentOffset.y > 260.0 ? navigation.setOptions({ headerTitle: product.title, headerTransparent: false}) : navigation.setOptions({ headerTitle: '', headerTransparent: true})
       }}>
-        <Image source={defaultImg} style={{height: 200}} resizeMode='cover'/>
+        <Image source={product.bannerImg} style={{height: 200}} resizeMode='cover'/>
         <View style={{backgroundColor: '#EEE', justifyContent: 'space-around', alignItems: 'center'}}>
-          <Image source={defaultImg} style={{position:'absolute', alignSelf: 'center', top:-80, height: 100, width: 100, borderRadius: 50}}/>
-          <Text style={{fontSize: 20, fontWeight:'bold', marginTop: 35, marginBottom: 10}}>{itemId}</Text>
-          <Text style={{margin: 20}}>구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, 디자인 상품 로고 제작, 디자인 상품 소개 이미지 정방형 디자인 상품 소개</Text>
+          <Image source={product.thumbnailImg} style={{position:'absolute', alignSelf: 'center', top:-80, height: 100, width: 100, borderRadius: 50}}/>
+          <Text style={{fontSize: 20, fontWeight:'bold', marginTop: 35, marginBottom: 10}}>{product.title}</Text>
+          <Text style={{margin: 20}}>{product.text}</Text>
         </View>
-        <Image source={defaultImg} style={{height: 1200}} resizeMode='cover'/>
+        <Image source={product.mainImg} style={{height: 1200}} resizeMode='cover'/>
         <View style={{height: 400, backgroundColor: '#EEE'}}>
           <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
             <View style={{flexDirection: 'column'}}>
               <Text style={{marginLeft: 30, marginTop: 40, fontSize: 20}}>구독 하기</Text>
               <Text style={{marginLeft: 30, marginTop: 40, fontSize: 20}}>정시 메시지 수신 시간</Text>
             </View>
-            <TouchableOpacity style={{marginTop: 40, marginRight: 30}} onPress={()=>setSubscribe(!subscribe)}>
-              <View style={{flexDirection: 'row', height: 30, width: 85, borderRadius: 15, backgroundColor: subscribe?'cornflowerblue':'white', borderWidth: 1}}>
-                {subscribe? (
+            <TouchableOpacity style={{marginTop: 40, marginRight: 30}} onPress={()=>setIsSubscribe(!isSubscribe)}>
+              <View style={{flexDirection: 'row', height: 30, width: 85, borderRadius: 15, backgroundColor: isSubscribe?'cornflowerblue':'white', borderWidth: 1}}>
+                {isSubscribe? (
                   <>
                     <Text style={{marginLeft: 11, color: 'white', fontSize: 18}}>ON</Text>
                     <View style={{marginTop: 5, marginLeft: 16, height: 18, width: 18, borderRadius: 9, backgroundColor: 'white'}}/>
@@ -511,8 +670,8 @@ function SubscribeContentScreen({route, navigation}){
               </View>
             </TouchableOpacity>
           </View>
-          <View style={{alignSelf: 'flex-end', margin: 20, fontSize: 20}}>
-            <Text> 오후 {pushTime.from.hour}시</Text>
+          <View style={{alignSelf: 'flex-end', margin: 20}}>
+            <Text style={{fontSize: 25}}>{pushTime.pushStartTime.format('LT')}</Text>
           </View>
           <View style={{margin:20, borderRadius: 10, width: 230, alignSelf: 'center'}}>
             <DateTimePickerExample/>
@@ -541,7 +700,7 @@ function CustomDrawerContent({navigation}) {
         <Octicons name="three-bars" style={{marginLeft:20, marginTop:10, marginBottom: 30}} size={30} color="black" />
       </TouchableOpacity>
       <DrawerItem label="다이어리 보기"  icon={()=><MaterialCommunityIcons name="bookmark-outline" size={30} color="black" />} onPress={() => navigation.navigate('Diary')} />
-      <DrawerItem label="푸시 메세지 설정" icon={()=><Ionicons name="md-time" style={{marginLeft: 3}} size={30} color="black" />} onPress={() => navigation.navigate('contentScreen', {itemId: '상품제목', otherParams: ''})} />
+      <DrawerItem label="푸시 메세지 설정" icon={()=><Ionicons name="md-time" style={{marginLeft: 3}} size={30} color="black" />} onPress={() => navigation.navigate('contentScreen', {product: product, subscribe:subscribe})} />
       <DrawerItem label="채팅방 나가기" icon={()=><MaterialIcons name="exit-to-app" size={30} color="black" />}
         onPress={() => {
           Alert.alert('정말 채팅방을 나가시겠습니까?', '채팅방을 나가면 채팅 내용과 채팅 목록은 사라지고 다이어리에서만 기록을 확인할 수 있습니다.', [{text: '나가기', onPress: ()=>navigation.navigate('MainPage')}, {text:'취소'}]);}} />
@@ -550,33 +709,14 @@ function CustomDrawerContent({navigation}) {
 }
 function MyChatRoomScreen({route, navigation}) {
   const [messages, setMessages] = useState([]);
-  const {itemId, otherParams} = route.params;
+  const {product, chatroom} = route.params;
 
   useEffect(() => {
-    setMessages([
-      {
-        _id: 1,
-        text: otherParams,
-        createdAt: new Date(),
-        user: {
-          avatar: 'https://placeimg.com/140/140/any',
-        }
-      },
-      {
-        _id: 2,
-        text: itemId + ' 채팅방입니다.',
-        createdAt: new Date(),
-        user: {
-          _id:2,
-          name: 'system',
-          avatar: 'https://placeimg.com/140/140/any',
-        },
-      },
-    ])
+    setMessages(chatroom.message);
   }, [])
 
   React.useLayoutEffect(() => {
-    navigation.setOptions({ headerTitle: itemId });
+    navigation.setOptions({ headerTitle: product.title });
   }, [navigation, route]);
 
   const onSend = useCallback((messages = []) => {
@@ -610,25 +750,59 @@ class DiaryComponent extends React.Component{
       updateCount: this.props.updateCount?this.props.updateCount:0,
     };
   }
-  handleViewRef = ref => this.view = ref;
-  bounce = () => this.view.bounce(800).then(endState => console.log(endState.finished ? 'bounce finished' : 'bounce cancelled'));
 
   render(){
     return (
-      <Animatable.View ref={this.handleViewRef}>
-        <TouchableOpacity style={{margin: 20, marginBottom: 0, marginTop: 10}} onPress={()=>{this.props.nav.navigate('Diary')}}>
-          <View style={{margin: 5}}>
-            <Image style={{height: 190, width: 130, marginBottom: 5}} source={diaryImg} resizeMode='contain'/>
-            <View style={{}}>
-              <Text style={{fontSize: 20, color: 'black', fontWeight:'bold', alignSelf: 'center'}}>{this.state.title}</Text>
-              <View style={{flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5}}>
-                <Text style={{fontSize: 8, color: 'gray'}}>{this.state.updateDate.year}년 {this.state.updateDate.month}월 {this.state.updateDate.day}일</Text>
-                <Text style={{fontSize: 8, color: 'gray'}}>{this.state.updateCount}회 기록</Text>
-              </View>
+      <TouchableOpacity style={{margin: 20, marginBottom: 0, marginTop: 10}} onPress={()=>{this.props.nav.navigate('Diary')}}>
+        <View style={{margin: 5}}>
+          <Image style={{height: 190, width: 130, marginBottom: 5}} source={diaryImg} resizeMode='contain'/>
+          <View style={{}}>
+            <Text style={{fontSize: 20, color: 'black', fontWeight:'bold', alignSelf: 'center'}}>{this.state.title}</Text>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5}}>
+              <Text style={{fontSize: 8, color: 'gray'}}>{this.state.updateDate.year}년 {this.state.updateDate.month}월 {this.state.updateDate.day}일</Text>
+              <Text style={{fontSize: 8, color: 'gray'}}>{this.state.updateCount}회 기록</Text>
             </View>
           </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+}
+class AnimatableDiaryComponent extends React.Component{
+  constructor(props){
+    super(props);
+
+    this.state = {
+      _id: this.props.id?this.props.id:1,
+      title: this.props.title?this.props.title:'임시 상품명',
+      updateDate: this.props.updateDate?{
+        year: this.props.updateDate.getFullYear(),
+        month: this.props.updateDate.getMonth(),
+        day: this.props.updateDate.getDay(),
+      }:{year: 2020, month: 11, day: 21},
+      updateCount: this.props.updateCount?this.props.updateCount:0,
+    };
+  }
+
+  render(){
+    return (
+      <View style={{margin: 5}}>
+        <Animatable.View animation='swing' iterationCount={'infinite'}>
+          <TouchableOpacity style={{margin: 20, marginBottom: 0, marginTop: 10}} onPress={()=>{Alert.alert('다이어리 순서변경 기능', '추가예정')}}>
+          <Image style={{height: 190, width: 130, marginBottom: 5}} source={diaryImg} resizeMode='contain'/>
+          <View style={{}}>
+            <Text style={{fontSize: 20, color: 'black', fontWeight:'bold', alignSelf: 'center'}}>{this.state.title}</Text>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5}}>
+              <Text style={{fontSize: 8, color: 'gray'}}>{this.state.updateDate.year}년 {this.state.updateDate.month}월 {this.state.updateDate.day}일</Text>
+              <Text style={{fontSize: 8, color: 'gray'}}>{this.state.updateCount}회 기록</Text>
+            </View>
+          </View>
+          </TouchableOpacity>
+        </Animatable.View>
+        <TouchableOpacity onPress={()=>{Alert.alert(this.props.title+'을 삭제하시겠습니까?', '삭제 기능 구현예정')}} style={{position: 'absolute', left: 18, top:18, backgroundColor: '#999', height: 30, width: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center'}}>
+          <Text>X</Text>
         </TouchableOpacity>
-      </Animatable.View>
+      </View>
     );
   }
 }
