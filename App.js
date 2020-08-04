@@ -16,6 +16,8 @@ import * as ImagePicker from 'expo-image-picker';      // https://docs.expo.io/v
 import Constants from 'expo-constants';
 import * as Permissions from 'expo-permissions';
 import Moment from 'moment';
+import "moment/locale/ko";
+Moment.locale("ko");
 
 // 추가기능 리스트
 // 그림자 https://www.npmjs.com/package/react-native-shadow
@@ -23,7 +25,10 @@ import Moment from 'moment';
 const introImage1 = {uri: "https://cdn.crowdpic.net/detail-thumb/thumb_d_F78FC0AA8923C441588C382B19DF0BF8.jpg"};
 const introImage2 = {uri: "https://previews.123rf.com/images/romeolu/romeolu1601/romeolu160100122/50594417-%EB%88%88-%EB%B0%B0%EA%B2%BD.jpg"};
 const introImage3 = {uri: "https://previews.123rf.com/images/kittikornphongok/kittikornphongok1505/kittikornphongok150501184/40020410-%EB%8B%A4%EC%B1%84%EB%A1%9C%EC%9A%B4-%EC%88%98%EC%B1%84%ED%99%94%EC%9E%85%EB%8B%88%EB%8B%A4-%EA%B7%B8%EB%9F%B0-%EC%A7%80-%EC%A7%88%EA%B0%90-%EB%B0%B0%EA%B2%BD%EC%9E%85%EB%8B%88%EB%8B%A4-%EB%B6%80%EB%93%9C%EB%9F%AC%EC%9A%B4-%EB%B0%B0%EA%B2%BD%EC%9E%85%EB%8B%88%EB%8B%A4-.jpg"};
-const defaultImg = {uri: "https://t1.daumcdn.net/cfile/tistory/24283C3858F778CA2E"};
+const defaultImg = {uri: "https://www.daelim.ac.kr/coming_soon.jpg"};
+const dogtImg = {uri: "https://t1.daumcdn.net/cfile/tistory/24283C3858F778CA2E"};
+const catImg = {uri: 'https://image-notepet.akamaized.net/resize/620x-/seimage/20190816%2Ff07bd9f247293aa0317f2c8faba7e83b.png'};
+const carmelImg = {uri: 'https://www.jain.re.kr/file/contents/1/201609/30aade86-7056-4948-86a4-a8003c4498ab.jpg'};
 const diaryImg = require('./assets/diary.jpg');
 const AuthContext = React.createContext();
 const ControllContext = React.createContext();
@@ -34,29 +39,131 @@ const ServiceCenterStack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 
 // 데이터
-var message = [
-  { _id: 1, text: '오늘 뭐 했어?', createdAt: new Date(),
-    user: {
-      _id:3,
-      avatar: 'https://placeimg.com/140/140/any',
-    }
+var message2 = [
+  {
+    _id: 7, text: '나의 오늘 답변1', createdAt: Moment('2019-06-24 01:09:34'),
+    user: { _id:1},
+  },
+  { _id: 6, text: '오늘 뭐 했어?', createdAt: Moment('2019-06-23 01:09:34'),
+    user: { _id:2, avatar: 'https://image-notepet.akamaized.net/resize/620x-/seimage/20190816%2Ff07bd9f247293aa0317f2c8faba7e83b.png',}
   },
   {
-    _id: 2, text: '상품정보명' + ' 채팅방입니다.', createdAt: new Date(),
-    user: {
-      _id:2,
-      avatar: 'https://placeimg.com/140/140/any',
-    },
+    _id: 5, text: '나의 이전 답변3', createdAt: Moment('2019-06-22 01:09:34'),
+    user: { _id:1},
+  },
+  {
+    _id: 4, text: '나의 이전 답변2', createdAt: Moment('2019-06-21 01:09:34'),
+    user: { _id:1},
+  },
+  {
+    _id: 3, text: '나의 이전 답변1', createdAt: Moment('2019-06-20 01:09:34'),
+    user: { _id:1,},
+  },
+  { _id: 2, text: '오늘 뭐 했어?', createdAt: Moment('2019-06-19 01:09:34'),
+    user: { _id:2, avatar: 'https://image-notepet.akamaized.net/resize/620x-/seimage/20190816%2Ff07bd9f247293aa0317f2c8faba7e83b.png',}
+  },
+  {
+    _id: 1, text: '상품정보명' + ' 채팅방입니다.', createdAt: Moment('2019-06-18 01:09:34'),
+    user: { _id:2, avatar: 'https://image-notepet.akamaized.net/resize/620x-/seimage/20190816%2Ff07bd9f247293aa0317f2c8faba7e83b.png',},
   },
 ];
+var message4 = [
+  {
+    _id: 7, text: '나의 오늘 답변1', createdAt: Moment('2019-06-24 01:09:34'),
+    user: { _id:1},
+  },
+  { _id: 6, text: '오늘 뭐 했어?', createdAt: Moment('2019-06-23 01:09:34'),
+    user: { _id:2, avatar: 'https://www.jain.re.kr/file/contents/1/201609/30aade86-7056-4948-86a4-a8003c4498ab.jpg',}
+  },
+  {
+    _id: 5, text: '나의 이전 답변3', createdAt: Moment('2019-06-22 01:09:34'),
+    user: { _id:1},
+  },
+  {
+    _id: 4, text: '나의 이전 답변2', createdAt: Moment('2019-06-21 01:09:34'),
+    user: { _id:1},
+  },
+  {
+    _id: 3, text: '나의 이전 답변1', createdAt: Moment('2019-06-20 01:09:34'),
+    user: { _id:1,},
+  },
+  { _id: 2, text: '오늘 뭐 했어?', createdAt: Moment('2019-06-19 01:09:34'),
+    user: { _id:2, avatar: 'https://www.jain.re.kr/file/contents/1/201609/30aade86-7056-4948-86a4-a8003c4498ab.jpg',}
+  },
+  {
+    _id: 1, text: '상품정보명' + ' 채팅방입니다.', createdAt: Moment('2019-06-18 01:09:34'),
+    user: { _id:2, avatar: 'https://www.jain.re.kr/file/contents/1/201609/30aade86-7056-4948-86a4-a8003c4498ab.jpg',},
+  },
+];
+var message6 = [
+  {
+    _id: 7, text: '나의 오늘 답변1', createdAt: Moment('2019-06-24 01:09:34'),
+    user: { _id:1},
+  },
+  { _id: 6, text: '오늘 뭐 했어?', createdAt: Moment('2019-06-23 01:09:34'),
+    user: { _id:2, avatar: 'https://t1.daumcdn.net/cfile/tistory/24283C3858F778CA2E',}
+  },
+  {
+    _id: 5, text: '나의 이전 답변3', createdAt: Moment('2019-06-22 01:09:34'),
+    user: { _id:1},
+  },
+  {
+    _id: 4, text: '나의 이전 답변2', createdAt: Moment('2019-06-21 01:09:34'),
+    user: { _id:1},
+  },
+  {
+    _id: 3, text: '나의 이전 답변1', createdAt: Moment('2019-06-20 01:09:34'),
+    user: { _id:1,},
+  },
+  { _id: 2, text: '오늘 뭐 했어?', createdAt: Moment('2019-06-19 01:09:34'),
+    user: { _id:2, avatar: 'https://t1.daumcdn.net/cfile/tistory/24283C3858F778CA2E',}
+  },
+  {
+    _id: 1, text: '상품정보명' + ' 채팅방입니다.', createdAt: Moment('2019-06-18 01:09:34'),
+    user: { _id:2, avatar: 'https://t1.daumcdn.net/cfile/tistory/24283C3858F778CA2E',},
+  },
+];
+var diaryMessage2 = [
+  { _id: 1, text: '나의 엤날 답변1', createdAt: Moment('20200314 1405')},
+  { _id: 2, text: '나의 엤날 답변2', createdAt: Moment('2020-03-15 14:06')},
+  { _id: 3, text: '나의 엤날 답변3', createdAt: Moment('2020-03-16 14:10')},
+  { _id: 4, text: '나의 엤날 답변4', createdAt: Moment('2020-03-19 14:05')},
+  { _id: 5, text: '나의 엤날 답변5', createdAt: Moment('2020-05-21 14:06')},
+  { _id: 6, text: '나의 엤날 답변6 나의 엤날 답변7 나의 엤날 답변8 나의 엤날 답변9', createdAt: Moment('2020-05-27 14:10')},
+];
+var diaryMessage4 = [
+  { _id: 1, text: '나의 엤날 답변1', createdAt: Moment('20200314 1405')},
+  { _id: 2, text: '같은 날 먼저 한 답변, 같은 날 먼저 한 답변, 같은 날 먼저 한 답변, 같은 날 먼저 한 답변, 같은 날 먼저 한 답변', createdAt: Moment('2020-03-15 14:06')},
+  { _id: 3, text: '나중에 한 답변, 나중에 한 답변, 나중에 한 답변, 나중에 한 답변, 나중에 한 답변, 나중에 한 답변', createdAt: Moment('2020-03-15 16:31')},
+  { _id: 4, text: '나의 엤날 답변2', createdAt: Moment('2020-03-19 15:35')},
+  { _id: 5, text: '나의 엤날 답변3', createdAt: Moment('2020-05-21 14:06')},
+  { _id: 6, text: '나의 엤날 답변4 나의 엤날 답변5 나의 엤날 답변6 나의 엤날 답변7', createdAt: Moment('2020-05-27 14:10')},
+];
+var diaryMessage6 = [
+  { _id: 1, text: '나의 예전 답변1', createdAt: Moment('20200314 1405')},
+  { _id: 2, text: '나의 예전 답변2', createdAt: Moment('2020-03-15 14:06')},
+  { _id: 3, text: '나의 예전 답변3', createdAt: Moment('2020-03-16 14:10')},
+  { _id: 4, text: '나의 예전 답변4', createdAt: Moment('2020-03-19 14:05')},
+  { _id: 5, text: '나의 예전 답변5', createdAt: Moment('2020-05-21 14:06')},
+  { _id: 6, text: '나의 예전 답변6 나의 엤날 답변6 나의 엤날 답변6 나의 엤날 답변6', createdAt: Moment('2020-05-27 14:10')},
+];
+var questionList = [
+  '오늘은 어땠어?',
+  '오늘의 가장 즐거웠던 점은 뭐야?',
+  '3번째 랜덤 질문~~',
+  '오늘의 날시는 어땠어?',
+  '이 앱은 어떤거 같아?',
+  '오늘의 점심은 뭐야?',
+  '7번째 럭키한 질문~~',
+];
 var productListData = [
-  { p_id:1, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: false, title: '구독상품명 1', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, 디자인 상품 로고 제작, 디자인 상품 소개 이미지 정방형 디자인 상품 소개', },
-  { p_id:2, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: true, title: '구독상품명 2', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, 디자인 상품 로고 제작, 디자인 상품 소개 이미지 ', },
-  { p_id:3, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: false, title: '구독상품명 3', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, 디자인 상품 로고 제작, 디자인 ', },
-  { p_id:4, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: true, title: '구독상품명 4', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, ', },
-  { p_id:5, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: false, title: '구독상품명 5', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 ', },
-  { p_id:6, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: true, title: '구독상품명 6', text: '구독상품 소개 문구, 50자 이내 25자씩 ', },
-  { p_id:7, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: false, title: '구독상품명 7', text: '구독상품 소개 문구', },
+  { p_id:1, avaterThumnail:defaultImg, questionList: questionList, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: false, title: '구독상품명 1', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, 디자인 상품 로고 제작, 디자인 상품 소개 이미지 정방형 디자인 상품 소개', },
+  { p_id:2, avaterThumnail:catImg, questionList: questionList, thumbnailImg: catImg, bannerImg:catImg, mainImg:catImg,  randomPushType: true, title: '고양이 상품', text: '귀여운 고양이 상품 이미지와 소개글~', },
+  { p_id:3, avaterThumnail:defaultImg, questionList: questionList, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: false, title: '구독상품명 3', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, 디자인 상품 로고 제작, 디자인 ', },
+  { p_id:4, avaterThumnail:carmelImg, questionList: questionList, thumbnailImg: carmelImg, bannerImg:carmelImg, mainImg:carmelImg,  randomPushType: true, title: '낙타 상품', text: '지금 구독하시면 귀여운 낙타를 드립니다. 정말로 ', },
+  { p_id:5, avaterThumnail:defaultImg, questionList: questionList, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: false, title: '구독상품명 5', text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 ', },
+  { p_id:6, avaterThumnail:dogtImg, questionList: questionList, thumbnailImg: dogtImg, bannerImg:dogtImg, mainImg:dogtImg,  randomPushType: false, title: '댕댕이 상품', text: '강아지 귀여움', },
+  { p_id:7, avaterThumnail:defaultImg, questionList: questionList, thumbnailImg: defaultImg, bannerImg:defaultImg, mainImg:defaultImg,  randomPushType: false, title: '구독상품명 7', text: '구독상품 소개 문구', },
 ];
 var subscribeListData = [
   { p_id: 2, pushStartTime: Moment('2019-06-18 09:34'), pushEndTime: Moment('2019-06-18 09:34'), },
@@ -64,22 +171,25 @@ var subscribeListData = [
   { p_id: 6, pushStartTime: Moment('2020-06-26 20:32'), pushEndTime: Moment('2020-06-26 20:32'), },
 ];
 var chatMessageListData = [
-  {p_id: 2, message: message},
-  {p_id: 4, message: message},
-  {p_id: 6, message: message},
+  { p_id: 2, message: message2 },
+  { p_id: 4, message: message4 },
+  { p_id: 6, message: message6 },
 ];
 var pushListData = [
-  {p_id:2, lastUpdateTime: new Date(), newItemCount: 3},
-  {p_id:4, lastUpdateTime: new Date(), newItemCount: 3},
-  {p_id:6, lastUpdateTime: new Date(), newItemCount: 3},
+  { p_id:2, lastUpdateTime: Moment(), newItemCount: 2 },
+  { p_id:4, lastUpdateTime: Moment(), newItemCount: 3 },
+  { p_id:6, lastUpdateTime: Moment(), newItemCount: 17 },
 ];
-var diaryList = [
-  {},
+var diaryListData = [
+  { p_id:2, lastUpdateTime: Moment('2019-06-18 09:34'), diaryImg:diaryImg, totalUpdateCount: 32, diaryMessage: diaryMessage2 },
+  { p_id:4, lastUpdateTime: Moment('2019-06-18 09:34'), diaryImg:diaryImg, totalUpdateCount: 3, diaryMessage: diaryMessage4 },
+  { p_id:6, lastUpdateTime: Moment('2019-06-18 09:34'), diaryImg:diaryImg, totalUpdateCount: 17, diaryMessage: diaryMessage6 },
 ];
 
 // 컨트롤 변수
 var pressDiaryEditButton = false;  // diary 편집 버튼 누름
 var global_p_id = 0;
+var editDiaryTextMode = false;
 
 // 인증 페이지
 function IntroScreen1() {
@@ -336,7 +446,8 @@ function MyChatListScreen({navigation}){
     } else {
       setZeroSubscribe(false);
     }
-  }, []);
+    console.log('useEffect - pushListData');
+  }, [navigation, pushListData]);
 
   return (
     <SafeAreaView style={{flex:1}}>
@@ -349,38 +460,10 @@ function MyChatListScreen({navigation}){
     </SafeAreaView>
   );
 }
-function MyChatListScreen_backup({navigation}){
-  var time =  (new Date().getMonth() + 1) + '월 ' + new Date().getDate() + '일';
-  var numberOfSubscribe = 0;
-
-  return (
-    <SafeAreaView style={{flex:1}}>
-      <ScrollView styles={{marginHorizontal: 20}} centerContent={true} >
-        {!numberOfSubscribe ? NoSubscribeInform(navigation) : <Text/>}
-        <TouchableOpacity onPress={()=>navigation.navigate('chatroom', {itemId: '구독상품명 1', otherParams: '오늘 뭐 했어?'})}>
-          <ContentLayout title='구독상품명 1' thumbnail={introImage1} lastUpdateTime={time} newItemCount={'3'}/>
-        </TouchableOpacity>
-        <ContentLayout title='구독상품명 2' thumbnail={introImage2} lastUpdateTime={'오전 11:59'} newItemCount={'0'}/>
-        <ContentLayout title='구독상품명 3' thumbnail={introImage3} lastUpdateTime={'오전 11:59'} newItemCount={'1'}/>
-        <ContentLayout title='구독상품명 4' thumbnail={defaultImg} lastUpdateTime={'오전 11:59'} newItemCount={'0'}/>
-        <ContentLayout title='이미지 없음'/>
-        <ContentLayout title='글자길이 테스트으으으으ㅡㅇ으으 15' lastUpdateTime={'오후 11:09'} newItemCount={'18'}/>
-        <ContentLayout />
-        <ContentLayout />
-        <ContentLayout />
-        <ContentLayout />
-        <ContentLayout />
-        <ContentLayout />
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
 function MyDiaryScreen({route, navigation}){
-  const [diaryCount, setDiaryCount] = React.useState(0);
-  const [animation, setAnimation] = React.useState(false);
   const [editMode, setEditMode] = React.useState(false);
+  const [diaryOption, setDiaryOption] = React.useState(diaryListData)
   const date = new Date();
-
 
   useFocusEffect(()=>{
     setEditMode(pressDiaryEditButton);
@@ -391,22 +474,11 @@ function MyDiaryScreen({route, navigation}){
     <ScrollView>
       <View style={{flex:1, flexDirection: 'column', alignItems: 'center'}}>
         <View style={{flex:1, flexDirection: 'row', justifyContent: 'flex-start', flexWrap: 'wrap'}}>
-          {editMode ?
-            <AnimatableDiaryComponent title='구독 상품명 1' updateDate={date} updateCount={3} id={1} nav={navigation}/> :
-            <DiaryComponent title='구독 상품명 1' updateDate={date} updateCount={3} id={1} nav={navigation}/>
-          }
-          {editMode ?
-            <AnimatableDiaryComponent title='구독 상품명 2' updateDate={date} updateCount={3} id={1} nav={navigation}/> :
-            <DiaryComponent title='구독 상품명 2' updateDate={date} updateCount={3} id={1} nav={navigation}/>
-          }
-          {editMode ?
-            <AnimatableDiaryComponent title='구독 상품명 3' updateDate={date} updateCount={3} id={1} nav={navigation}/> :
-            <DiaryComponent title='구독 상품명 3' updateDate={date} updateCount={3} id={1} nav={navigation}/>
-          }
-          {editMode ?
-            <AnimatableDiaryComponent title='구독 상품명 4' updateDate={date} updateCount={3} id={1} nav={navigation}/> :
-            <DiaryComponent title='구독 상품명 4' updateDate={date} updateCount={3} id={1} nav={navigation}/>
-          }
+          {diaryOption.map((diary)=>{
+            return editMode ?
+              <AnimatableDiaryComponent key={diary.p_id} id={diary.p_id} nav={navigation}/> :
+              <DiaryComponent key={diary.p_id} id={diary.p_id} nav={navigation}/>
+          })}
         </View>
       </View>
     </ScrollView>
@@ -452,9 +524,7 @@ function completeDiaryButtonHandler(route, navigation){
 
   return navigation.navigate('MyDiaryScreen', {editMode: false});
 }
-function optionDiaryButtonHandler(){
-  return Alert.alert('다이어리내의 옵션 버튼을 눌렀습니다.', '기능 차후 추가 예정');
-}
+
 
 
 // 글로벌 구성품
@@ -502,13 +572,14 @@ class ContentLayout extends React.Component {
     }
   }
 
+
   render() {
     return (
       <View style={{flexDirection: 'row', height: 56, margin: 3, borderWidth: 0, borderColor: 'gray'}}>
         <Image source={this.state.product.thumbnailImg} style={{height: 46, width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
         <Text style={{marginLeft: 10, marginTop: 4, fontSize: 17, width: 220}}>{this.state.product.title ?? "임시 구독상품 명"}</Text>
         <View style={{flex:1, flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'flex-end'}}>
-        {this.state.lastUpdateTime && <Text style={{fontSize: 10, marginRight: 6, marginTop: 0}}>{this.state.lastUpdateTime.getHours()}시 {this.state.lastUpdateTime.getMinutes()}분</Text>}
+        {this.state.lastUpdateTime && <Text style={{fontSize: 10, marginRight: 6, marginTop: 0}}>{this.state.lastUpdateTime.format('LT')}</Text>}
           {
               this.state.newItemCount && this.state.newItemCount !== '0'
                 ? <View style={{height: 20, width: 20, borderRadius: 10, backgroundColor: 'red', margin: 6, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 11}}>{this.state.newItemCount}</Text></View>
@@ -668,8 +739,8 @@ function CustomDrawerContent({navigation}) {
       <TouchableOpacity onPress={()=>navigation.closeDrawer()}>
         <Octicons name="three-bars" style={{marginLeft:20, marginTop:10, marginBottom: 30}} size={30} color="black" />
       </TouchableOpacity>
-      <DrawerItem label="다이어리 보기"  icon={()=><MaterialCommunityIcons name="bookmark-outline" size={30} color="black" />} onPress={() => navigation.navigate('Diary', {id:global_p_id})} />
-      <DrawerItem label="푸시 메세지 설정" icon={()=><Ionicons name="md-time" style={{marginLeft: 3}} size={30} color="black" />} onPress={() => {console.log(navigation); navigation.navigate('contentScreen', {id:global_p_id})}} />
+      <DrawerItem label="다이어리 보기"  icon={()=><MaterialCommunityIcons name="bookmark-outline" size={30} color="black" />} onPress={() => {navigation.navigate('MyDiaryScreen'); navigation.navigate('Diary', {id:global_p_id})}} />
+      <DrawerItem label="푸시 메세지 설정" icon={()=><Ionicons name="md-time" style={{marginLeft: 3}} size={30} color="black" />} onPress={() => {navigation.navigate('SubscribeListScreen'); navigation.navigate('contentScreen', {id:global_p_id})}} />
       <DrawerItem label="채팅방 나가기" icon={()=><MaterialIcons name="exit-to-app" size={30} color="black" />}
         onPress={() => {
           Alert.alert('정말 채팅방을 나가시겠습니까?', '채팅방을 나가면 채팅 내용과 채팅 목록은 사라지고 다이어리에서만 기록을 확인할 수 있습니다.', [{text: '나가기', onPress: ()=>navigation.navigate('MainPage')}, {text:'취소'}]);}} />
@@ -693,18 +764,31 @@ function MyChatRoomScreen({route, navigation}) {
       return true;
     }
   });
+  var pushInfo = false;
+  pushListData.some((push)=>{
+    if(id===push.p_id){
+      pushInfo = push;
+      push.newItemCount = 0;
+      return true;
+    }
+  });
 
   useEffect(() => {
     setMessages(chatroomInfo.message);
     global_p_id = id;
-  }, [])
+    navigation.addListener('beforeRemove', (e) => {
+      console.log('beforeRemove', messages);
+    })
+  }, [navigation])
 
   React.useLayoutEffect(() => {
     navigation.setOptions({ headerTitle: productInfo.title });
   }, [navigation, route]);
 
   const onSend = useCallback((messages = []) => {
-    setMessages(previousMessages => GiftedChat.append(previousMessages, messages))
+    setMessages(previousMessages => GiftedChat.append(previousMessages, messages));
+    console.log('input messages', messages);
+    chatroomInfo.message.unshift(messages[0]);
   }, [])
 
   return (
@@ -719,32 +803,88 @@ function MyChatRoomScreen({route, navigation}) {
 }
 
 // 다이어리 구성품
+class AnimatableDiaryComponent extends React.Component{
+  constructor(props){
+    super(props);
+
+    this.state = {
+      id: this.props.id?this.props.id:1,
+      productInfo: false,
+      diaryOption: false,
+    };
+
+    productListData.some((product)=>{
+      if(this.state.id===product.p_id){
+        this.state.productInfo=product;
+        return true;
+      }
+    });
+    diaryListData.some((diary)=>{
+      if(this.state.id===diary.p_id){
+        this.state.diaryOption=diary;
+        return true;
+      }
+    });
+  }
+
+  render(){
+    return (
+      <View style={{margin: 5}}>
+        <Animatable.View animation='swing' iterationCount={'infinite'}>
+      <TouchableOpacity style={{margin: 20, marginBottom: 0, marginTop: 10}} onPress={()=>Alert.alert('다이어리 순서변경 기능', '추가예정')}>
+
+          <Image style={{height: 190, width: 130, marginBottom: 5}} source={this.state.diaryOption.diaryImg} resizeMode='contain'/>
+          <View>
+            <Text style={{fontSize: 20, color: 'black', fontWeight:'bold', alignSelf: 'center'}}>{this.state.productInfo.title}</Text>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5}}>
+              <Text style={{fontSize: 8, color: 'gray'}}>{this.state.diaryOption.lastUpdateTime.format('YYYY')}년 {this.state.diaryOption.lastUpdateTime.format('MM')}월 {this.state.diaryOption.lastUpdateTime.format('DD')}일</Text>
+              <Text style={{fontSize: 8, color: 'gray'}}>{this.state.diaryOption.totalUpdateCount}회 기록</Text>
+            </View>
+          </View>
+
+      </TouchableOpacity>
+      </Animatable.View>
+      <TouchableOpacity onPress={()=>{Alert.alert(this.props.title+'을 삭제하시겠습니까?', '삭제 기능 구현예정')}} style={{position: 'absolute', left: 18, top:18, backgroundColor: '#999', height: 30, width: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center'}}>
+        <Text>X</Text>
+      </TouchableOpacity>
+    </View>
+    );
+  }
+}
 class DiaryComponent extends React.Component{
   constructor(props){
     super(props);
 
     this.state = {
-      _id: this.props.id?this.props.id:1,
-      title: this.props.title?this.props.title:'임시 상품명',
-      updateDate: this.props.updateDate?{
-        year: this.props.updateDate.getFullYear(),
-        month: this.props.updateDate.getMonth(),
-        day: this.props.updateDate.getDay(),
-      }:{year: 2020, month: 11, day: 21},
-      updateCount: this.props.updateCount?this.props.updateCount:0,
+      id: this.props.id?this.props.id:1,
+      productInfo: false,
+      diaryOption: false,
     };
+
+    productListData.some((product)=>{
+      if(this.state.id===product.p_id){
+        this.state.productInfo=product;
+        return true;
+      }
+    });
+    diaryListData.some((diary)=>{
+      if(this.state.id===diary.p_id){
+        this.state.diaryOption=diary;
+        return true;
+      }
+    });
   }
 
   render(){
     return (
-      <TouchableOpacity style={{margin: 20, marginBottom: 0, marginTop: 10}} onPress={()=>{this.props.nav.navigate('Diary')}}>
+      <TouchableOpacity style={{margin: 20, marginBottom: 0, marginTop: 10}} onPress={()=>{this.props.nav.navigate('Diary', {id: this.state.id})}}>
         <View style={{margin: 5}}>
-          <Image style={{height: 190, width: 130, marginBottom: 5}} source={diaryImg} resizeMode='contain'/>
-          <View style={{}}>
-            <Text style={{fontSize: 20, color: 'black', fontWeight:'bold', alignSelf: 'center'}}>{this.state.title}</Text>
+          <Image style={{height: 190, width: 130, marginBottom: 5}} source={this.state.diaryOption.diaryImg} resizeMode='contain'/>
+          <View>
+            <Text style={{fontSize: 20, color: 'black', fontWeight:'bold', alignSelf: 'center'}}>{this.state.productInfo.title}</Text>
             <View style={{flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5}}>
-              <Text style={{fontSize: 8, color: 'gray'}}>{this.state.updateDate.year}년 {this.state.updateDate.month}월 {this.state.updateDate.day}일</Text>
-              <Text style={{fontSize: 8, color: 'gray'}}>{this.state.updateCount}회 기록</Text>
+              <Text style={{fontSize: 8, color: 'gray'}}>{this.state.diaryOption.lastUpdateTime.format('YYYY')}년 {this.state.diaryOption.lastUpdateTime.format('MM')}월 {this.state.diaryOption.lastUpdateTime.format('DD')}일</Text>
+              <Text style={{fontSize: 8, color: 'gray'}}>{this.state.diaryOption.totalUpdateCount}회 기록</Text>
             </View>
           </View>
         </View>
@@ -752,73 +892,145 @@ class DiaryComponent extends React.Component{
     );
   }
 }
-class AnimatableDiaryComponent extends React.Component{
-  constructor(props){
-    super(props);
+function DailyDiaryContentWithDate({message, last, nav, title}){
+  const [myMessage, setMyMessage] = React.useState(message? message.text : '임시 텍스트');
+  const [editMode, setEditMode] = React.useState(true);
 
-    this.state = {
-      _id: this.props.id?this.props.id:1,
-      title: this.props.title?this.props.title:'임시 상품명',
-      updateDate: this.props.updateDate?{
-        year: this.props.updateDate.getFullYear(),
-        month: this.props.updateDate.getMonth(),
-        day: this.props.updateDate.getDay(),
-      }:{year: 2020, month: 11, day: 21},
-      updateCount: this.props.updateCount?this.props.updateCount:0,
-    };
-  }
+  const onFocusHandler = () => {
 
-  render(){
-    return (
-      <View style={{margin: 5}}>
-        <Animatable.View animation='swing' iterationCount={'infinite'}>
-          <TouchableOpacity style={{margin: 20, marginBottom: 0, marginTop: 10}} onPress={()=>{Alert.alert('다이어리 순서변경 기능', '추가예정')}}>
-          <Image style={{height: 190, width: 130, marginBottom: 5}} source={diaryImg} resizeMode='contain'/>
-          <View style={{}}>
-            <Text style={{fontSize: 20, color: 'black', fontWeight:'bold', alignSelf: 'center'}}>{this.state.title}</Text>
-            <View style={{flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5}}>
-              <Text style={{fontSize: 8, color: 'gray'}}>{this.state.updateDate.year}년 {this.state.updateDate.month}월 {this.state.updateDate.day}일</Text>
-              <Text style={{fontSize: 8, color: 'gray'}}>{this.state.updateCount}회 기록</Text>
-            </View>
-          </View>
-          </TouchableOpacity>
-        </Animatable.View>
-        <TouchableOpacity onPress={()=>{Alert.alert(this.props.title+'을 삭제하시겠습니까?', '삭제 기능 구현예정')}} style={{position: 'absolute', left: 18, top:18, backgroundColor: '#999', height: 30, width: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center'}}>
-          <Text>X</Text>
+    nav.setOptions({
+      headerTitle: '편집 중',
+      headerRight: (props) => (
+        <TouchableOpacity onPress={onEndEditingHandler}>
+        <Text style={{fontSize:20, marginRight: 20, justifyContent: 'center'}}>완료</Text>
         </TouchableOpacity>
-      </View>
-    );
-  }
-}
-function DailyDiaryContent({text, last}){
-  const [message, setMessage] = React.useState(
-    text? text : 'media heading media heading media heading media headingmedia heading media heading media heading media heading media heading media heading'
-  );
+      )
+    });
+  };
+  const onEndEditingHandler = () => {
+    setEditMode(false);
+    message.text = myMessage;
+    nav.setOptions({
+      headerTitle: title,
+      headerRight: (props) => (
+        <TouchableOpacity onPress={() => optionDiaryButtonHandler()}>
+        <MaterialCommunityIcons name="arrow-down-circle-outline" style={{marginRight: 20}} size={40} color="black" />
+        </TouchableOpacity>
+      )
+    });
 
+  };
 
   return (
     <View style={{flex:1, flexDirection: 'row'}}>
       <View style={{width: 16, height: 16, borderRadius: 8, backgroundColor: 'gray', marginTop: 10}}/>
       <SafeAreaView style={{flex: 1, flexDirection: 'column', marginRight: 8}}>
-        <Text style={{color: 'gray', fontWeight: 'bold', fontSize: 20, marginLeft: 10}}>0524</Text>
-        <TextInput editable={last??true} style={{marginLeft: 30, fontSize: 13}} multiline value={message===''?'빈 메시지':message} onChangeText={text=>setMessage(text)}></TextInput>
-        <TouchableOpacity onPress={()=>{ return(<DateTimePicker
-          testID="dateTimePicker"
-          value={new Date(1598051730000)}
-          mode={'date'}
-          is24Hour={true}
-          display="default"
-          onChange={()=>{}}
-          />)}}>
-          <Text style={{fontSize: 10, color: '#AAA', alignSelf: 'flex-end', marginTop: 6, marginBottom: 30}}>오후 4시 40분</Text>
+        <Text style={{color: 'gray', fontWeight: 'bold', fontSize: 20, marginLeft: 10}}>{message.createdAt.format('MMDD')}</Text>
+          {!last ?
+            <TouchableOpacity onPress={()=>setEditMode(true)}>
+              <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{marginLeft: 30, fontSize: 13, padding:3, borderRadius: 5}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
+            </TouchableOpacity>
+            : <Text style={{marginLeft: 30, fontSize: 13, padding:3, borderRadius: 5}}>{myMessage}</Text>
+          }
+          <TouchableOpacity>
+          <Text style={{fontSize: 10, color: '#AAA', alignSelf: 'flex-end', marginTop: 6, marginBottom: 30}}>{!last&&message.createdAt.format('LT')}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     </View>
   );
 }
-function DynamicDiaryScreen(){
+function DailyDiaryContentNoDate({message, last, nav, title}){
+  const [myMessage, setMyMessage] = React.useState(message? message.text : '임시 텍스트');
+  const [editMode, setEditMode] = React.useState(true);
+
+  const onFocusHandler = () => {
+
+    nav.setOptions({
+      headerTitle: '편집 중',
+      headerRight: (props) => (
+        <TouchableOpacity onPress={onEndEditingHandler}>
+        <Text style={{fontSize:20, marginRight: 20, justifyContent: 'center'}}>완료</Text>
+        </TouchableOpacity>
+      )
+    });
+  };
+  const onEndEditingHandler = () => {
+    setEditMode(false);
+    message.text = myMessage;
+    nav.setOptions({
+      headerTitle: title,
+      headerRight: (props) => (
+        <TouchableOpacity onPress={() => optionDiaryButtonHandler()}>
+        <MaterialCommunityIcons name="arrow-down-circle-outline" style={{marginRight: 20}} size={40} color="black" />
+        </TouchableOpacity>
+      )
+    });
+
+  };
+
+  return (
+    <View style={{flex:1, flexDirection: 'row'}}>
+      <View style={{width: 16}}/>
+      <SafeAreaView style={{flex: 1, flexDirection: 'column', marginRight: 8, marginTop:-30}}>
+        <Text style={{marginLeft: 10}}></Text>
+          {!last ?
+            <TouchableOpacity onPress={()=>setEditMode(true)}>
+              <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{marginLeft: 30, fontSize: 13, padding:3, borderRadius: 5}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
+            </TouchableOpacity>
+            : <Text style={{marginLeft: 30, fontSize: 13, padding:3, borderRadius: 5}}>{myMessage}</Text>
+          }
+          <TouchableOpacity>
+          <Text style={{fontSize: 10, color: '#AAA', alignSelf: 'flex-end', marginTop: 6, marginBottom: 30}}>{!last&&message.createdAt.format('LT')}</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    </View>
+  );
+}
+function DynamicDiaryScreen({navigation, route}){
   const [valueY, setValueY] = React.useState(0);
-  const [contentHeight, setContentHeight] = React.useState(1000);
+  const [contentHeight, setContentHeight] = React.useState(1000000);
+  const [showDropbox, setShowDropbox] = React.useState(false);
+  const {id} = route.params;
+  var productInfo = false;
+  var chatMessageInfo = false;
+  var diaryInfo = [];
+  var time=false;
+
+  productListData.some((product)=>{
+    if(id===product.p_id){
+      productInfo = product;
+      return true;
+    }
+  });
+  chatMessageListData.some((chatMessage)=>{
+    if(id===chatMessage.p_id){
+      chatMessageInfo = chatMessage;
+      return true;
+    }
+  });
+  diaryListData.some((diary)=>{
+    if(id===diary.p_id){
+      diaryInfo = diary;
+      return true;
+    }
+  });
+  const diaryOptionFocusHandler = () => {
+      setShowDropbox(true);
+  };
+  const diaryOptionBlurHandler = () => {
+      setShowDropbox(false);
+  };
+
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: productInfo.title,
+      headerRight: (props) => (
+        <TouchableOpacity onPress={diaryOptionFocusHandler}>
+          <MaterialCommunityIcons name="arrow-down-circle-outline" style={{marginRight: 20}} size={40} color="black" />
+        </TouchableOpacity>
+      )
+    });
+  }, [navigation, route]);
 
   return (
     <View style={{flex:1, flexDirection: 'column'}}>
@@ -826,20 +1038,41 @@ function DynamicDiaryScreen(){
     <View style={{backgroundColor: '#555', position: 'absolute', left:15, top: 30, borderRadius: 12}}>
       <Text style={{color: 'white', fontSize: 20, marginVertical: 3, marginHorizontal: 5}}>2020</Text>
     </View>
-    <ScrollView style={{ marginTop: 80}} onScroll={(event)=>{setValueY(event.nativeEvent.contentOffset.y); setContentHeight(event.nativeEvent.contentSize.height);}} keyboardDismissMode={'on-drag'} scrollToEnd={true}>
+    <ScrollView style={{ marginTop: 80, marginBottom: 50}} keyboardDismissMode={'on-drag'} scrollToEnd={true}>
       <View style={{flex:1, flexDirection: 'column', marginLeft: 40, marginRight: 10, marginBottom: 60}}>
-        <DailyDiaryContent/>
-        <DailyDiaryContent/>
-        <DailyDiaryContent/>
-        <DailyDiaryContent/>
-        <DailyDiaryContent/>
-        <DailyDiaryContent/>
-        <DailyDiaryContent/>
-        <DailyDiaryContent text={'마지막 메세지'} date={new Date()} last={false}/>
+        {diaryInfo.diaryMessage.map((message)=>{
+          if(time&&time.isSameOrAfter(message.createdAt, 'day')){
+            time = message.createdAt;
+            return <DailyDiaryContentNoDate key={message._id} nav={navigation} title={productInfo.title} message={message} last={false}/>
+          }else{
+            time = message.createdAt;
+            return <DailyDiaryContentWithDate key={message._id} nav={navigation} title={productInfo.title} message={message} last={false}/>
+          }
+          time = message.createdAt;
+          return <DailyDiaryContentWithDate key={message._id} nav={navigation} title={productInfo.title} message={message} last={false}/>
+        })}
+
+        <DailyDiaryContentWithDate key={0} message={{text:'마지막 입니다.', createdAt: Moment()}} last={true}/>
       </View>
-      <View style={{position: 'absolute', left: 47,  width: 2, borderRadius: 1, backgroundColor: 'gray', height: contentHeight-150}}/>
+      <View style={{position: 'absolute', left: 47,  width: 2, borderRadius: 1, backgroundColor: 'gray', height: contentHeight, bottom:150}}/>
 
     </ScrollView>
+    {showDropbox &&
+      <View style={{position: 'absolute', left: 0, top:0, bottom:0, right:0, backgroundColor: '#AAA8'}}>
+        <View style={{height: 65, borderBottomWidth: 1, borderColor: '#AAA', backgroundColor: '#EEE', justifyContent: 'center'}}>
+          <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center', padding: 5}} onPress={()=>{}}>
+            <FontAwesome name="file-pdf-o" size={30} color="black" />
+            <Text style={{position: 'absolute', left: 50, fontSize: 23}}>PDF 다운로드</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{height: 65, backgroundColor: '#EEE', justifyContent: 'center'}}>
+          <TouchableOpacity style={{flexDirection: 'row',  alignItems: 'center', padding: 5}} onPress={()=>{}}>
+            <EvilIcons name="external-link" size={40} color="black" />
+            <Text style={{position: 'absolute', left: 50, fontSize: 23}}>링크로 공유하기</Text>
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity onPress={diaryOptionBlurHandler} style={{flex:1, flexDirection: 'column', backgroundColor: '#AAAd'}}/>
+      </View>}
     </View>
   );
 }
@@ -1221,13 +1454,7 @@ function MainStackHomePage({navigation}) {
           title: "내 다이어리",
           headerTitleAlign: 'left',
           headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
-          headerRight: (props) => (
-            <TouchableOpacity
-            onPress={() => optionDiaryButtonHandler()}
-            >
-            <MaterialCommunityIcons name="arrow-down-circle-outline" style={{marginRight: 20}} size={40} color="black" />
-            </TouchableOpacity>
-          )}}
+          }}
         component={DynamicDiaryScreen}
       />
       <Stack.Screen
@@ -1305,9 +1532,6 @@ function MainStackHomePage({navigation}) {
     </Stack.Navigator>
   );
 }
-
-
-
 
 // 메인 앱
 export default function App() {
