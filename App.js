@@ -18,6 +18,7 @@ import * as Permissions from 'expo-permissions';
 import Moment from 'moment';
 import "moment/locale/ko";
 Moment.locale("ko");
+import _ from 'lodash'; // https://lodash.com/docs
 
 // 추가기능 리스트
 // 그림자 https://www.npmjs.com/package/react-native-shadow
@@ -176,8 +177,8 @@ var chatMessageListData = [
   { p_id: 6, message: message6 },
 ];
 var pushListData = [
-  { p_id:2, lastUpdateTime: Moment(), newItemCount: 2 },
-  { p_id:4, lastUpdateTime: Moment(), newItemCount: 3 },
+  { p_id:2, lastUpdateTime: Moment('2019-06-18 09:34'), newItemCount: 2 },
+  { p_id:4, lastUpdateTime: Moment('2020-06-18 09:34'), newItemCount: 7 },
   { p_id:6, lastUpdateTime: Moment(), newItemCount: 17 },
 ];
 var diaryListData = [
@@ -186,10 +187,13 @@ var diaryListData = [
   { p_id:6, lastUpdateTime: Moment('2019-06-18 09:34'), diaryImg:diaryImg, totalUpdateCount: 17, diaryMessage: diaryMessage6 },
 ];
 
+// 새로운 데이터
+
 // 컨트롤 변수
 var pressDiaryEditButton = false;  // diary 편집 버튼 누름
 var global_p_id = 0;
 var editDiaryTextMode = false;
+var myChatListScreenUpdate = false;
 
 // 인증 페이지
 function IntroScreen1() {
@@ -366,7 +370,10 @@ function InformPersonalInformationProcessingPolicyScreen({navigation}) {
 }
 
 // 메인 페이지
-function MainPageScreen(){
+function MainPageScreen({navigation, route}){
+  const [productData, setProductData] = useState(route.params.productData);
+  if(!productData) console.log('MainPageScreen', 'load productData error');
+
   return (
     <Tab.Navigator
       backBehavior={'initialRoute'} initialRouteName={'MyChatListScreen'}
@@ -409,28 +416,23 @@ function MainPageScreen(){
   );
 }
 function SubscribeListScreen({navigation}){
-  const [productList, setProductList] = React.useState(productListData);
-  const [subscribeList, setSubscribeList] = React.useState(subscribeListData);
-
-  useEffect(()=>{
-    console.log('useEffect');
-    setSubscribeList(subscribeListData);
-  },[subscribeListData]);
+  const [productList, setProductList] = React.useState([]);
+  const [subscribeList, setSubscribeList] = React.useState([]);
 
   return (
     <SafeAreaView>
       <ScrollView styles={{marginHorizontal: 20}} centerContent={true}>
         <Text style={{margin:10}}>내 구독 상품</Text>
-        {productList.map((product, i)=>{
-          return subscribeList.some((subscribe)=>{
+        {productListData.map((product, i)=>{
+          return subscribeListData.some((subscribe)=>{
             return product.p_id === subscribe.p_id
-          }) && <TouchableContentLayout key={i.toString()} id={product.p_id}  nav={()=>navigation.navigate('contentScreen', {id:product.p_id})}/>
+          }) && <SubscribeContentLayout key={i} id={product.p_id}  nav={navigation}/>
         })}
         <Text style={{margin:10, borderTopWidth: 1, borderColor: 'gray', marginTop:23}}>구독 가능한 상품</Text>
-        {productList.map((product, i)=>{
-          return subscribeList.every((subscribe)=>{
+        {productListData.map((product, i)=>{
+          return subscribeListData.every((subscribe)=>{
             return product.p_id != subscribe.p_id
-          }) && <TouchableContentLayout key={i.toString()} id={product.p_id} nav={()=>navigation.navigate('contentScreen', {id:product.p_id})}/>
+          }) && <SubscribeContentLayout key={i} id={product.p_id} nav={navigation}/>
         })}
       </ScrollView>
     </SafeAreaView>
@@ -440,21 +442,12 @@ function MyChatListScreen({navigation}){
   const [mySubscribeList, setMySubscribeList] = React.useState(subscribeListData);
   const [zeroSubscribe, setZeroSubscribe] = React.useState(true);
 
-  useEffect(()=>{
-    if(mySubscribeList.length===0) {
-      setZeroSubscribe(true);
-    } else {
-      setZeroSubscribe(false);
-    }
-    console.log('useEffect - pushListData');
-  }, [navigation, pushListData]);
-
   return (
     <SafeAreaView style={{flex:1}}>
       <ScrollView styles={{marginHorizontal: 20}} centerContent={true} >
         {zeroSubscribe ? NoSubscribeInform(navigation) : <Text/>}
-        {mySubscribeList.map((subscribe, i)=>{
-          return <TouchableContentLayout key={i.toString()} id={subscribe.p_id} chatroom={true} nav={()=>navigation.navigate('chatroom', {id: subscribe.p_id})}/>
+        {subscribeListData.map((subscribe, i)=>{
+          return <ChatroomContentLayout key={i} id={subscribe.p_id} nav={navigation}/>
         })}
       </ScrollView>
     </SafeAreaView>
@@ -528,67 +521,62 @@ function completeDiaryButtonHandler(route, navigation){
 
 
 // 글로벌 구성품
-class TouchableContentLayout extends React.Component{
-  constructor(props){
-    super(props);
-  };
+function ChatroomContentLayout(props){
+  const id = props.id;
+  const [pushInfo, setPushInfo] = useState(false);
+  const [productInfo, setProductInfo] = useState(false);
+  const [count, setCount] = useState(false);
 
-  render(){
-    return (
-      <TouchableOpacity onPress={this.props.nav}>
-        <ContentLayout id={this.props.id} chatroom={this.props.chatroom??false}/>
-      </TouchableOpacity>
-    );
-  };
-}
-class ContentLayout extends React.Component {
-  constructor(props){
-    super(props);
-    this.state={
-      id: this.props.id,
-      lastUpdateTime: false,
-      newItemCount: 0,
-    };
+  useFocusEffect(()=>{
     productListData.some((product)=>{
-      if(product.p_id===this.state.id){
-        this.state = {
-          ...this.state,
-          product: product,
-        };
-        return true;
+      if(id===product.p_id){
+        return setProductInfo(product);
       }
     });
-    if(this.props.chatroom){
-      pushListData.some((push)=>{
-        if(push.p_id===this.state.id){
-          this.state = {
-            ...this.state,
-            lastUpdateTime: push.lastUpdateTime,
-            newItemCount: push.newItemCount,
-          };
-          return true;
-        }
-      });
-    }
-  }
+    pushListData.some((push)=>{
+      if(id===push.p_id){
+        setCount(push.newItemCount===0?false:push.newItemCount);
+        return setPushInfo(push);
+      }
+    });
 
+  },[pushListData]);
 
-  render() {
-    return (
-      <View style={{flexDirection: 'row', height: 56, margin: 3, borderWidth: 0, borderColor: 'gray'}}>
-        <Image source={this.state.product.thumbnailImg} style={{height: 46, width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
-        <Text style={{marginLeft: 10, marginTop: 4, fontSize: 17, width: 220}}>{this.state.product.title ?? "임시 구독상품 명"}</Text>
-        <View style={{flex:1, flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'flex-end'}}>
-        {this.state.lastUpdateTime && <Text style={{fontSize: 10, marginRight: 6, marginTop: 0}}>{this.state.lastUpdateTime.format('LT')}</Text>}
-          {
-              this.state.newItemCount && this.state.newItemCount !== '0'
-                ? <View style={{height: 20, width: 20, borderRadius: 10, backgroundColor: 'red', margin: 6, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 11}}>{this.state.newItemCount}</Text></View>
-                : <View style={{height: 20, width: 20, borderRadius: 10, margin: 6, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}/>
-          }
-        </View>
+  return (
+    <TouchableOpacity onPress={()=>props.nav.navigate('chatroom', {id: id })}>
+    <View style={{flexDirection: 'row', height: 56, margin: 3, borderWidth: 0, borderColor: 'gray'}}>
+      <Image source={productInfo.thumbnailImg} style={{height: 46, width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
+      <Text style={{marginLeft: 10, marginTop: 4, fontSize: 17, width: 220}}>{productInfo.title ?? "임시 구독상품 명"}</Text>
+      <View style={{flex:1, flexDirection: 'column', alignItems: 'flex-end'}}>
+        <Text style={{fontSize: 10, marginRight: 6, marginTop: 0}}>{pushInfo&&pushInfo.lastUpdateTime.fromNow()}</Text>
+        {count && <View style={{height: 20, width: 20, borderRadius: 10, backgroundColor: 'red', margin: 6, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 11}}>{count}</Text></View> }
       </View>
-    );
-  }
+    </View>
+    </TouchableOpacity>
+  );
+}
+function SubscribeContentLayout(props){
+  const id = props.id;
+  const chatroom = props.chatroom;
+  const [pushInfo, setPushInfo] = useState(false);
+  const [productInfo, setProductInfo] = useState(false);
+
+  useFocusEffect(()=>{
+    productListData.some((product)=>{
+      if(id===product.p_id){
+        return setProductInfo(product);
+      }
+    });
+  },);
+
+  return (
+    <TouchableOpacity onPress={()=>props.nav.navigate('contentScreen', {id: id })}>
+    <View style={{flexDirection: 'row', height: 56, margin: 3, borderWidth: 0, borderColor: 'gray'}}>
+      <Image source={productInfo.thumbnailImg} style={{height: 46, width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
+      <Text style={{marginLeft: 10, marginTop: 4, fontSize: 17, width: 220}}>{productInfo.title ?? "임시 구독상품 명"}</Text>
+    </View>
+    </TouchableOpacity>
+  );
 }
 function getHeaderTitle(route, initialName) {
   // If the focused route is not found, we need to assume it's the initial screen
@@ -660,8 +648,6 @@ function SubscribeContentScreen({route, navigation}){
       return true;
     }
   });
-  console.log('id', id);
-  console.log('SubscribeContentScreen-productInfo', productInfo);
   var subscribeInfo = false;
   subscribeListData.some((subscribe)=>{
     if(id===subscribe.p_id){
@@ -669,7 +655,7 @@ function SubscribeContentScreen({route, navigation}){
       return true;
     }
   });
-  console.log('SubscribeContentScreen-subscribeInfo', subscribeInfo);
+
   const [isSubscribe, setIsSubscribe] = React.useState(subscribeInfo?true:false);
   const [pushTime, setPushTime] = React.useState({
     pushStartTime: subscribeInfo?subscribeInfo.pushStartTime: Moment(),
@@ -769,6 +755,7 @@ function MyChatRoomScreen({route, navigation}) {
     if(id===push.p_id){
       pushInfo = push;
       push.newItemCount = 0;
+
       return true;
     }
   });
@@ -777,8 +764,9 @@ function MyChatRoomScreen({route, navigation}) {
     setMessages(chatroomInfo.message);
     global_p_id = id;
     navigation.addListener('beforeRemove', (e) => {
-      console.log('beforeRemove', messages);
-    })
+
+    });
+    myChatListScreenUpdate = !myChatListScreenUpdate;
   }, [navigation])
 
   React.useLayoutEffect(() => {
@@ -787,7 +775,7 @@ function MyChatRoomScreen({route, navigation}) {
 
   const onSend = useCallback((messages = []) => {
     setMessages(previousMessages => GiftedChat.append(previousMessages, messages));
-    console.log('input messages', messages);
+
     chatroomInfo.message.unshift(messages[0]);
   }, [])
 
@@ -1411,6 +1399,7 @@ function QuestionPage({navigation}) {
 
 // 메인스택
 function MainStackHomePage({navigation}) {
+  const [productData, setProductData] = useState(productListData);
 
   return (
     <Stack.Navigator>
@@ -1422,6 +1411,7 @@ function MainStackHomePage({navigation}) {
           headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
           headerRight: mainHeaderRightHandler(route, navigation)})}
         component={MainPageScreen}
+        initialParams={{productData: productData}}
       />
       <Stack.Screen
         name="chatroom"
@@ -1675,6 +1665,7 @@ export default function App() {
             <Stack.Screen options={{headerShown: true, headerTitle: '개인정보 처리방침', headerTitleAlign: 'center'}} name="InformPersonalInformationProcessingPolicy" component={InformPersonalInformationProcessingPolicyScreen}/>
           </Stack.Navigator>
         </NavigationContainer>
+
       ) : (
         <NavigationContainer>
           <Drawer.Navigator drawerPosition='right' drawerStyle={{backgroundColor: '#CCC'}} drawerContent={props => <CustomDrawerContent {...props}/>}>
