@@ -1,12 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Platform, AsyncStorage, ImageBackground, Text, View, StyleSheet, TouchableOpacity, TextInput, CheckBox, KeyboardAvoidingView, Alert, Button, ScrollView, SafeAreaView, Image }
+import { Platform,TouchableHighlight, TouchableWithoutFeedback, AsyncStorage, ImageBackground, Text, View, StyleSheet, TouchableOpacity, TextInput, CheckBox, KeyboardAvoidingView, Alert, Button, ScrollView, SafeAreaView, Image }
 from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, getFocusedRouteNameFromRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem, } from '@react-navigation/drawer';  //  https://reactnavigation.org/docs/drawer-based-navigation/
-import { Ionicons, MaterialCommunityIcons, Feather, FontAwesome, EvilIcons, AntDesign, MaterialIcons, Octicons } from '@expo/vector-icons'; // https://icons.expo.fyi/
+import { Ionicons, MaterialCommunityIcons, Feather, FontAwesome, EvilIcons, AntDesign, MaterialIcons, Octicons }
+from '@expo/vector-icons'; // https://icons.expo.fyi/
 import { GiftedChat } from 'react-native-gifted-chat' // https://github.com/FaridSafi/react-native-gifted-chat
 import DateTimePicker from '@react-native-community/datetimepicker'; // https://github.com/react-native-community/datetimepicker
 import * as Animatable from 'react-native-animatable'; // https://github.com/oblador/react-native-animatable
@@ -18,6 +19,7 @@ import Moment from 'moment';
 import "moment/locale/ko";
 Moment.locale("ko");
 import _ from 'lodash'; // https://lodash.com/docs
+import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npmjs.com/package/react-native-swipe-list-view
 
 // https://velog.io/@max9106/React-Native-%EB%A6%AC%EC%95%A1%ED%8A%B8-%EB%84%A4%EC%9D%B4%ED%8B%B0%EB%B8%8Creact-native-%ED%91%B8%EC%8B%9C%EC%95%8C%EB%9E%8C-expo-jkk16hzg5d
 const PUSH_REGISTRATION_ENDPOINT = 'http://e0492ebe48e6.ngrok.io/pushalarm/token';
@@ -506,9 +508,15 @@ function InformPersonalInformationProcessingPolicyScreen({navigation}) {
 
 // 메인 페이지
 function MainPageScreen({navigation, route}){
+  const [swipeEnabled, setSwipeEnabled] = useState(true);
+  const changeSwipeMode = (mode) => {
+    setSwipeEnabled(mode);
+  }
+
   return (
     <Tab.Navigator
       backBehavior={'initialRoute'} initialRouteName={'MyChatListScreen'}
+      swipeEnabled={swipeEnabled}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, tintcolor  }) => {
           let iconName;
@@ -545,7 +553,7 @@ function MainPageScreen({navigation, route}){
       }}
     >
       <Tab.Screen name="SubscribeListScreen"  component={SubscribeListScreen}/>
-      <Tab.Screen name="MyChatListScreen"  component={MyChatListScreen}/>
+      <Tab.Screen name="MyChatListScreen"  component={MyChatListScreen} initialParams={{swipeChanger: changeSwipeMode}}/>
       <Tab.Screen name="MyDiaryScreen"  component={MyDiaryScreen} />
     </Tab.Navigator>
   );
@@ -572,23 +580,59 @@ function SubscribeListScreen({navigation}){
     </View>
   );
 }
-function MyChatListScreen({navigation}){
+function HiddenLayer({data, rowMap}){
+  const [alarm, setAlarm] = useState(dataList[data.item.id-1].chatroom.chatroomSetting.getPushAlarm);
+
+  const alarmOnOffhandler = () => {
+    if(alarm) {
+      // 알람 끄기
+      dataList[data.item.id-1].chatroom.chatroomSetting.getPushAlarm = false;
+      setAlarm(false);
+    } else {
+      // 알람 켜기
+      dataList[data.item.id-1].chatroom.chatroomSetting.getPushAlarm = true;
+      setAlarm(true);
+    }
+  }
+
+  return (
+    <TouchableOpacity onPress={alarmOnOffhandler}>
+      <View style={{justifyContent: 'center',marginLeft:15, marginTop: 15, width: 40, height: 40}}>
+        {alarm
+          ? <MaterialIcons name="alarm-off" size={34} color="black" />
+          : <MaterialCommunityIcons name="alarm-check" size={34} color="black"/>
+        }
+      </View>
+    </TouchableOpacity>
+  );
+}
+function MyChatListScreen({navigation, route}){
   const [noSubscribe, setNoSubscribe] = useState(true);
-  const [numberOfChatroom, setNumberOfChatroom] = useState(userData.numberOfChatroom);
+  const [numberOfChatroom, setNumberOfChatroom] = useState(0);
+  const [listViewData, setListViewData] = useState([]);
 
   useFocusEffect(()=>{
     if(userData.numberOfSubscribe === 0 && noSubscribe===false || userData.numberOfSubscribe != 0 && noSubscribe===true) setNoSubscribe(!noSubscribe);
-    if(numberOfChatroom != userData.numberOfChatroom) setNumberOfChatroom(userData.numberOfChatroom);
+    if(numberOfChatroom != userData.numberOfChatroom) {
+      setNumberOfChatroom(userData.numberOfChatroom);
+      setListViewData(userData.chatroomOrder.map((id)=>{return {key: id, id: id}}));
+    }
   });
 
   return (
     <View style={{flex:1, flexDirection: 'column', backgroundColor: 'white'}}>
-      <ScrollView centerContent={true} >
-          {noSubscribe ? NoSubscribeInform(navigation) : <Text/>}
-          {dataList.map(({id, hasChatroom})=>{
-            if(hasChatroom) return <ChatroomContentLayout key={id} id={id} nav={navigation}/>
-          })}
-      </ScrollView>
+      {noSubscribe ? NoSubscribeInform(navigation) : <Text/>}
+      <SwipeListView
+        data={listViewData}
+        renderHiddenItem={(data, rowMap)=>(<HiddenLayer data={data} rowMap={rowMap}/>)}
+        renderItem={(data, rowMap)=>(
+          <ChatroomContentLayout key={data.item.id} id={data.item.id} nav={navigation} swipeHandler={route.params.swipeChanger}/>
+        )}
+        onRowOpen={(rowKey, rowMap, toValue)=>setTimeout(()=>rowMap[rowKey].closeRow(), 3000)}
+        leftOpenValue={60}
+        closeOnRowPress={true}
+        closeOnScroll={true}
+        />
     </View>
   );
 }
@@ -667,13 +711,12 @@ function completeDiaryButtonHandler(route, navigation){
 
 // 글로벌 구성품
 function ChatroomContentLayout(props){
-  const id = props.id;
+  const id = props.id;``
   const data = dataList[id-1];
   const productInfo  = dataList[id-1].product;
   const [lastMessageTime, setLastMessageTime] = useState(data.chatroom.lastMessageTime);  // 최신 메세지 업데이트 시간
   const [newItemCount, setNewItemCount] = useState(data.chatroom.newItemCount);   // 최신 알림 수
   const [fromNowTime, setFromNowTime] = useState(lastMessageTime.fromNow());  // 최신 메세지 업데이트 시간, 자연적인 설명버전
-
 
   useFocusEffect(()=>{
     if(newItemCount != data.chatroom.newItemCount){
@@ -688,8 +731,8 @@ function ChatroomContentLayout(props){
   });
 
   return (
-    <TouchableOpacity onPress={()=>props.nav.navigate('chatroom', {id: id})}>
-    <View style={{flexDirection: 'row', height: 56, margin: 3, borderWidth: 0, borderColor: 'gray', marginBottom: 10}}>
+    <TouchableHighlight style={{marginBottom: 10}} onPressOut={()=>{props.swipeHandler(true)}} onPressIn={()=>{props.swipeHandler(false)}} onPress={()=>props.nav.navigate('chatroom', {id: id})}>
+    <View style={{flexDirection: 'row', height: 60, backgroundColor: 'white'}}>
       <Image source={productInfo.imageSet.thumbnailImg} style={{height: 46, width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
       <Text style={{marginLeft: 10, marginTop: 4, fontSize: 17, width: 220}}>{productInfo.title}</Text>
       <View style={{flex:1, flexDirection: 'column', alignItems: 'flex-end'}}>
@@ -697,7 +740,7 @@ function ChatroomContentLayout(props){
         {newItemCount > 0 && <View style={{height: 20, width: 20, borderRadius: 10, backgroundColor: 'red', margin: 6, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 11}}>{newItemCount}</Text></View> }
       </View>
     </View>
-    </TouchableOpacity>
+    </TouchableHighlight>
   );
 }
 function SubscribeContentLayout(props){
@@ -732,48 +775,6 @@ function getHeaderTitle(route, initialName) {
 }
 
 // 구독 구성품
-const DateTimePickerExample = () => {
-  const [date, setDate] = useState(new Date(1598051730000));
-  const [mode, setMode] = useState('date');
-  const [show, setShow] = useState(false);
-
-  const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date;
-    setShow(Platform.OS === 'ios');
-    setDate(currentDate);
-  };
-
-  const showMode = currentMode => {
-    setShow(true);
-    setMode(currentMode);
-  };
-
-  const showDatepicker = () => {
-    showMode('date');
-  };
-
-  const showTimepicker = () => {
-    showMode('time');
-  };
-
-  return (
-    <View>
-    <View>
-    <Button onPress={showTimepicker} title="눌러서 시간 선택" />
-    </View>
-    {show &&
-      <DateTimePicker
-      testID="dateTimePicker"
-      value={date}
-      mode={mode}
-      is24Hour={true}
-      display="default"
-      onChange={onChange}
-      />
-    }
-    </View>
-  );
-};
 function diaryInitializeFunction(id){
   // 기존의 다이어리 있는지 확인
   const data = dataList[id-1];
@@ -805,6 +806,7 @@ function chatroomInitializeFunction(id){
     // 초기버전 채팅창을 만듦
     userData.numberOfChatroom += 1; // 채팅창 확장을 알림
     data.hasChatroom = true; // 채팅창을 보이게 함
+    userData.chatroomOrder.push(id);    // 위치 등록
 
     // 채팅창 초기 데이터 구성
     let makeChatroomSettingData = {
@@ -821,7 +823,7 @@ function chatroomInitializeFunction(id){
     };
 
     data.chatroom = _.cloneDeep(makeChatroomData); // 채팅창 데이터 연결
-    userData.chatroomOrder.push(id);
+
     return ;
   }
 }
@@ -881,7 +883,7 @@ function SubscribeContentScreen({route, navigation}){
   const onChange2 = (event, selectedDate) => {
     console.log('event2 : ', event);
     if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
-    
+
     setShow2(false);  // 시간 선택 종료
     setPushEndTime(Moment(selectedDate));
     data.push.pushEndTime = Moment(selectedDate);
@@ -1058,6 +1060,7 @@ function AnimatableDiaryComponent(props){
     data.hasChatroom = false;     // 채팅창 제거
     data.isSubscribe = false;     // 구독 제거
     userData.diaryOrder.splice(userData.diaryOrder.indexOf(id), 1); // 다이어리 순서열에서 제거
+    userData.chatroomOrder.splice(userData.chatroomOrder.indexOf(id), 1); // 채팅창 순서열에서 제거
 
     props.handler();    // 화면 렌더링 시작
   }
