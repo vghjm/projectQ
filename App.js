@@ -22,8 +22,8 @@ import _ from 'lodash'; // https://lodash.com/docs
 import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npmjs.com/package/react-native-swipe-list-view
 
 // https://velog.io/@max9106/React-Native-%EB%A6%AC%EC%95%A1%ED%8A%B8-%EB%84%A4%EC%9D%B4%ED%8B%B0%EB%B8%8Creact-native-%ED%91%B8%EC%8B%9C%EC%95%8C%EB%9E%8C-expo-jkk16hzg5d
-const PUSH_REGISTRATION_ENDPOINT = 'http://e0492ebe48e6.ngrok.io/pushalarm/token';
-const MESSAGE_ENPOINT = 'http://e0492ebe48e6.ngrok.io/pushalarm/message';
+const PUSH_REGISTRATION_ENDPOINT = 'http://4774a5cc0602.ngrok.io/pushalarm/token';
+const MESSAGE_ENPOINT = 'http://4774a5cc0602.ngrok.io/pushalarm/message';
 
 // 추가기능 리스트
 // 그림자 https://www.npmjs.com/package/react-native-shadow
@@ -37,6 +37,7 @@ const catImg = {uri: 'https://image-notepet.akamaized.net/resize/620x-/seimage/2
 const carmelImg = {uri: 'https://www.jain.re.kr/file/contents/1/201609/30aade86-7056-4948-86a4-a8003c4498ab.jpg'};
 const diaryImg = require('./assets/diary.jpg');
 const logo = require('./assets/icon/Q_banner.png');
+const q_moment = require('./assets/icon/Q_1.png');
 const bookOn = require('./assets/icon/book_on.png');
 const bookOff = require('./assets/icon/book_off.png');
 const subOn = require('./assets/icon/subOn.png');
@@ -319,7 +320,7 @@ let dataList = [
 let userData = {
   token: 'aadfnlkas235kj2',
   username: '기본 사용자',
-  email: 'temp@naver.com',
+  email: 'aa2',
   password: '1234!',
   numberOfSubscribe: 3,
   numberOfChatroom: 3,
@@ -339,9 +340,8 @@ function IntroScreen1() {
   return (
     <ImageBackground source={introImage1} style={styles.backgroundImg}>
       <TouchableOpacity style={styles.skipButton} onPress={introSkip}>
-        <Text style={styles.skipButtonText}>[Skip]</Text>
+        <Text style={{fontSize: 24, marginRight: 20, color: 'blue', marginTop: 20}}>[Skip]</Text>
       </TouchableOpacity>
-      <Text style={styles.introText}>@  o  o</Text>
     </ImageBackground>
   );
 }
@@ -351,9 +351,8 @@ function IntroScreen2() {
   return (
     <ImageBackground source={introImage2} style={styles.backgroundImg}>
       <TouchableOpacity style={styles.skipButton} onPress={introSkip}>
-        <Text style={styles.skipButtonText}>[Skip]</Text>
+        <Text style={{fontSize: 24, marginRight: 20, color: 'blue', marginTop: 20}}>[Skip]</Text>
       </TouchableOpacity>
-      <Text style={styles.introText}>o  @  o</Text>
     </ImageBackground>
   );
 }
@@ -361,12 +360,20 @@ function IntroScreen3() {
   const { introSkip } = React.useContext(AuthContext);
 
   return (
-    <ImageBackground source={introImage3} style={styles.backgroundImg}>
-      <TouchableOpacity style={styles.skipButton} onPress={introSkip}>
-        <Text style={styles.skipButtonText}>[Skip]</Text>
+    <ImageBackground source={introImage3} style={{resizeMode: 'cover', flex:1, flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-end'}}>
+      <TouchableOpacity onPress={introSkip}>
+        <Text style={{fontSize: 24, color: 'blue', marginRight: 40, marginBottom: 40}}>[로그인]</Text>
       </TouchableOpacity>
-      <Text style={styles.introText}>o  o  @</Text>
     </ImageBackground>
+  );
+}
+function IntroScreen4() {
+  const { introSkip } = React.useContext(AuthContext);
+
+  useFocusEffect(introSkip, []);
+
+  return (
+    <View style={{backgroundColor: 'white'}}/>
   );
 }
 function SignInScreen({navigation}){
@@ -376,25 +383,27 @@ function SignInScreen({navigation}){
   const { signIn } = React.useContext(AuthContext);
 
   return (
-    <View style={{flex:1, flexDirection: 'column', alignItems: 'center', justifyContent: 'space-around', margin:20}}>
-      <Text>로그인 이미지</Text>
-      <View>
-        <TextInput value={username} onChangeText={(username)=>setUsername(username)} placeholder={"이메일"} style={[styles.singInInputBox, {marginBottom: 8}]} placeholderTextColor={'#666'}/>
-        <TextInput value={password} onChangeText={(password)=>setPassword(password)} placeholder={"비밀번호"} style={styles.singInInputBox} secureTextEntry={true} placeholderTextColor={'#666'}/>
-        <View style={{flexDirection: 'row'}}>
-          <CheckBox title="autoLoginCheckBox" value={autoLoginChecked} onValueChange={()=>setAutoLoginChecked(!autoLoginChecked)}/>
-          <Text style={{marginTop: 3}}>자동로그인</Text>
+      <ScrollView style={{marginTop:30}}>
+      <View style={{flex:1, flexDirection: 'column', alignItems: 'center'}}>
+      <Image source={q_moment} resizeMode={'contain'} style={{height: 200, width:170, marginTop: 80}}/>
+        <View style={{marginTop: 80}}>
+          <TextInput value={username} onChangeText={(username)=>setUsername(username)} placeholder={"이메일"} style={[styles.singInInputBox, {marginBottom: 8}]} placeholderTextColor={'#666'}/>
+          <TextInput value={password} onChangeText={(password)=>setPassword(password)} placeholder={"비밀번호"} style={styles.singInInputBox} secureTextEntry={true} placeholderTextColor={'#666'}/>
+          <View style={{flexDirection: 'row'}}>
+            <CheckBox title="autoLoginCheckBox" value={autoLoginChecked} onValueChange={()=>setAutoLoginChecked(!autoLoginChecked)}/>
+            <Text style={{marginTop: 3}}>자동로그인</Text>
+          </View>
+          <TouchableOpacity style={{alignItems: 'center', padding: 10, backgroundColor: '#BBB'}} onPress={()=>signIn([username, password, true])}>
+            <Text style={{fontSize: 21}}>로그인</Text>
+          </TouchableOpacity>
+          <View style={{flexDirection: 'row', justifyContent: 'center'}}>
+            <TouchableOpacity onPress={()=>navigation.navigate('FindPassword')}><Text style={{fontSize: 12, margin: 5}}>비밀번호 찾기</Text></TouchableOpacity>
+            <Text style={{marginTop: 2}}> | </Text>
+            <TouchableOpacity onPress={()=>navigation.navigate('SignUp')}><Text style={{fontSize: 12, margin: 5, marginRight: 30}}>회원 가입</Text></TouchableOpacity>
+          </View>
         </View>
-        <TouchableOpacity style={{alignItems: 'center', padding: 10, backgroundColor: '#BBB'}} onPress={()=>signIn([username, password, true])}>
-          <Text>로그인</Text>
-        </TouchableOpacity>
-        <View style={{flexDirection: 'row', justifyContent: 'center'}}>
-          <TouchableOpacity onPress={()=>navigation.navigate('FindPassword')}><Text style={{fontSize: 12, margin: 5}}>비밀번호 찾기</Text></TouchableOpacity>
-          <Text style={{marginTop: 2}}> | </Text>
-          <TouchableOpacity onPress={()=>navigation.navigate('SignUp')}><Text style={{fontSize: 12, margin: 5, marginRight: 30}}>회원 가입</Text></TouchableOpacity>
         </View>
-      </View>
-    </View>
+      </ScrollView>
   )
 }
 function FindPasswordScreen({navigation}){
@@ -427,38 +436,47 @@ function SignUpScreen({navigation}){
   const { signIn } = React.useContext(AuthContext);
 
   return (
-    <KeyboardAvoidingView style={{flex:1, flexDirection: 'column', alignItems:'center', justifyContent:'space-between'}} behavior="height" enabled>
-      <View style={{padding:40}}><Text>회원등록 이미지</Text></View>
-      <View>
-        <Text style={{margin:5, fontWeight:'bold', marginLeft: 0}}>이메일</Text>
-        <TextInput value={email} onChangeText={(email)=>setEmail(email)} style={styles.singInInputBox} placeholder={"username@example.com"}/>
-        <Text style={{padding: 3, marginLeft: 10, fontSize: 10}}>※ 비밀번호 찾기 시 이메일 주소로 임시 비밀번호가 발급됩니다.</Text>
-        {errorEmailForm && <Text style={{padding: 3, marginLeft: 16, fontSize: 10, color: '#D00'}}>[필수] 메일 주소 형식으로 입력해주세요.</Text>}
+    <View>
+    <View style={{position:'absolute', left:16, top:30}}>
+      <TouchableOpacity onPress={()=>navigation.navigate('SignIn')}>
+        <AntDesign name="arrowleft" size={26} color="black" />
+      </TouchableOpacity>
+    </View>
+    <ScrollView  style={{marginTop:60}}>
+      <View style={{flex:1, flexDirection: 'column', alignItems: 'center'}}>
+        <Image source={logo} resizeMode={'contain'} style={{width:270, height:90, marginBottom: 40}} />
+        <View>
+          <Text style={{margin:5, fontWeight:'bold', marginLeft: 0}}>이메일</Text>
+          <TextInput value={email} onChangeText={(email)=>setEmail(email)} style={styles.singInInputBox} placeholder={"username@example.com"}/>
+          <Text style={{padding: 3, marginLeft: 10, fontSize: 10}}>※ 비밀번호 찾기 시 이메일 주소로 임시 비밀번호가 발급됩니다.</Text>
+          {errorEmailForm && <Text style={{padding: 3, marginLeft: 16, fontSize: 10, color: '#D00'}}>[필수] 메일 주소 형식으로 입력해주세요.</Text>}
+        </View>
+        <View>
+          <Text style={{margin:5, fontWeight:'bold', marginLeft: 0}}>비밀번호</Text>
+          <TextInput value={password} onChangeText={(password)=>setPassword(password)}  style={styles.singInInputBox} secureTextEntry={true}/>
+          <Text style={{padding: 3, marginLeft: 10, fontSize: 10}}>※ 6~16자 영문 소문자, 숫자만 사용 가능합니다.</Text>
+          {errorPasswordForm && <Text style={{padding: 3, marginLeft: 16, fontSize: 10, color: '#D00'}}>[필수] 비밀번호 형식을 확인해 주세요.</Text>}
+        </View>
+        <View>
+          <Text style={{margin:5, fontWeight:'bold', marginLeft: 0}}>비밀번호 확인</Text>
+          <TextInput value={password2} onChangeText={(password2)=>setPassword2(password2)}  style={styles.singInInputBox} secureTextEntry={true}/>
+          {errorPasswordNotCorrect && <Text style={{padding: 3, marginLeft: 16, fontSize: 10, color: '#D00'}}>[필수] 비밀번호가 일치하지 않습니다.</Text>}
+        </View>
+        <View style={{flexDirection: 'row'}}>
+          <Text style={styles.smallText}>회원가입 시 </Text>
+          <TouchableOpacity onPress={()=>{navigation.navigate('InformTermsOfUse')}}><Text style={[styles.smallText, {color: '#22D'}]}>이용약관</Text></TouchableOpacity>
+          <Text style={styles.smallText}>과 </Text>
+          <TouchableOpacity onPress={()=>{navigation.navigate('InformPersonalInformationProcessingPolicy')}}><Text style={[styles.smallText, {color: '#22D'}]}>개인정보 처리방침</Text></TouchableOpacity>
+          <Text style={styles.smallText}>을 확인하였으며, 동의합니다. </Text>
+        </View>
+        <View>
+          <TouchableOpacity style={{alignItems: 'center', padding: 10, backgroundColor: '#BBB', width: 300, marginTop: 60}} onPress={()=>{navigation.navigate('SetUsername'); signIn([email, password, false])}}>
+            <Text>가입하기</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <View>
-        <Text style={{margin:5, fontWeight:'bold', marginLeft: 0}}>비밀번호</Text>
-        <TextInput value={password} onChangeText={(password)=>setPassword(password)}  style={styles.singInInputBox} secureTextEntry={true}/>
-        <Text style={{padding: 3, marginLeft: 10, fontSize: 10}}>※ 6~16자 영문 소문자, 숫자만 사용 가능합니다.</Text>
-        {errorPasswordForm && <Text style={{padding: 3, marginLeft: 16, fontSize: 10, color: '#D00'}}>[필수] 비밀번호 형식을 확인해 주세요.</Text>}
-      </View>
-      <View>
-        <Text style={{margin:5, fontWeight:'bold', marginLeft: 0}}>비밀번호 확인</Text>
-        <TextInput value={password2} onChangeText={(password2)=>setPassword2(password2)}  style={styles.singInInputBox} secureTextEntry={true}/>
-        {errorPasswordNotCorrect && <Text style={{padding: 3, marginLeft: 16, fontSize: 10, color: '#D00'}}>[필수] 비밀번호가 일치하지 않습니다.</Text>}
-      </View>
-      <View style={{flexDirection: 'row'}}>
-        <Text style={styles.smallText}>회원가입 시 </Text>
-        <TouchableOpacity onPress={()=>{navigation.navigate('InformTermsOfUse')}}><Text style={[styles.smallText, {color: '#22D'}]}>이용약관</Text></TouchableOpacity>
-        <Text style={styles.smallText}>과 </Text>
-        <TouchableOpacity onPress={()=>{navigation.navigate('InformPersonalInformationProcessingPolicy')}}><Text style={[styles.smallText, {color: '#22D'}]}>개인정보 처리방침</Text></TouchableOpacity>
-        <Text style={styles.smallText}>을 확인하였으며, 동의합니다. </Text>
-      </View>
-      <View>
-        <TouchableOpacity style={{alignItems: 'center', padding: 10, backgroundColor: '#BBB', width: 300, marginTop: 60}} onPress={()=>{navigation.navigate('SetUsername'); signIn([email, password, false])}}>
-          <Text>가입하기</Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+    </ScrollView>
+    </View>
   );
 }
 function UserNameSettingScreen({navigation}) {
@@ -506,17 +524,14 @@ function InformPersonalInformationProcessingPolicyScreen({navigation}) {
   );
 }
 
+let glov = false;
+
 // 메인 페이지
 function MainPageScreen({navigation, route}){
-  const [swipeEnabled, setSwipeEnabled] = useState(true);
-  const changeSwipeMode = (mode) => {
-    setSwipeEnabled(mode);
-  }
-
   return (
     <Tab.Navigator
       backBehavior={'initialRoute'} initialRouteName={'MyChatListScreen'}
-      swipeEnabled={swipeEnabled}
+      swipeEnabled={false}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, tintcolor  }) => {
           let iconName;
@@ -536,24 +551,22 @@ function MainPageScreen({navigation, route}){
               return <Image source={bookOn} style={{width: 22, height: 22}}/>
             }
           }
-
           // You can return any component that you like here!
         },
       })}
       tabBarPosition='bottom'
       tabBarOptions={{
-        activeTintColor: 'black',
-        inactiveTintColor: 'gray',
+        indicatorStyle: {backgroundColor: '#0000'},
         showIcon: true,
         showLabel: false,
         style: {
           backgroundColor: '#fafafa',
-          height: 44,
+          height: 45,
         },
       }}
     >
-      <Tab.Screen name="SubscribeListScreen"  component={SubscribeListScreen}/>
-      <Tab.Screen name="MyChatListScreen"  component={MyChatListScreen} initialParams={{swipeChanger: changeSwipeMode}}/>
+      <Tab.Screen name="SubscribeListScreen"  component={SubscribeListScreen} />
+      <Tab.Screen name="MyChatListScreen"  component={MyChatListScreen}/>
       <Tab.Screen name="MyDiaryScreen"  component={MyDiaryScreen} />
     </Tab.Navigator>
   );
@@ -597,11 +610,13 @@ function HiddenLayer({data, rowMap}){
 
   return (
     <TouchableOpacity onPress={alarmOnOffhandler}>
-      <View style={{justifyContent: 'center',marginLeft:15, marginTop: 15, width: 40, height: 40}}>
-        {alarm
-          ? <MaterialIcons name="alarm-off" size={34} color="black" />
-          : <MaterialCommunityIcons name="alarm-check" size={34} color="black"/>
-        }
+      <View style={{backgroundColor: '#cffffe', padding:11, paddingLeft: 30, justifyContent: 'center'}}>
+
+          {alarm
+            ? <Feather name="bell-off" size={34} color="black" />
+            : <Feather name="bell" size={34} color="black" />
+          }
+
       </View>
     </TouchableOpacity>
   );
@@ -615,7 +630,7 @@ function MyChatListScreen({navigation, route}){
     if(userData.numberOfSubscribe === 0 && noSubscribe===false || userData.numberOfSubscribe != 0 && noSubscribe===true) setNoSubscribe(!noSubscribe);
     if(numberOfChatroom != userData.numberOfChatroom) {
       setNumberOfChatroom(userData.numberOfChatroom);
-      setListViewData(userData.chatroomOrder.map((id)=>{return {key: id, id: id}}));
+      setListViewData(userData.chatroomOrder.map((id)=>{return {key: id.toString(), id: id}}));
     }
   });
 
@@ -624,15 +639,15 @@ function MyChatListScreen({navigation, route}){
       {noSubscribe ? NoSubscribeInform(navigation) : <Text/>}
       <SwipeListView
         data={listViewData}
-        renderHiddenItem={(data, rowMap)=>(<HiddenLayer data={data} rowMap={rowMap}/>)}
+        renderHiddenItem={(data, rowMap)=>(<HiddenLayer key={data.item.id.toString()} data={data} rowMap={rowMap}/>)}
         renderItem={(data, rowMap)=>(
-          <ChatroomContentLayout key={data.item.id} id={data.item.id} nav={navigation} swipeHandler={route.params.swipeChanger}/>
+          <ChatroomContentLayout key={data.item.id.toString()} id={data.item.id} nav={navigation}/>
         )}
-        onRowOpen={(rowKey, rowMap, toValue)=>setTimeout(()=>rowMap[rowKey].closeRow(), 3000)}
-        leftOpenValue={60}
+        onRowOpen={(rowKey, rowMap, toValue)=>setTimeout(()=>rowMap[rowKey].closeRow(), 2000)}
+        leftOpenValue={90}
         closeOnRowPress={true}
         closeOnScroll={true}
-        />
+      />
     </View>
   );
 }
@@ -731,13 +746,13 @@ function ChatroomContentLayout(props){
   });
 
   return (
-    <TouchableHighlight style={{marginBottom: 10}} onPressOut={()=>{props.swipeHandler(true)}} onPressIn={()=>{props.swipeHandler(false)}} onPress={()=>props.nav.navigate('chatroom', {id: id})}>
+    <TouchableHighlight style={{marginBottom: 10}} onPress={()=>props.nav.navigate('chatroom', {id: id})}>
     <View style={{flexDirection: 'row', height: 60, backgroundColor: 'white'}}>
       <Image source={productInfo.imageSet.thumbnailImg} style={{height: 46, width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
-      <Text style={{marginLeft: 10, marginTop: 4, fontSize: 17, width: 220}}>{productInfo.title}</Text>
+      <Text style={{marginLeft: 10, marginTop: 4, fontSize: 15, width: 220}}>{productInfo.title}</Text>
       <View style={{flex:1, flexDirection: 'column', alignItems: 'flex-end'}}>
-        <Text style={{fontSize: 10, marginRight: 6, marginTop: 0}}>{fromNowTime}</Text>
-        {newItemCount > 0 && <View style={{height: 20, width: 20, borderRadius: 10, backgroundColor: 'red', margin: 6, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 11}}>{newItemCount}</Text></View> }
+        <Text style={{fontSize: 10, marginRight: 10, marginTop: 0}}>{fromNowTime}</Text>
+        {newItemCount > 0 && <View style={{height: 20, width: 20, borderRadius: 10, backgroundColor: '#F66', margin: 6, marginRight: 10, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 11}}>{newItemCount}</Text></View> }
       </View>
     </View>
     </TouchableHighlight>
@@ -751,7 +766,7 @@ function SubscribeContentLayout(props){
     <TouchableOpacity onPress={()=>props.nav.navigate('contentScreen', {id: id})}>
     <View style={{flexDirection: 'row', height: 56, margin: 3, borderWidth: 0, borderColor: 'gray', marginBottom: 10}}>
       <Image source={productInfo.imageSet.thumbnailImg} style={{height: 46, width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
-      <Text style={{marginLeft: 10, marginTop: 4, fontSize: 17, width: 220}}>{productInfo.title}</Text>
+      <Text style={{marginLeft: 10, marginTop: 4, fontSize: 15, width: 220}}>{productInfo.title}</Text>
     </View>
     </TouchableOpacity>
   );
@@ -1122,6 +1137,7 @@ function DailyDiaryContentWithDate({message, last, nav, title, handler}){
   const onFocusHandler = () => {
     nav.setOptions({
       headerTitle: '내 기록편집',
+      headerTitleAlign: 'center',
       headerRight: (props) => (
         <TouchableOpacity onPress={onEndEditingHandler}>
         <Text style={{fontSize:20, marginRight: 20, justifyContent: 'center'}}>완료</Text>
@@ -1134,6 +1150,7 @@ function DailyDiaryContentWithDate({message, last, nav, title, handler}){
     message.text = myMessage;
     nav.setOptions({
       headerTitle: title,
+      headerTitleAlign: 'left',
       headerRight: (props) => (
         <TouchableOpacity onPress={handler}>
           <MaterialCommunityIcons name="arrow-down-circle-outline" style={{marginRight: 20}} size={40} color="black" />
@@ -1209,7 +1226,7 @@ function DailyDiaryContentNoDate({message, last, nav, title, handler}){
     </View>
   );
 }
-function DynamicDiaryScreen({navigation, route}){
+function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
   const id = route.params.id;
   const data = dataList[id-1];
   let time = false;
@@ -1643,7 +1660,7 @@ function MainStackHomePage({navigation}) {
         options={({route, navigation})=>({
           headerTitle: getHeaderTitle(route, '채팅'),
           headerTitleAlign: 'left',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
           cardStyle: {backgroundColor: 'white'},
           headerRight: mainHeaderRightHandler(route, navigation)})}
         component={MainPageScreen}
@@ -1653,7 +1670,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "chatroom",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
           cardStyle: {backgroundColor: 'white'},
           headerRight: (props) => (
             <TouchableOpacity
@@ -1669,7 +1686,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
           cardStyle: {backgroundColor: 'white'},
           headerTransparent: true,
         }}
@@ -1680,7 +1697,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "내 다이어리",
           headerTitleAlign: 'left',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
           cardStyle: {backgroundColor: 'white'},
           }}
         component={DynamicDiaryScreen}
@@ -1690,7 +1707,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "My",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
           cardStyle: {backgroundColor: 'white'},
           }}
         component={MyPageScreen}
@@ -1700,7 +1717,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "비밀번호 변경",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
           cardStyle: {backgroundColor: 'white'},
           }}
         component={MyChangePasswordPage}
@@ -1710,7 +1727,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "이용 내역",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
           cardStyle: {backgroundColor: 'white'},
           }}
         component={UserHistoryPage}
@@ -1720,7 +1737,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "고객센터",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
           cardStyle: {backgroundColor: 'white'},
           }}
         component={ServiceCenterPage}
@@ -1730,7 +1747,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "서비스 소개",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
           cardStyle: {backgroundColor: 'white'},
           }}
         component={ServiceIntroductionPage}
@@ -1740,7 +1757,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "도움말",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
           cardStyle: {backgroundColor: 'white'},
           }}
         component={HelpPage}
@@ -1750,7 +1767,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "공지사항",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
           cardStyle: {backgroundColor: 'white'},
           }}
         component={NoticePage}
@@ -1760,7 +1777,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "문의",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 25},
+          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
           cardStyle: {backgroundColor: 'white'},
           }}
         component={QuestionPage}
@@ -1880,7 +1897,6 @@ export default function App() {
 
   const handleNotification = (notify) => {
     setNotification(notify);
-    console.log('notify', notify);
     console.log('notification', notification);
   };
 
@@ -1897,14 +1913,6 @@ export default function App() {
     Notifications.addListener(handleNotification);
     console.log('registerForPushNotificationsAsync up');
 
-    if (Platform.OS === 'android') {
-      Notifications.createChannelAndroidAsync('default', {
-        name: 'default',
-        sound: true,
-        priority: 'max',
-        vibrate: [0, 250, 250, 250],
-      });
-    }
     return fetch(PUSH_REGISTRATION_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -1916,6 +1924,7 @@ export default function App() {
           value: token,
         },
         user: {
+          email: userData.email,
           username: 'warly', //임의값
           name: 'Dan Ward'   //임의값
         },
@@ -1982,15 +1991,20 @@ export default function App() {
         </View>
       ) : state.userToken === null ? (
         <NavigationContainer>
-          <Tab.Navigator backBehavior={null}>
+          <Tab.Navigator backBehavior={null} tabBarOptions={{
+            tabStyle: {backgroundColor: '#FFF', height: 0},
+            showIcon: false,
+            showLabel: false,
+          }}>
             <Tab.Screen name="Intro1" component={IntroScreen1} />
             <Tab.Screen name="Intro2" component={IntroScreen2} />
             <Tab.Screen name="Intro3" component={IntroScreen3} />
+            <Tab.Screen name="Intro4" component={IntroScreen4} />
           </Tab.Navigator>
         </NavigationContainer>
       ) : state.login === false ? (
         <NavigationContainer>
-          <Stack.Navigator mode={'modal'}>
+          <Stack.Navigator>
             <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: false}} name="SignIn" component={SignInScreen}/>
             <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: true, headerTitle: '비밀번호 찾기', headerTitleAlign: 'center'}} name="FindPassword" component={FindPasswordScreen}/>
             <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: false}} name="SignUp" component={SignUpScreen}/>
@@ -2012,7 +2026,7 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: StatusBar.currentHeight,
+    paddingTop: StatusBar.currentHeight,
   },
   backgroundImg: {
     flex: 1,
