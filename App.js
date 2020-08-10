@@ -235,7 +235,7 @@ let testDiarymessageLsitData = [
   { _id: 6, text: '나의 엤날 답변6 나의 엤날 답변7 나의 엤날 답변8 나의 엤날 답변9', createdAt: Moment('2020-05-27 14:10'), islagacy: true, linkedMessageList: []},
 ];
 let catDiarymessageLsitData = [
-  { _id: 1, text: '나의 엤날 답변1', createdAt: Moment('20200314 1405'), islagacy: true, linkedMessageList: []},
+  { _id: 1, text: '나의 엤날 답변1', createdAt: Moment('20190826 1405'), islagacy: true, linkedMessageList: []},
   { _id: 2, text: '나의 엤날 답변2', createdAt: Moment('2020-03-16 12:06'), islagacy: true, linkedMessageList: []},
   { _id: 3, text: '나의 엤날 답변3', createdAt: Moment('2020-03-16 14:10'), islagacy: true, linkedMessageList: []},
   { _id: 4, text: '나의 엤날 답변4', createdAt: Moment('2020-03-16 15:05'), islagacy: true, linkedMessageList: []},
@@ -524,7 +524,6 @@ function InformPersonalInformationProcessingPolicyScreen({navigation}) {
   );
 }
 
-let glov = false;
 
 // 메인 페이지
 function MainPageScreen({navigation, route}){
@@ -976,13 +975,13 @@ function NoSubscribeInform(navigation){
 function CustomDrawerContent({navigation}) {
 
   return (
-    <DrawerContentScrollView>
+    <DrawerContentScrollView style={{backgroundColor: '#FFF'}}>
       <TouchableOpacity onPress={()=>navigation.closeDrawer()}>
-        <Octicons name="three-bars" style={{marginLeft:20, marginTop:10, marginBottom: 30}} size={30} color="black" />
+        <Octicons name="three-bars" style={{marginLeft:20, marginTop:10, marginBottom: 20}} size={20} color="black" />
       </TouchableOpacity>
-      <DrawerItem label="다이어리 보기"  icon={()=><MaterialCommunityIcons name="bookmark-outline" size={30} color="black" />} onPress={() => {navigation.navigate('MyDiaryScreen'); navigation.navigate('Diary', {id:global_p_id})}} />
-      <DrawerItem label="푸시 메세지 설정" icon={()=><Ionicons name="md-time" style={{marginLeft: 3}} size={30} color="black" />} onPress={() => {navigation.navigate('SubscribeListScreen'); navigation.navigate('contentScreen', {id:global_p_id})}} />
-      <DrawerItem label="채팅방 나가기" icon={()=><MaterialIcons name="exit-to-app" size={30} color="black" />}
+      <DrawerItem label="다이어리 보기"  icon={()=><Image source={bookOn} resizeMode={'cover'} style={{width:20, height:20}}/>} onPress={() => {navigation.navigate('MyDiaryScreen'); navigation.navigate('Diary', {id:global_p_id})}} />
+      <DrawerItem label="푸시 메세지 설정" icon={()=><Ionicons name="md-time" style={{marginLeft: 3}} size={20} color="black" />} onPress={() => {navigation.navigate('SubscribeListScreen'); navigation.navigate('contentScreen', {id:global_p_id})}} />
+      <DrawerItem label="채팅방 나가기" icon={()=><MaterialIcons name="exit-to-app" style={{marginLeft: 1}} size={20} color="black" />}
         onPress={() => {
           Alert.alert('정말 채팅방을 나가시겠습니까?', '채팅방을 나가면 채팅 내용과 채팅 목록은 사라지고 다이어리에서만 기록을 확인할 수 있습니다.', [{text: '나가기', onPress: ()=>navigation.navigate('MainPage')}, {text:'취소'}]);}} />
     </DrawerContentScrollView>
@@ -1061,10 +1060,12 @@ function AnimatableDiaryComponent(props){
   const data = dataList[id-1];
   const [makeTime, setMakeTime] = useState(data.diary.makeTime);
   const [totalUpdateCount, setTotalUpdateCount] = useState(data.diary.totalUpdateCount);
+  const [nowTime, setNowTime] = useState(Moment());
 
   useFocusEffect(()=>{
     if(makeTime != data.diary.makeTime) setMakeTime(data.diary.makeTime);
     if(totalUpdateCount != data.diary.totalUpdateCount) setTotalUpdateCount(data.diary.totalUpdateCount);
+    if(!nowTime.isSameOrAfter(nowTime, 'day')) setNowTime(Moment());
   });
 
   const eraseDiaryHandler = () => {
@@ -1092,7 +1093,9 @@ function AnimatableDiaryComponent(props){
           <View>
             <Text adjustsFontSizeToFit={true} style={{width: 130, fontSize: 16,  color: 'black', fontWeight:'bold', alignSelf: 'center'}}>{data.product.title}</Text>
             <View style={{flexDirection: 'column', marginBottom: 5}}>
-              <Text style={{fontSize: 8, color: 'gray'}}>From {makeTime.format('LL')}</Text>
+              {makeTime.isSameOrAfter(nowTime, 'day')
+                ? <Text style={{fontSize: 8, color: 'gray'}}>오늘 생성함</Text>
+                : <Text style={{fontSize: 8, color: 'gray'}}>{makeTime.format('L')} ~ {nowTime.format('L')}</Text>}
               <Text style={{fontSize: 8, color: 'gray'}}>총 {totalUpdateCount}회 기록</Text>
             </View>
           </View>
@@ -1109,10 +1112,12 @@ function DiaryComponent(props){
   const data = dataList[id-1];
   const [makeTime, setMakeTime] = useState(data.diary.makeTime);
   const [totalUpdateCount, setTotalUpdateCount] = useState(data.diary.totalUpdateCount);
+  const [nowTime, setNowTime] = useState(Moment());
 
   useFocusEffect(()=>{
     if(makeTime != data.diary.makeTime) setMakeTime(data.diary.makeTime);
     if(totalUpdateCount != data.diary.totalUpdateCount) setTotalUpdateCount(data.diary.totalUpdateCount);
+    if(!nowTime.isSameOrAfter(nowTime, 'day')) setNowTime(Moment());
   });
 
   return (
@@ -1122,7 +1127,10 @@ function DiaryComponent(props){
         <View>
           <Text style={{width: 130, fontSize: 16, color: 'black', fontWeight:'bold', alignSelf: 'center'}}>{data.product.title}</Text>
           <View style={{flexDirection: 'column', marginBottom: 5}}>
-            <Text style={{fontSize: 8, color: 'gray'}}>From {makeTime.format('LL')}</Text>
+            {makeTime.isSameOrAfter(nowTime, 'day')
+              ? <Text style={{fontSize: 8, color: 'gray'}}>오늘 생성함</Text>
+              : <Text style={{fontSize: 8, color: 'gray'}}>{makeTime.format('L')} ~ {nowTime.format('L')}</Text>}
+
             <Text style={{fontSize: 8, color: 'gray'}}>총 {totalUpdateCount}회 기록</Text>
           </View>
         </View>
@@ -1130,12 +1138,74 @@ function DiaryComponent(props){
     </TouchableOpacity>
   );
 }
-function DailyDiaryContentWithDate({message, last, nav, title, handler}){
-  const [myMessage, setMyMessage] = React.useState(message.text);
+function MyDropList(props){
+  const downloadPDFHandler = () => {
+    Alert.alert('PDF 다운로드 버튼');
+  };
+  const shareWithLinkHandler = () => {
+    Alert.alert('링크로 공유하기 버튼');
+  }
+
+  return (
+    <View style={{position: 'absolute', left: 0, top:0, bottom:0, right:0, backgroundColor: '#AAA8'}}>
+      <View style={{height: 65, borderBottomWidth: 1, borderColor: '#AAA', backgroundColor: '#FFF', justifyContent: 'center'}}>
+        <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center', padding: 5}} onPress={downloadPDFHandler}>
+          <FontAwesome name="file-pdf-o" size={30} color="black" style={{marginLeft: 10}}/>
+          <Text style={{position: 'absolute', left: 50, fontSize: 23}}>PDF 다운로드</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={{height: 65, backgroundColor: '#FFF', justifyContent: 'center'}}>
+        <TouchableOpacity style={{flexDirection: 'row',  alignItems: 'center', padding: 5}} onPress={shareWithLinkHandler}>
+          <EvilIcons name="external-link" size={40} color="black" />
+          <Text style={{position: 'absolute', left: 50, fontSize: 23}}>링크로 공유하기</Text>
+        </TouchableOpacity>
+      </View>
+      <TouchableOpacity onPress={props.handler} style={{flex:1, flexDirection: 'column', backgroundColor: '#AAA7'}}/>
+    </View>
+  )
+}
+function NoDataInDiary(){
+  return (
+    <View style={{flex:1, flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+      <Text style={{fontSize: 15}}>채팅방에서 글을 작성해보세요.</Text>
+    </View>
+  );
+}
+function DiaryYear(props){
+  const year = props.year;
+
+  return (
+    <View style={{paddingVertical: 5, marginBottom: 20}}>
+      <View style={{backgroundColor: '#555', borderRadius: 12, marginLeft: 20, width: 70}}>
+        <Text style={{color: 'white', fontSize: 20, marginVertical: 2, marginHorizontal: 10}}>{year}</Text>
+      </View>
+    </View>
+  );
+}
+function DiaryDate(props){
+  const date = props.date;
+
+  return (
+      <View style={{flexDirection: 'row', height: 40, alignItems: 'center'}}>
+        <View style={{width: 12, height: 12, borderRadius: 6, backgroundColor: 'gray', marginLeft: 50}}/>
+        <TouchableOpacity onPress={()=>Alert.alert('날짜 편집 모드')}>
+          <Text style={{marginLeft: 20, fontSize: 20, color: 'black', marginBottom:5}}>{date}</Text>
+        </TouchableOpacity>
+      </View>
+  );
+}
+function DiaryTextWithDate(props){
+  const showYear = props.options.first || !props.options.sameYear;
+  const showDate = props.options.first || !props.options.sameDate;
+  const last = props.options.last;
+  const title = props.title;
+  const [myMessage, setMyMessage] = React.useState(props.message.text);
   const [editMode, setEditMode] = React.useState(true);
+  let handler = props.handler;
+  let minusHandler = props.minusHandler;
 
   const onFocusHandler = () => {
-    nav.setOptions({
+    props.nav.setOptions({
       headerTitle: '내 기록편집',
       headerTitleAlign: 'center',
       headerRight: (props) => (
@@ -1147,8 +1217,8 @@ function DailyDiaryContentWithDate({message, last, nav, title, handler}){
   };
   const onEndEditingHandler = () => {
     setEditMode(false);
-    message.text = myMessage;
-    nav.setOptions({
+    props.message.text = myMessage;
+    props.nav.setOptions({
       headerTitle: title,
       headerTitleAlign: 'left',
       headerRight: (props) => (
@@ -1163,66 +1233,22 @@ function DailyDiaryContentWithDate({message, last, nav, title, handler}){
   };
 
   return (
-    <View style={{flex:1, flexDirection: 'row'}}>
-      <View style={{width: 16, height: 16, borderRadius: 8, backgroundColor: 'gray', marginTop: 10}}/>
-      <SafeAreaView style={{flex: 1, flexDirection: 'column', marginRight: 8}}>
-        <Text style={{color: 'gray', fontWeight: 'bold', fontSize: 20, marginLeft: 10}}>{!last&&message.createdAt.format('MMDD')}</Text>
-          {!last ?
-            <TouchableOpacity onPress={()=>setEditMode(true)}>
-              <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{marginLeft: 30, fontSize: 13, padding:3, borderRadius: 5}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
-            </TouchableOpacity>
-            : <Text style={{marginLeft: 30, fontSize: 13, padding:3, borderRadius: 5}}>{myMessage}</Text>
-          }
-        <TouchableOpacity>
-          <Text style={{fontSize: 10, color: '#AAA', alignSelf: 'flex-end', marginBottom: 30}}>{!last&&message.createdAt.format('LT')}</Text>
+    <View onLayout={(event) => {
+        var {x, y, width, height} = event.nativeEvent.layout;
+        if(last) minusHandler(y);
+    }}>
+      {showYear && <DiaryYear year={props.message.createdAt.format('YYYY')} />}
+      {showDate && <DiaryDate date={props.message.createdAt.format('MMDD')} />}
+      <View style={{paddingLeft: 90, flexWrap:'wrap'}}>
+        <TouchableOpacity onPress={()=>setEditMode(true)}>
+          <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{marginLeft: 30, fontSize: 13, padding:3, borderRadius: 5}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
         </TouchableOpacity>
-      </SafeAreaView>
-    </View>
-  );
-}
-function DailyDiaryContentNoDate({message, last, nav, title, handler}){
-  const [myMessage, setMyMessage] = React.useState(message.text);
-  const [editMode, setEditMode] = React.useState(true);
-
-  const onFocusHandler = () => {
-    nav.setOptions({
-      headerTitle: '편집 중',
-      headerRight: (props) => (
-        <TouchableOpacity onPress={onEndEditingHandler}>
-          <Text style={{fontSize:20, marginRight: 20, justifyContent: 'center'}}>완료</Text>
+      </View>
+      <View style={{marginBottom: 30, marginRight: 20, alignItems: 'flex-end'}}>
+        <TouchableOpacity onPress={()=>Alert.alert('시간 편집 모드')}>
+          <Text style={{fontSize:10, color: '#AAA'}}>{props.message.createdAt.format('LT')}</Text>
         </TouchableOpacity>
-      )
-    });
-    message.islagacy = true;
-  };
-  const onEndEditingHandler = () => {
-    setEditMode(false);
-    message.text = myMessage;
-    nav.setOptions({
-      headerTitle: title,
-      headerRight: (props) => (
-        <TouchableOpacity onPress={handler}>
-          <MaterialCommunityIcons name="arrow-down-circle-outline" style={{marginRight: 20}} size={40} color="black" />
-        </TouchableOpacity>
-      )
-    });
-  };
-
-  return (
-    <View style={{flex:1, flexDirection: 'row'}}>
-      <View style={{width: 16}}/>
-      <SafeAreaView style={{flex: 1, flexDirection: 'column', marginRight: 8, marginTop:-30}}>
-        <Text style={{marginLeft: 10}}></Text>
-          {!last ?
-            <TouchableOpacity onPress={()=>setEditMode(true)}>
-              <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{marginLeft: 30, fontSize: 13, padding:3, borderRadius: 5}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
-            </TouchableOpacity>
-            : <Text style={{marginLeft: 30, fontSize: 13, padding:3, borderRadius: 5}}>{myMessage}</Text>
-          }
-        <TouchableOpacity>
-          <Text style={{fontSize: 10, color: '#AAA', alignSelf: 'flex-end', marginTop: 6, marginBottom: 30}}>{!last&&message.createdAt.format('LT')}</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
+      </View>
     </View>
   );
 }
@@ -1230,20 +1256,14 @@ function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
   const id = route.params.id;
   const data = dataList[id-1];
   let time = false;
+  let lastDate = data.diary.diarymessageList[data.diary.diarymessageList.length-1].createdAt;
 
-  const [contentHeight, setContentHeight] = React.useState(1000000);    // 동적 컨텐츠 크기 저장용
-  const [showDropbox, setShowDropbox] = React.useState(false);          // 다이어리 공유 옵션 바
+  const [showDropbox, setShowDropbox] = React.useState(false);      // 다이어리 공유 옵션 바
+  const [showTime, setShowTime] = useState(false);                  // 시간 선택 표시창
+  const [numberOfMessage, setNumberOfMessage] = useState(data.diary.diarymessageList.length);
+  const [contentHeight, setContentHeight] = useState(10000);
+  const [minusPos, setMinusPos] = useState(0);
 
-  const diaryOptionFocusHandler = () => {
-      setShowDropbox(true);
-      navigation.setOptions({
-        headerRight: (props) => (
-          <TouchableOpacity onPress={diaryOptionBlurHandler}>
-            <MaterialCommunityIcons name="arrow-down-circle-outline" style={{marginRight: 20}} size={40} color="black" />
-          </TouchableOpacity>
-        )
-      });
-  };
   const diaryOptionBlurHandler = () => {
       setShowDropbox(false);
       navigation.setOptions({
@@ -1255,13 +1275,17 @@ function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
         )
       });
   };
-  const downloadPDFHandler = () => {
-    Alert.alert('PDF 다운로드 버튼');
+  const diaryOptionFocusHandler = () => {
+      setShowDropbox(true);
+      console.log('diaryOptionFocusHandler');
+      navigation.setOptions({
+        headerRight: (props) => (
+          <TouchableOpacity onPress={diaryOptionBlurHandler}>
+            <MaterialCommunityIcons name="arrow-down-circle-outline" style={{marginRight: 20}} size={40} color="black" />
+          </TouchableOpacity>
+        )
+      });
   };
-  const shareWithLinkHandler = () => {
-    Alert.alert('링크로 공유하기 버튼');
-  }
-
   React.useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: data.product.title,
@@ -1273,47 +1297,43 @@ function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
     });
   }, [navigation, route]);
 
+  const getMinusContentPositionHandler = (value) => {
+    console.log('getMinusContentPositionHandler: ', value);
+    setMinusPos(value);
+  }
+
   return (
     <View style={{flex:1, flexDirection: 'column', backgroundColor: 'white'}}>
-      <View style={{position: 'absolute', left: 47, top: 30,  width: 2, borderRadius: 1, backgroundColor: 'gray', height: 50}}/>
-      <View style={{backgroundColor: '#555', position: 'absolute', left:15, top: 30, borderRadius: 12}}>
-        <Text style={{color: 'white', fontSize: 20, marginVertical: 3, marginHorizontal: 5}}>2020</Text>
-      </View>
-      <ScrollView style={{ marginTop: 80}} keyboardDismissMode={'on-drag'}>
-        <View style={{flex:1, flexDirection: 'column', marginLeft: 40, marginRight: 10, marginBottom: 60}}>
-          {data.diary.diarymessageList.map((message) => {
-            if(!id) return ;
-            if(time&&time.isSameOrAfter(message.createdAt, 'day')){
-              time = message.createdAt;
-              return <DailyDiaryContentNoDate key={message._id} handler={diaryOptionFocusHandler}  nav={navigation} title={data.product.title} message={message} last={false}/>
-            }else{
-              time = message.createdAt;
-              return <DailyDiaryContentWithDate key={message._id} handler={diaryOptionFocusHandler} nav={navigation} title={data.product.title} message={message} last={false}/>
-            }
-            time = message.createdAt;
-            return <DailyDiaryContentWithDate key={message._id} handler={diaryOptionFocusHandler} nav={navigation} title={data.product.title} message={message} last={false}/>
-          })}
-          <DailyDiaryContentWithDate key={0} message={{text:'', createdAt: Moment()}} last={true}/>
-        </View>
-        <View style={{position: 'absolute', flex:1, flexDirection: 'column', left: 47,  width: 2, borderRadius: 1, backgroundColor: 'gray', height: contentHeight, bottom:150}}/>
-      </ScrollView>
+      {numberOfMessage === 0
+        ? <NoDataInDiary/>
+        : <ScrollView onContentSizeChange={(contentWidth, contentHeight)=>{setContentHeight(contentHeight); console.log('contentHeight: ', contentHeight)}}>
+            <View style={{position: 'absolute', flex:1, flexDirection: 'column', left: 55, top:38, width: 2, borderRadius: 1, backgroundColor: 'gray', height: minusPos-15}}/>
+            {data.diary.diarymessageList.map((message, i)=>{
+                let options = {first: false, last: false, sameDate: false, sameYear: false};
 
-    {showDropbox &&
-      <View style={{position: 'absolute', left: 0, top:0, bottom:0, right:0, backgroundColor: '#AAA8'}}>
-        <View style={{height: 65, borderBottomWidth: 1, borderColor: '#AAA', backgroundColor: '#FFF', justifyContent: 'center'}}>
-          <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center', padding: 5}} onPress={downloadPDFHandler}>
-            <FontAwesome name="file-pdf-o" size={30} color="black" style={{marginLeft: 10}}/>
-            <Text style={{position: 'absolute', left: 50, fontSize: 23}}>PDF 다운로드</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={{height: 65, backgroundColor: '#FFF', justifyContent: 'center'}}>
-          <TouchableOpacity style={{flexDirection: 'row',  alignItems: 'center', padding: 5}} onPress={shareWithLinkHandler}>
-            <EvilIcons name="external-link" size={40} color="black" />
-            <Text style={{position: 'absolute', left: 50, fontSize: 23}}>링크로 공유하기</Text>
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity onPress={diaryOptionBlurHandler} style={{flex:1, flexDirection: 'column', backgroundColor: '#AAA7'}}/>
-      </View>}
+                if(i===0) {
+                  options.first = true;
+                  time = message.createdAt;
+                }
+                if(time.isSameOrAfter(message.createdAt, 'year')) {
+                  options.sameYear = true;
+                } else {
+                  time = message.createdAt;
+                }
+                if(options.sameYear && time.isSameOrAfter(message.createdAt, 'day')) {
+                  options.sameDate = true;
+                } else {
+                  time = message.createdAt;
+                }
+                if(message.createdAt.isSameOrAfter(lastDate, 'day') && !options.sameDate) options.last = true;
+
+                return <DiaryTextWithDate  options={options} key={i.toString()}  nav={navigation} message={message} title={data.product.title} handler={diaryOptionFocusHandler} minusHandler={getMinusContentPositionHandler}/>;
+              })
+            }
+        </ScrollView>
+      }
+      {showDropbox && <MyDropList handler={diaryOptionBlurHandler}/>}
+      {showTime && <DateTimePicker />}
     </View>
   );
 }
