@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Platform,TouchableHighlight, TouchableWithoutFeedback, AsyncStorage, ImageBackground, Text, View, StyleSheet, TouchableOpacity, TextInput, CheckBox, KeyboardAvoidingView, Alert, Button, ScrollView, SafeAreaView, Image }
+import { Dimensions , ActivityIndicator, Platform,TouchableHighlight, TouchableWithoutFeedback, AsyncStorage, ImageBackground, Text, View, StyleSheet, TouchableOpacity, TextInput, CheckBox, KeyboardAvoidingView, Alert, Button, ScrollView, SafeAreaView, Image }
 from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, getFocusedRouteNameFromRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -8,7 +8,6 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem, } from '@react-navigation/drawer';  //  https://reactnavigation.org/docs/drawer-based-navigation/
 import { Ionicons, MaterialCommunityIcons, Feather, FontAwesome, EvilIcons, AntDesign, MaterialIcons, Octicons }
 from '@expo/vector-icons'; // https://icons.expo.fyi/
-import { GiftedChat } from 'react-native-gifted-chat' // https://github.com/FaridSafi/react-native-gifted-chat
 import DateTimePicker from '@react-native-community/datetimepicker'; // https://github.com/react-native-community/datetimepicker
 import * as Animatable from 'react-native-animatable'; // https://github.com/oblador/react-native-animatable
 import * as ImagePicker from 'expo-image-picker';      // https://docs.expo.io/versions/latest/sdk/imagepicker/
@@ -16,17 +15,18 @@ import * as ImagePicker from 'expo-image-picker';      // https://docs.expo.io/v
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
 import Moment from 'moment';
-import "moment/locale/ko";
+import  "moment/locale/ko";
+require('dayjs/locale/ko');
 Moment.locale("ko");
 import _ from 'lodash'; // https://lodash.com/docs
 import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npmjs.com/package/react-native-swipe-list-view
+import { GiftedChat, Bubble , Send, InputToolbar, Time, Day, Composer } from 'react-native-gifted-chat' // https://github.com/FaridSafi/react-native-gifted-chat
+import Draggable from 'react-native-draggable'; // https://github.com/tongyy/react-native-draggable
+import * as Font from 'expo-font';          // https://docs.expo.io/versions/latest/sdk/font/
 
 // https://velog.io/@max9106/React-Native-%EB%A6%AC%EC%95%A1%ED%8A%B8-%EB%84%A4%EC%9D%B4%ED%8B%B0%EB%B8%8Creact-native-%ED%91%B8%EC%8B%9C%EC%95%8C%EB%9E%8C-expo-jkk16hzg5d
 const PUSH_REGISTRATION_ENDPOINT = 'http://4774a5cc0602.ngrok.io/pushalarm/token';
 const MESSAGE_ENPOINT = 'http://4774a5cc0602.ngrok.io/pushalarm/message';
-
-// 추가기능 리스트
-// 그림자 https://www.npmjs.com/package/react-native-shadow
 
 const introImage1 = {uri: "https://cdn.crowdpic.net/detail-thumb/thumb_d_F78FC0AA8923C441588C382B19DF0BF8.jpg"};
 const introImage2 = {uri: "https://previews.123rf.com/images/romeolu/romeolu1601/romeolu160100122/50594417-%EB%88%88-%EB%B0%B0%EA%B2%BD.jpg"};
@@ -43,6 +43,20 @@ const bookOff = require('./assets/icon/book_off.png');
 const subOn = require('./assets/icon/subOn.png');
 const subOff = require('./assets/icon/subOff.png');
 const splash = require('./assets/icon/splash2.png');
+const upArrow = require('./assets/icon/up_arrow.png');
+const downArrow = require('./assets/icon/down_arrow.png');
+const diaryImgList = [
+  require('./assets/icon/diary_1.png'),
+  require('./assets/icon/diary_2.png'),
+  require('./assets/icon/diary_3.png'),
+  require('./assets/icon/diary_4.png'),
+  require('./assets/icon/diary_5.png'),
+  require('./assets/icon/diary_6.png'),
+  require('./assets/icon/diary_7.png'),
+  require('./assets/icon/diary_8.png'),
+  require('./assets/icon/diary_9.png'),
+  require('./assets/icon/diary_10.png'),
+];
 const AuthContext = React.createContext();
 const ControllContext = React.createContext();
 const Tab = createMaterialTopTabNavigator();
@@ -55,11 +69,11 @@ const Drawer = createDrawerNavigator();
 let defaultQuestionListData = [
   '오늘은 어땠어?',
   '오늘의 가장 즐거웠던 점은 뭐야?',
-  '3번째 랜덤 질문~~',
-  '오늘의 날시는 어땠어?',
+  '랜덤~ 랜덤~ 질문',
+  '오늘의 날씨는 어땠어?',
   '이 앱은 어떤거 같아?',
   '오늘의 점심은 뭐야?',
-  '7번째 럭키한 질문~~',
+  '7은 행운의 숫자지',
 ];
 
 let defaultProductData = {
@@ -201,6 +215,138 @@ let dogChatmessageListData = [
   },
 ];
 
+let thankQChatmessageListData = [
+  {
+    _id: 10, text: '그랬구나~!~! 정말 감사한 기억이겠다😌', createdAt: Moment('20200705 0810'),
+    user: { _id:2, avatar: require('./assets/product/new땡Q노트/thumbnail.png')},
+  },
+  {
+    _id: 9, text: '어렸을 때 할아버지가 크레파스를 사주셨던 추억이 너무 감사해. 할아버지가 조금 무서웠는데, 크레파스를 통해서 할아버지의 사랑이 느껴져서 좋았어~', createdAt: Moment('20200705 0807'),
+    user: { _id:1,},
+  },
+  {
+    _id: 8, text: '너의 어린시절에 감사를 한다면?', createdAt: Moment('20200705 0803'),
+    user: { _id:2, avatar: require('./assets/product/new땡Q노트/thumbnail.png')},
+  },
+  {
+    _id: 7, text: '아 그래? 네 곁에 소중한 것이 많아지길 바래..!', createdAt: Moment('20200704 0807'),
+    user: { _id:2, avatar: require('./assets/product/new땡Q노트/thumbnail.png')},
+  },
+  { _id: 6, text: '나는 생일날 선물 받은 무선 이어폰이 감사해. 그 이어폰을 꼽고 지하철을 탈 때마다 너무 편하고 기분이 좋아!!', createdAt: Moment('20200704 0805'),
+    user: { _id:1,},
+  },
+  {
+    _id: 5, text: '감사하게 생각하는 물건은 뭐야?', createdAt: Moment('20200704 0801'),
+    user: { _id:2, avatar: require('./assets/product/new땡Q노트/thumbnail.png')},
+  },
+  {
+    _id: 4, text: '그렇구나~~ 간단하게 그분께 감사함을 표현해보는 것도 좋겠다😉', createdAt: Moment('20200703 0805'),
+    user: { _id:2, avatar: require('./assets/product/new땡Q노트/thumbnail.png')},
+  },
+  {
+    _id: 3, text: '나랑 함께 일하는 사람들에게 감사해. 나 혼자였다면 하지 못했을 일들도, 주변의 사람들과 함께 만들어나가면 해낼 수 있었던 거 같아.', createdAt: Moment('20200703 0802'),
+    user: { _id:1,},
+  },
+  { _id: 2, text: '지금 문득 감사하고 싶은 사람이 있어?', createdAt: Moment('20200703 0800'),
+    user: { _id:2, avatar: require('./assets/product/new땡Q노트/thumbnail.png')},
+  },
+  {
+    _id: 1, text: '이제 THANK Q 감사노트 구독이 시작됩니다.\n오전 8시가 되면 질문 드릴게요.', createdAt: Moment('20200702 211034'),
+    user: { _id:2, avatar: require('./assets/product/new땡Q노트/thumbnail.png')},
+  },
+];
+let highlightChatmessageListData = [
+  {
+    _id: 10, text: '좋은데~? 잘 할 수 있을거야! 빠샤~!', createdAt: Moment('20200712 0842'),
+    user: { _id:2, avatar: require('./assets/product/newQ하이라이트/thumbnail.png')},
+  },
+  {
+    _id: 9, text: '오! 오늘 중학교 친구에게 연락이나 한번 해봐야겠다. 오랜만에 전화하면 진짜 반가울 거 같아ㅋㅋㅋ', createdAt: Moment('20200712 0840'),
+    user: { _id:1,},
+  },
+  {
+    _id: 8, text: '오늘 소소하게 하고 싶은 일이 뭐야? 난 연락을 못했던 친구에게 안부를 물어봐야겠다. 너는?', createdAt: Moment('20200712 0832'),
+    user: { _id:2, avatar: require('./assets/product/newQ하이라이트/thumbnail.png')},
+  },
+  {
+    _id: 7, text: '그래~~멋지다😍😍 매일 행동하는 너가 대단해..!', createdAt: Moment('20200711 0807'),
+    user: { _id:2, avatar: require('./assets/product/newQ하이라이트/thumbnail.png')},
+  },
+  { _id: 6, text: '오늘은 저녁에 10분 정도 운동을 해야겠어. 틈날 때마다 조금씩이라도 운동을 해보려고!', createdAt: Moment('20200711 0840'),
+    user: { _id:1,},
+  },
+  {
+    _id: 5, text: '오늘 소소하게 하고 싶은 일이 뭐야?', createdAt: Moment('20200711 0835'),
+    user: { _id:2, avatar: require('./assets/product/newQ하이라이트/thumbnail.png')},
+  },
+  {
+    _id: 4, text: '좋아! 그거 하나는 끝내버리자고!!! 💪💪', createdAt: Moment('20200710 0837'),
+    user: { _id:2, avatar: require('./assets/product/newQ하이라이트/thumbnail.png')},
+  },
+  {
+    _id: 3, text: '오늘은 꼭 밀렸던 집안일을 해치우겠어!!! 빨래도 하고 방도 쓸거야~~', createdAt: Moment('20200710 0834'),
+    user: { _id:1,},
+  },
+  { _id: 2, text: '오늘은 어떤 소소한 일을 해낼까?', createdAt: Moment('20200710 0830'),
+    user: { _id:2, avatar: require('./assets/product/newQ하이라이트/thumbnail.png')},
+  },
+  {
+    _id: 1, text: '이제 Q 하이라이트 구독이 시작됩니다.\n오전 8시 30분이 되면 질문 드릴게요.', createdAt: Moment('20200709 221034'),
+    user: { _id:2, avatar: require('./assets/product/newQ하이라이트/thumbnail.png')},
+  },
+];
+let qTalkChatmessageListData = [
+  {
+    _id: 11, text: '오늘 뭐했는지 궁금하다! 오늘 어떻게 보냈어?', createdAt: Moment('20200813 2101'),
+    user: { _id:2, avatar: require('./assets/product/newQ톡일기/thumbnail.png')},
+  },
+  {
+    _id: 10, text: '그랬어?? 내가 다 재밌다🤣🤣', createdAt: Moment('20200812 2112'),
+    user: { _id:2, avatar: require('./assets/product/newQ톡일기/thumbnail.png')},
+  },
+  {
+    _id: 9, text: '오늘은 동료들끼리 고기를 좀 구웠어~ 우리가 갔던 곳이 정말 맛있는 집이여서 기분이 좋았어. 같이 얘기도 하고 고기도 먹으니 신났어', createdAt: Moment('20200812 2110'),
+    user: { _id:1,},
+  },
+  {
+    _id: 8, text: '오늘 재밌는 일은 뭐가 있었어?', createdAt: Moment('20200812 2103'),
+    user: { _id:2, avatar: require('./assets/product/newQ톡일기/thumbnail.png')},
+  },
+  {
+    _id: 7, text: '그래? 잘했어, 잘한거야~🤗', createdAt: Moment('20200811 2110'),
+    user: { _id:2, avatar: require('./assets/product/newQ톡일기/thumbnail.png')},
+  },
+  { _id: 6, text: '오늘은 집에 왔는데 너무 귀찮아서 놀았어. 재밌는 영상 보면서 뒹굴거리니깐 안락해ㅋㅋ 너무 생각없이 놀았나 싶기도 하고 ㅠㅠ', createdAt: Moment('20200811 2108'),
+    user: { _id:1,},
+  },
+  {
+    _id: 5, text: '오늘 잘지냈어? 뭐하고 지냈어?', createdAt: Moment('20200811 2105'),
+    user: { _id:2, avatar: require('./assets/product/newQ톡일기/thumbnail.png')},
+  },
+  {
+    _id: 4, text: '그랬구나! 밥🍚은 꼭꼭 챙겨먹으라구~', createdAt: Moment('20200810 2112'),
+    user: { _id:2, avatar: require('./assets/product/newQ톡일기/thumbnail.png')},
+  },
+  {
+    _id: 3, text: '오늘은 바빠서 점심에 후딱 샐러드를 먹긴 했는데, 저녁에는 그래도 든든하게 챙겨 먹었어. 정신없이 지나간 하루였어ㅠㅠ', createdAt: Moment('20200810 2110'),
+    user: { _id:1,},
+  },
+  { _id: 2, text: '오늘 어떻게 보냈어? 밥은 잘 챙겨 먹었어?', createdAt: Moment('20200810 2100'),
+    user: { _id:2, avatar: require('./assets/product/newQ톡일기/thumbnail.png')},
+  },
+  {
+    _id: 1, text: '이제 Q TALK 일기 구독이 시작됩니다.\n오후 9시가 되면 질문 드릴게요.', createdAt: Moment('20200809 233834'),
+    user: { _id:2, avatar: require('./assets/product/newQ톡일기/thumbnail.png')},
+  },
+];
+let qTalkDiaryMessageListData = [
+  { _id: 1, text: '오늘은 바빠서 점심에 후딱 샐러드를 먹긴 했는데,\n저녁에는 그래도 든든하게 챙겨 먹었어.\n정신없이 지나간 하루였어ㅠㅠ', createdAt: Moment('20200810 2110'), islagacy: true, linkedMessageList: []},
+  { _id: 2, text: '오늘은 집에 왔는데 너무 귀찮아서 놀았어.\n재밌는 영상 보면서 뒹굴거리니깐 안락해ㅋㅋ\n너무 생각없이 놀았나 싶기도 하고 ㅠㅠ', createdAt: Moment('20200811 2108'), islagacy: true, linkedMessageList: []},
+  { _id: 3, text: '오늘은 동료들끼리 고기를 좀 구웠어~\n우리가 갔던 곳이 정말 맛있는 집이여서 기분이 좋았어.\n같이 얘기도 하고 고기도 먹으니 신났어', createdAt:Moment('20200812 2110'), islagacy: true, linkedMessageList: []},
+  { _id: 4, text: '오늘 특별한 일이 없었던거 같아.\n그냥 열심히 일하고, 기분도 딱히 나쁘지 않았던거 같아.\n하루를 끝내기는 조금 아쉬우니 집 앞에\n산책이나 다녀오려고 해.', createdAt: Moment('20200813 2105'), islagacy: true, linkedMessageList: []},
+]
+
+
 let defaultChatroomSettingData = {
   getPushAlarm: true,
 };
@@ -261,19 +407,19 @@ let carmelDiarymessageLsitData = [
 
 let defaultDiarySettingData = {
   position: 1,
-  color: 'default',
+  color: 1,
 };
 let testDiarySettingData = {
-  color: 'default',
+  color: 2,
 };
 let catDiarySettingData = {
-  color: 'default',
+  color: 3,
 };
 let dogDiarySettingData = {
-  color: 'default',
+  color: 4,
 };
 let carmelDiarySettingData = {
-  color: 'default',
+  color: 5,
 };
 
 // diary
@@ -307,27 +453,137 @@ let carmelPushData = {
   isRandomPushType: false, pushStartTime: Moment('20200805 090000'), pushEndTime: Moment(),
 };
 
+
+
+let realTestData1 = {
+  id: 1, isAvailable: true, hasDiary:true, hasChatroom: true, isSubscribe:false,
+  product: {
+    title: 'THANK Q 감사노트',
+    text: '매일 당신에게 질문하는 감사 일기장',
+    imageSet: {thumbnailImg: require('./assets/product/new땡Q노트/thumbnail.png'), logoImg: require('./assets/product/new땡Q노트/logo.png'), mainImg: require('./assets/product/new땡Q노트/main.png'), avatarImg: require('./assets/product/new땡Q노트/thumbnail.png')},
+    questionList: [
+      '지금 문득 감사하고 싶은 사람이 있어?',
+      '너가 감사함을 느끼는 추억은 어떤거야?',
+      '너가 평소 감사하고 있는 일은 어떤거야?',
+      '너가 감사하는 물건은?',
+      '자연에 관해 감사한다면, 어떤 것에 감사하고 싶어?',
+      '나 자신에게 감사하고 싶은 게 있을까?',
+      '너의 가족들에게 어떤 걸 감사하고 싶어?',
+      '최근에 친구나 주변사람 중에 누구에게 감사를 느꼈어?',
+      '연예인이나 유명인 중에 너가 감동을 받고, 감사한 사람이 있어?',
+      '너는 어떤 글귀나 책에 감사한 마음을 느끼고 있어?',
+      '지금까지 영화나 영상을 본 것 중에 감사한 것이 있어?',
+      '너의 어린시절에 감사를 한다면?',
+      '오늘 감사할 것이 있다면, 어떤거야?',
+      '음식에 관해 감사할 것이 있을까?',
+    ]
+  },
+  chatroom: {
+    lastMessageTime: Moment('20200705 0811'), newItemCount: 0, lastId:10, chatmessageList: thankQChatmessageListData, chatroomSetting: {color: 0},
+  },
+  diary: {
+    makeTime: Moment('20200702 21:10:34'), lastId:0, totalUpdateCount: 0, diarymessageList: [], diarySetting: {color: 4}
+  },
+  push: {
+    isRandomPushType: false, pushStartTime: Moment('20200812 0830'), pushEndTime: Moment('20200812 0830'),
+  },
+};
+let realTestData2 = {
+  id: 2, isAvailable: true, hasDiary:true, hasChatroom: true, isSubscribe:false,
+  product: {
+    title: 'Q 하이라이트',
+    text: '오늘을 의미있게 만들 순간을, 미리 적는 일기장',
+    imageSet: {thumbnailImg: require('./assets/product/newQ하이라이트/thumbnail.png'), logoImg: require('./assets/product/newQ하이라이트/logo.png'), mainImg: require('./assets/product/newQ하이라이트/main.png'), avatarImg: require('./assets/product/newQ하이라이트/thumbnail.png')},
+    questionList: [
+      '오늘 소소하게 하고 싶은 일이 있어?',
+      '오늘 소소하게 하고 싶은 일이 어떤거야? 난 밀렸던 빨래를 할거야. 너는?',
+      '오늘 소소하게 하고 싶은 일이 뭐야? 난 글을 써보고 싶어. 너는?',
+      '오늘 소소하게 하고 싶은 일이 뭐야? 나는 오늘 일기를 쓸거야. 너는?',
+      '오늘 소소하게 하고 싶은 일이 뭐야? 난 조용한 음악을 틀어놓고 명상을 해보고 싶어. 너는?',
+      '오늘 소소하게 하고 싶은 일이 뭐야? 난 내가 좋아하는 노래를 들으려고! 너는?',
+      '오늘 소소하게 하고 싶은 일이 뭐야? 난 좋아하는 친구에게 전화할거야! 너는?',
+      '오늘 소소하게 하고 싶은 일이 뭐야? 난 연락을 못했던 친구에게 안부를 물어봐야겠다. 너는?',
+      '오늘의 소소한 하이라이트는 뭐였으면 좋겠어?',
+      '오늘 소소하게 하고 싶은 일이 뭐야?',
+      '오늘 한 가지 재밌는 일을 뭘로 정하면 좋을 것 같아?',
+      '오늘 해내고 싶은 한 가지는 뭐야?',
+      '오늘 처리해버리면 시원한, 할 일 한 가지는 뭐야?',
+      '오늘의 하이라이트 한 가지는 뭐로 정할래?',
+      '오늘은 어떤 소소한 일을 해낼까?',
+      '오늘 내가 할 수 있는 일 한 가지를 뭘로 정하면 좋겠어?',
+      '오늘 하이라이트로 뭘 하고 싶어?',
+      '즐거운 일 한 가지를 오늘의 하이라이트로 정해보는 건 어때? 뭘로 정할래!',
+      '오늘 이거 하나는 꼭 해야겠다는 게 뭐야?',
+      '오늘을 만족한 하루로 만들, 소소한 할 일 한 가지는 뭐야?',
+    ]
+  },
+  chatroom: {
+    lastMessageTime:  Moment('20200712 0842'), newItemCount: 0, lastId:10, chatmessageList: highlightChatmessageListData, chatroomSetting: {color: 0},
+  },
+  diary: {
+    makeTime:  Moment('20200709 221034'), lastId:0, totalUpdateCount: 0, diarymessageList: [], diarySetting: {color: 5}
+  },
+  push: {
+    isRandomPushType: false, pushStartTime: Moment('20200812 0830'), pushEndTime: Moment('20200812 0830'),
+  },
+};
+let realTestData3 = {
+  id: 3, isAvailable: true, hasDiary:true, hasChatroom: true, isSubscribe:true,
+  product: {
+    title: 'Q TALK 일기',
+    text: '오늘 당신의 감정과 생각을 물어오는 일기장',
+    imageSet: {thumbnailImg: require('./assets/product/newQ톡일기/thumbnail.png'), logoImg: require('./assets/product/newQ톡일기/logo.png'), mainImg: require('./assets/product/newQ톡일기/main.png'), avatarImg: require('./assets/product/newQ톡일기/thumbnail.png')},
+    questionList: [
+      '오늘 어땠어? 만족스러웠어?',
+      '오늘 기분은 어때?',
+      '오늘은 어떻게 보냈어?',
+      '오늘 힘든 일 없었어?',
+      '오늘 재밌는 일은 뭐가 있었어?',
+      '오늘 잘지냈어? 뭐하고 지냈어?',
+      '오늘은 뭐했어?',
+      '오늘 뭐했는지 궁금하다! 오늘 어떻게 보냈어?',
+      '하루동안 수고 많았어. 만족스러운 하루였어?',
+      '오늘 기분은 어때!',
+      '하루 잘 보냈어?',
+      '오늘 어떻게 보냈어? 밥은 잘 챙겨 먹었어?',
+      '오늘 뭐가 제일 재밌는 일이었어?',
+      '오늘 어떤 즐거운 일이 있었어?',
+      '오늘 하루는 너다웠어?',
+      '오늘은 많이 바빴어?',
+      '오늘 고민거리는 없었어?',
+    ]
+  },
+  chatroom: {
+    lastMessageTime: Moment('20200813 2107'), newItemCount: 0, lastId:13, chatmessageList: qTalkChatmessageListData, chatroomSetting: {color: 0},
+  },
+  diary: {
+    makeTime: Moment('20200809 233834'), lastId:4, totalUpdateCount: 4, diarymessageList: qTalkDiaryMessageListData, diarySetting: {color: 9}
+  },
+  push: {
+    isRandomPushType: false, pushStartTime: Moment('20200812 2100'), pushEndTime: Moment(),
+  },
+};
+
 let dataList = [
-  { id: 1, isAvailable: true, product: _.cloneDeep(defaultProductData), hasDiary: false, hasChatroom: false, isSubscribe: false, chatroom: _.cloneDeep(testChatroomData), diary: _.cloneDeep(testDiaryData), push: _.cloneDeep(defaultPushData) },
-  { id: 2, isAvailable: true, product: _.cloneDeep(catProductData),     hasDiary: true,  hasChatroom: true,  isSubscribe: true,  chatroom: _.cloneDeep(catChatroomData), diary: _.cloneDeep(catDiaryData), push: _.cloneDeep(catPushData) },
-  { id: 3, isAvailable: true, product: _.cloneDeep(defaultProductData), hasDiary: false, hasChatroom: false, isSubscribe: false, chatroom: _.cloneDeep(testChatroomData), diary: _.cloneDeep(testDiaryData), push: _.cloneDeep(defaultPushData) },
-  { id: 4, isAvailable: true, product: _.cloneDeep(dogProductData),     hasDiary: true,  hasChatroom: true,  isSubscribe: true,  chatroom: _.cloneDeep(dogChatroomData), diary: _.cloneDeep(dogDiaryData), push: _.cloneDeep(dogPushData) },
-  { id: 5, isAvailable: true, product: _.cloneDeep(defaultProductData), hasDiary: false, hasChatroom: false, isSubscribe: false, chatroom: _.cloneDeep(testChatroomData), diary: _.cloneDeep(testDiaryData), push: _.cloneDeep(defaultPushData) },
-  { id: 6, isAvailable: true, product: _.cloneDeep(carmelProductData),  hasDiary: true,  hasChatroom: true,  isSubscribe: true,  chatroom: _.cloneDeep(carmelChatroomData), diary: _.cloneDeep(carmelDiaryData), push: _.cloneDeep(carmelPushData) },
-  { id: 7, isAvailable: true, product: _.cloneDeep(defaultProductData), hasDiary: false, hasChatroom: false, isSubscribe: false, chatroom: _.cloneDeep(testChatroomData), diary: _.cloneDeep(testDiaryData), push: _.cloneDeep(defaultPushData) },
-  { id: 8, isAvailable: true, product: _.cloneDeep(defaultProductData), hasDiary: false, hasChatroom: false, isSubscribe: false, chatroom: _.cloneDeep(testChatroomData), diary: _.cloneDeep(testDiaryData), push: _.cloneDeep(defaultPushData) },
+  realTestData1,
+  realTestData2,
+  realTestData3,
 ];
 let userData = {
   token: 'aadfnlkas235kj2',
   username: '기본 사용자',
-  email: 'aa2',
+  email: 'aa2@naver.com',
   password: '1234!',
   numberOfSubscribe: 3,
   numberOfChatroom: 3,
   numberOfDiary: 3,
-  diaryOrder: [2, 4, 6],
-  chatroomOrder: [2, 4, 6],
+  diaryOrder: [1, 2, 3],
+  chatroomOrder: [1, 2, 3],
+  lastDiaryColor: 1,      // 다이어리 색 분배의 유사랜덤
 };
+
+const screenHeight = Dimensions.get('window').height;
+const screenWidth = Dimensions.get('window').width;
 // 컨트롤 변수
 let pressDiaryEditButton = false;  // diary 편집버튼 누름 상태값
 let global_p_id = 0;               // 채팅창 사이드 메뉴에서 다른 상품정보로 보내기 위한 상품 id 값
@@ -524,6 +780,30 @@ function InformPersonalInformationProcessingPolicyScreen({navigation}) {
   );
 }
 
+// 푸시 테스트
+function chooseRandomly(a){
+  return a[Math.floor(Math.random() * a.length)];
+}
+function pushMessage(id){
+  let data = dataList[id-1];
+  let product = data.product;
+  let chatroom = data.chatroom;
+  let avatar = product.imageSet.avatarImg.uri?? product.imageSet.avatarImg;
+  let newMessage = { _id: chatroom.lastId+1, text: chooseRandomly(product.questionList), createdAt: Moment(),
+    user: { _id:2, avatar: avatar}
+  };
+  chatroom.newItemCount += 1;
+  chatroom.lastId += 1;
+  chatroom.chatmessageList.unshift(_.cloneDeep(newMessage));
+  chatroom.lastMessageTime = Moment();
+
+  return ;
+}
+function pushTestHandler(handler){
+  pushMessage(chooseRandomly(userData.chatroomOrder));
+  handler();  // update screen
+  return ;
+}
 
 // 메인 페이지
 function MainPageScreen({navigation, route}){
@@ -578,16 +858,20 @@ function SubscribeListScreen({navigation}){
   }, []);
 
   return (
-    <View style={{flex:1, flexDirection: 'column', backgroundColor: 'white'}}>
-      <ScrollView styles={{marginHorizontal: 20}} centerContent={true}>
-        <Text style={{margin:10}}>내 구독 상품</Text>
+    <View style={{flex:1, flexDirection: 'column', backgroundColor: 'white', alignItems: 'flex-start'}}>
+      <ScrollView styles={{marginHorizontal: 20}} >
+        <Text style={{margin:10, fontSize: 17}}>내 구독 상품</Text>
         {dataList.map(({id, isSubscribe})=>{
           if(isSubscribe) return <SubscribeContentLayout key={id} id={id}  nav={navigation}/>
         })}
-        <Text style={{margin:10, borderTopWidth: 1, borderColor: 'gray', marginTop:23}}>구독 가능한 상품</Text>
+
+          <View style={{left:10, right:10, backgroundColor: '#f0f0f0', height:1, marginVertical:7, width: screenWidth*0.98}}/>
+
+        <Text style={{margin:10, marginTop:5, borderTopWidth: 1, fontSize: 17, borderColor: '#CCC'}}>구독 가능한 상품</Text>
         {dataList.map(({id, isSubscribe})=>{
           if(!isSubscribe) return <SubscribeContentLayout key={id} id={id}  nav={navigation}/>
         })}
+        <View style={{height:200}}/>
       </ScrollView>
     </View>
   );
@@ -624,6 +908,11 @@ function MyChatListScreen({navigation, route}){
   const [noSubscribe, setNoSubscribe] = useState(true);
   const [numberOfChatroom, setNumberOfChatroom] = useState(0);
   const [listViewData, setListViewData] = useState([]);
+  const [updateChatListScreen, setUpdateChatListScreen] = useState(0);
+
+  const getPushMessage = () => {
+    setUpdateChatListScreen(updateChatListScreen + 1);
+  }
 
   useFocusEffect(()=>{
     if(userData.numberOfSubscribe === 0 && noSubscribe===false || userData.numberOfSubscribe != 0 && noSubscribe===true) setNoSubscribe(!noSubscribe);
@@ -647,6 +936,9 @@ function MyChatListScreen({navigation, route}){
         closeOnRowPress={true}
         closeOnScroll={true}
       />
+      <TouchableHighlight onPress={()=>pushTestHandler(getPushMessage)} style={{position:'absolute', width:60, height: 60, right:15, bottom: 15, borderWidth: 1, borderRadius: 30, backgroundColor: 'gray', alignItems: 'center', justifyContent: 'center'}}>
+        <Text style={{color: 'white', fontSize: 24}}>푸시</Text>
+      </TouchableHighlight>
     </View>
   );
 }
@@ -662,15 +954,10 @@ function MyDiaryScreen({route, navigation}){
     if(numberOfDiary != userData.numberOfDiary) setNumberOfDiary(userData.numberOfDiary);
   });
 
-  useEffect(()=>{
-    //console.log('MyDiaryScreen useEffect');
-    //if(userData.numberOfDiary != numberOfDiary) setNumberOfDiary(userData.numberOfDiary);
-  }, [userData.numberOfDiary]);
-
   return (
     <View style={{flex:1, flexDirection: 'column', backgroundColor: 'white'}}>
       <ScrollView>
-        <View style={{flexDirection: 'row', alignItems: 'flex-start', flexWrap: 'wrap'}}>
+        <View style={{flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between'}}>
           {userData.diaryOrder.map((id)=>{
             return editMode ?
               <AnimatableDiaryComponent key={id} id={id} nav={navigation} handler={changeDiaryHandler}/> :
@@ -723,7 +1010,7 @@ function completeDiaryButtonHandler(route, navigation){
 
 
 
-// 글로벌 구성품
+// 화면 구성품
 function ChatroomContentLayout(props){
   const id = props.id;``
   const data = dataList[id-1];
@@ -747,8 +1034,11 @@ function ChatroomContentLayout(props){
   return (
     <TouchableHighlight style={{marginBottom: 10}} onPress={()=>props.nav.navigate('chatroom', {id: id})}>
     <View style={{flexDirection: 'row', height: 60, backgroundColor: 'white'}}>
-      <Image source={productInfo.imageSet.thumbnailImg} style={{height: 46, width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
-      <Text style={{marginLeft: 10, marginTop: 4, fontSize: 15, width: 220}}>{productInfo.title}</Text>
+      <Image source={productInfo.imageSet.thumbnailImg} style={{height: 46, width: 46, margin: 5,borderWidth: 1, borderColor: '#f7f7f7', marginLeft: 10, borderRadius: 23, backgroundColor: '#DDD'}}/>
+      <View style={{flexDirection: 'column'}}>
+        <Text style={{marginLeft: 10, marginTop: 6, fontSize: 17,fontWeight: '400', width: 220}}>{productInfo.title}</Text>
+        <Text style={{color: '#AAA', fontSize: 12, marginLeft: 13, marginTop:3}}>{data.chatroom.chatmessageList[0].text}</Text>
+      </View>
       <View style={{flex:1, flexDirection: 'column', alignItems: 'flex-end'}}>
         <Text style={{fontSize: 10, marginRight: 10, marginTop: 0}}>{fromNowTime}</Text>
         {newItemCount > 0 && <View style={{height: 20, width: 20, borderRadius: 10, backgroundColor: '#F66', margin: 6, marginRight: 10, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 11}}>{newItemCount}</Text></View> }
@@ -763,9 +1053,12 @@ function SubscribeContentLayout(props){
 
   return (
     <TouchableOpacity onPress={()=>props.nav.navigate('contentScreen', {id: id})}>
-    <View style={{flexDirection: 'row', height: 56, margin: 3, borderWidth: 0, borderColor: 'gray', marginBottom: 10}}>
-      <Image source={productInfo.imageSet.thumbnailImg} style={{height: 46, width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
-      <Text style={{marginLeft: 10, marginTop: 4, fontSize: 15, width: 220}}>{productInfo.title}</Text>
+    <View style={{flexDirection: 'row', height: 56, margin: 3, marginBottom: 10}}>
+      <Image resizeMode='cover' source={productInfo.imageSet.thumbnailImg} style={{height: 46, borderWidth: 1, borderColor: '#f7f7f7', width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
+      <View style={{flexDirection: 'column'}}>
+        <Text style={{marginLeft: 10, marginTop: 6, fontSize: 17,fontWeight: '400', width: 220}}>{productInfo.title}</Text>
+        <Text style={{color: '#AAA', fontSize: 12, marginLeft: 13, marginTop:3}}>{productInfo.text}</Text>
+      </View>
     </View>
     </TouchableOpacity>
   );
@@ -802,8 +1095,9 @@ function diaryInitializeFunction(id){
     userData.diaryOrder.push(id);    // 위치 등록
 
     // 다이어리 초기 데이터 구성
+    userData.lastDiaryColor += 1;
     let makeDiaryData = {
-      makeTime: Moment(), diaryImg: diaryImg,  lastId:0, totalUpdateCount: 0, diarymessageList: defaultDiarymessageLsitData, diarySetting: defaultDiarySettingData,
+      makeTime: Moment(),  lastId:0, totalUpdateCount: 0, diarymessageList: [], diarySetting: {color: userData.lastDiaryColor% 10},
     };
 
     data.diary = _.cloneDeep(makeDiaryData); // 다이어리 데이터 연결
@@ -829,7 +1123,7 @@ function chatroomInitializeFunction(id){
     let makeChatmessageListData = [
       {
         _id: 1, text: data.product.title + ' 채팅방입니다.', createdAt: Moment(),
-        user: { _id:2, avatar: data.product.imageSet.avatarImg.uri},
+        user: { _id:2, avatar: data.product.imageSet.avatarImg.uri??data.product.imageSet.avatarImg},
       },
     ];
     let makeChatroomData = {
@@ -848,7 +1142,10 @@ function SubscribeContentScreen({route, navigation}){
   const [isSubscribeButton, setIsSubscribeButton] = React.useState(data.isSubscribe);
   const [pushStartTime, setPushStartTime] = useState(data.push.pushStartTime);
   const [pushEndTime, setPushEndTime] = useState(data.push.pushEndTime);
+  let thisScrollView = null;
+  let goToEnd = route.params.goToEnd??null;
 
+  const [show0, setShow0] = useState(false);
   const [show1, setShow1] = useState(false);
   const [show2, setShow2] = useState(false);
 
@@ -872,7 +1169,20 @@ function SubscribeContentScreen({route, navigation}){
 
     // 시간  설정 실패 return
   };
+  const onChange0 = (event, selectedDate) => {
+    // 취소한 경우
+    if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
 
+    // 시간 등록
+    setPushStartTime(Moment(selectedDate));
+    data.push.pushStartTime = Moment(selectedDate);
+
+    setShow0(false); // 시간 선택 종료
+
+    setPushEndTime(Moment(selectedDate));
+    data.push.pushEndTime = Moment(selectedDate);
+    subscribeOnHandler();
+  };
   const onChange1 = (event, selectedDate) => {
     // 취소한 경우
     if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
@@ -883,19 +1193,9 @@ function SubscribeContentScreen({route, navigation}){
 
     setShow1(false); // 시간 선택 종료
 
-    // 랜덤 푸시인 경우 2번째 선택을 진행함
-    if(data.push.isRandomPushType){
-      setShow2(true);
-    }else{
-      // 아닌경우 단일 선택 진행
-      setPushEndTime(Moment(selectedDate));
-      data.push.pushEndTime = Moment(selectedDate);
-      subscribeOnHandler();
-    }
+    setShow2(true);
   };
-
   const onChange2 = (event, selectedDate) => {
-    console.log('event2 : ', event);
     if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
 
     setShow2(false);  // 시간 선택 종료
@@ -910,56 +1210,82 @@ function SubscribeContentScreen({route, navigation}){
       Alert.alert('구독을 취소하시겠습니까?', '구독을 취소하여도 채팅기록과 다이어리는 남습니다.', [{text: '취소'}, {text:'구독취소', onPress: subscribeOffHandler}]);
     }else{
       // 구독 신청
-      Alert.alert(data.product.title + ' 상품을 구독하시겠습니까?', '푸시 알람설정을 완료하여 구독을 할 수 있습니다.', [{text:'취소'}, {text:'푸시설정', onPress:()=>setShow1(true)}]);
+      Alert.alert(data.product.title + ' 상품을 구독하시겠습니까?', '푸시 알람설정을 완료하여 구독을 할 수 있습니다.', [{text:'취소'}, {text:'푸시설정', onPress:()=>{thisScrollView.scrollToEnd({animated: true}); data.push.isRandomPushType ? setShow1(true) : setShow0(true)}}]);
     }
   };
 
-
   return (
     <SafeAreaView>
-      <ScrollView centerContent={true} onScroll={(event)=>{
-        event.nativeEvent.contentOffset.y > 260.0 ? navigation.setOptions({ headerTitle: data.product.title, headerTransparent: false}) : navigation.setOptions({ headerTitle: '', headerTransparent: true})
+      <ScrollView style={{width:screenWidth}}  ref={ref =>{ thisScrollView = ref}} onContentSizeChange={() =>{goToEnd && thisScrollView.scrollToEnd({animated: true}); goToEnd = null;}}  centerContent={true} onScroll={(event)=>{
+        event.nativeEvent.contentOffset.y > 255.0 ? navigation.setOptions({ headerTitle: data.product.title, headerTransparent: false}) : navigation.setOptions({ headerTitle: '', headerTransparent: true})
       }}>
-        <Image source={data.product.imageSet.logoImg} style={{height: 200}} resizeMode='cover'/>
-        <View style={{backgroundColor: 'white', justifyContent: 'space-around', alignItems: 'center'}}>
-          <Image source={data.product.imageSet.thumbnailImg} style={{position:'absolute', alignSelf: 'center', top:-80, height: 100, width: 100, borderRadius: 50}}/>
-          <Text style={{fontSize: 20, fontWeight:'bold', marginTop: 35, marginBottom: 10}}>{data.product.title}</Text>
-          <Text style={{margin: 20}}>{data.product.text}</Text>
+        <Image source={data.product.imageSet.logoImg} style={{height: 200}} resizeMode='stretch'/>
+        <View style={{alignItems: 'center', borderWidth: 0, borderColor:'black'}}>
+          <Image source={data.product.imageSet.thumbnailImg} resizeMode='cover' style={{position:'absolute', borderWidth: 0, borderColor: '#AAA', alignSelf: 'center', top:-80, height: 100, width: 100, borderRadius: 50}}/>
+          <Text style={{fontSize: 21, fontWeight:'bold', marginTop: 35, marginBottom: 10}}>{data.product.title}</Text>
+          <Text style={{margin: 20, marginTop:0}}>{data.product.text}</Text>
         </View>
-        <Image source={data.product.imageSet.mainImg} style={{height: 900}} resizeMode='cover'/>
-        <View style={{height: 400, backgroundColor: 'white'}}>
-          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-            <View style={{flexDirection: 'column'}}>
-              <Text style={{marginLeft: 30, marginTop: 35, fontSize: 26}}>{isSubscribeButton ? '구독 중': '구독 하기'}</Text>
-              {isSubscribeButton && <Text style={{marginLeft: 30, marginTop: 40, fontSize: 20}}>{ data.push.isRandomPushType ?' 랜덤 메시지 수신중':'정시 메시지 수신중'}</Text>}
-            </View>
-            <TouchableOpacity style={{marginTop: 30, marginRight: 30}} onPress={subscribeButtonHandler}>
+        <Image source={data.product.imageSet.mainImg} style={{ width:screenWidth, height:screenWidth, borderWidth: 0, resizeMode: 'contain'}}/>
+        <View style={{flexDirection:'column', paddingVertical: 10, paddingHorizontal: 15, borderTopWidth:0, borderBottomWidth:1, borderColor: '#f0f0f0'}}>
+          <Text style={{fontSize: 21}}>구독 상품 설정</Text>
+        </View>
+        <View style={{width:screenWidth, flexDirection: 'column', paddingHorizontal: 15}}>
+          <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginLeft: 10}}>
+            {isSubscribeButton ?<Text style={{fontSize: 19}}>구독 중</Text> :  <Text style={{fontSize: 19}}>구독하기</Text>}
+            <TouchableOpacity onPress={subscribeButtonHandler} style={{marginRight: 10, marginVertical: 7}}>
                 {isSubscribeButton? (
-                    <Image source={subOff} style={{width:90, height: 45}}/>
+                    <Image source={subOff}  style={{width:65, height:40}}/>
                 ):(
-                    <Image source={subOn} style={{width:90, height: 45}}/>
+                    <Image source={subOn} style={{width:65, height:40}}/>
                 )}
             </TouchableOpacity>
           </View>
           {isSubscribeButton &&
-            <View style={{alignSelf: 'flex-end', margin: 20}}>
-            {data.push.isRandomPushType ?
-                <><Text style={{fontSize: 23}}>{pushStartTime.format('LT')} 에서</Text>
-                <Text style={{fontSize: 23}}>{pushEndTime.format('LT')} 사이</Text></>
-              :
-                <Text style={{fontSize: 25}}>{pushStartTime.format('LT')}</Text>
-            }
+            <View style={{flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', borderTopWidth: 1, paddingBottom:10, borderColor: '#f0f0f0', marginLeft: 10}}>
+              <Text style={{fontSize: 19, marginTop:17}}>메시지 수신 시간</Text>
+              <TouchableOpacity onPress={()=>{Alert.alert('시간 변경')}}>
+                {data.push.isRandomPushType
+                  ? <View style={{flexDirection: 'column', justifyContent: 'space-around'}}>
+                      <Text style={{color: '#AAA', fontSize: 19, marginTop:10}}>{pushStartTime.format('LT')} 부터</Text>
+                      <Text style={{color: '#AAA', fontSize: 19}}>{pushEndTime.format('LT')} 사이</Text>
+                    </View>
+                  : <Text style={{fontSize: 19, color: '#AAA', fontSize: 19, marginTop:17, marginBottom:7}}>{pushStartTime.format('LT')}</Text>
+                }
+              </TouchableOpacity>
             </View>
           }
-          <View>
-            {show1 && <DateTimePicker testID="dateTimePicker" value={new Date()} mode={'time'} is24Hour={true} display="default" onChange={onChange1}/>}
-            {show2 && <DateTimePicker testID="dateTimePicker" value={new Date()} mode={'time'} is24Hour={true} display="default" onChange={onChange2}/>}
+        </View>
+        <View style={{backgroundColor: '#f0f0f0', height:1, width: '100%', marginVertical: 0}}/>
+        <View style={{height:290, width: '100%', flexDirection: 'column', paddingVertical: 5, paddingHorizontal: 15, paddingLeft:20}}>
+          {show0 &&
+            <View style={{flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', borderWidth: 0, borderColor: 'blue', marginTop:10, paddingLeft:5}}>
+              <Text style={{fontSize: 19}}>푸시알림 수신시간을 설정해 주세요.</Text>
+            </View>
+          }
+          {show1 &&
+            <View style={{flexDirection: ' row', alignItems: 'flex-start', justifyContent: 'space-between', borderWidth: 0, borderColor: 'blue', marginTop:10, paddingLeft:5}}>
+              <Text style={{fontSize: 19}}>푸시알림 시간대를 설정해주세요.</Text>
+            </View>
+          }
+          {show2 &&
+            <View style={{flexDirection: ' row', alignItems: 'flex-start', justifyContent: 'space-between', borderWidth: 0, borderColor: 'blue', marginTop:10, paddingLeft:5}}>
+              <Text style={{fontSize: 19}}>푸시알림 시간대를 설정해주세요.</Text>
+              <Text style={{color: '#AAA', fontSize: 19, marginTop: 5}}>{pushStartTime.format('LT')} 부터</Text>
+            </View>
+          }
+
+          <View style={{marginTop:10}}>
+            {show0 && <DateTimePicker testID="dateTimePicker" value={pushStartTime.toDate()} mode={'time'} is24Hour={true} display="default" onChange={onChange0}/>}
+            {show1 && <DateTimePicker testID="dateTimePicker" value={pushStartTime.toDate()} mode={'time'} is24Hour={true} display="default" onChange={onChange1}/>}
+            {show2 && <DateTimePicker testID="dateTimePicker" value={pushStartTime.toDate()} mode={'time'} is24Hour={true} display="default" onChange={onChange2}/>}
           </View>
         </View>
+
       </ScrollView>
     </SafeAreaView>
   );
 }
+
 
 // 채팅 구성품
 function NoSubscribeInform(navigation){
@@ -979,8 +1305,8 @@ function CustomDrawerContent({navigation}) {
       <TouchableOpacity onPress={()=>navigation.closeDrawer()}>
         <Octicons name="three-bars" style={{marginLeft:20, marginTop:10, marginBottom: 20}} size={20} color="black" />
       </TouchableOpacity>
-      <DrawerItem label="다이어리 보기"  icon={()=><Image source={bookOn} resizeMode={'cover'} style={{width:20, height:20}}/>} onPress={() => {navigation.navigate('MyDiaryScreen'); navigation.navigate('Diary', {id:global_p_id})}} />
-      <DrawerItem label="푸시 메세지 설정" icon={()=><Ionicons name="md-time" style={{marginLeft: 3}} size={20} color="black" />} onPress={() => {navigation.navigate('SubscribeListScreen'); navigation.navigate('contentScreen', {id:global_p_id})}} />
+      <DrawerItem label="다이어리 보기"  icon={()=><Image source={bookOn} resizeMode={'cover'} style={{width:20, height:20}}/>} onPress={() => {navigation.navigate('MyDiaryScreen'); navigation.navigate('Diary', {id:global_p_id, goToEnd: true})}} />
+      <DrawerItem label="푸시 메세지 설정" icon={()=><Ionicons name="md-time" style={{marginLeft: 3}} size={20} color="black" />} onPress={() => {navigation.navigate('SubscribeListScreen'); navigation.navigate('contentScreen', {id:global_p_id, goToEnd: true})}} />
       <DrawerItem label="채팅방 나가기" icon={()=><MaterialIcons name="exit-to-app" style={{marginLeft: 1}} size={20} color="black" />}
         onPress={() => {
           Alert.alert('정말 채팅방을 나가시겠습니까?', '채팅방을 나가면 채팅 내용과 채팅 목록은 사라지고 다이어리에서만 기록을 확인할 수 있습니다.', [{text: '나가기', onPress: ()=>navigation.navigate('MainPage')}, {text:'취소'}]);}} />
@@ -994,7 +1320,7 @@ function makeDiaryMessage(id, message){
   data.diary.totalUpdateCount += 1;
   data.diary.lastId+=1;
 }
-function MyChatRoomScreen({route, navigation}) {
+function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
   const [messages, setMessages] = useState([]);
   const id = route.params.id;
   const data = dataList[id-1];
@@ -1026,7 +1352,6 @@ function MyChatRoomScreen({route, navigation}) {
     data.chatroom.chatmessageList.unshift(_.cloneDeep(message));
 
     // 다이어리에 저장
-    data.diary.makeTime = Moment();
     if(data.diary.lastId === 0) {
       // 첫 메세지
       makeDiaryMessage(id, message);
@@ -1050,8 +1375,151 @@ function MyChatRoomScreen({route, navigation}) {
         messages={messages}
         onSend={messages => onSend(messages)}
         user={{ _id: 1}}
+        placeholder ={''}
+        alwaysShowSend ={true}
+        locale={'ko'}
+        showAvatarForEveryMessage={true}
+        renderBubble={renderBubble}
+        renderSend={renderSend}
+        renderLoading={renderLoading}
+        renderTime ={renderTime}
+        renderDay={renderDay}
+        bottomOffset ={-15}
+        renderInputToolbar={renderInputToolbar}
+        renderComposer={renderComposer}
+        scrollToBottom ={true}
+        alignTop={true}
+        maxInputLength={10}
       />
+
   )
+}
+function renderLoading() {
+  return (
+    <View style={{flex:1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+      <ActivityIndicator size='large' color='#6646ee' />
+    </View>
+  );
+}
+function renderSend(props) {
+  return (
+    <Send
+      {...props}
+    >
+      <View style={{marginBottom:3.5, marginRight:2.5}}>
+        <Image source={upArrow} style={{width: 38, height: 38}}/>
+      </View>
+    </Send>
+  );
+}
+function renderComposer(props){ // textInput style
+  return (
+    <Composer
+      {...props}
+      textInputStyle={{borderWidth: 0,marginTop:7, alignSelf: 'center', alignContent: 'center', justifyContent: 'center', paddingTop: 10, borderColor: 'green'}}
+    />
+  );
+}
+function renderBubble(props) {
+  return (
+    // Step 3: return the component
+    <Bubble
+      {...props}
+      wrapperStyle={{
+        right: {
+          // Here is the color change
+          backgroundColor: '#FFD400',
+          marginVertical: 3,
+          borderRadius: 20,
+        },
+        left: {
+          marginVertical: 9,
+          borderRadius: 20,
+        }
+      }}
+      textStyle={{
+        right: {
+          color: 'black',
+          fontSize: 15,
+          padding: 3,
+        },
+        left: {
+          fontSize: 15,
+          padding: 3,
+        }
+      }}
+      bottomContainerStyle={{
+        right: {
+          position: 'absolute',
+          left: -52,
+          bottom: -2,
+        },
+        left: {
+          position: 'absolute',
+          right: -52,
+          bottom: -2,
+        }
+      }}
+    />
+  );
+}
+function renderTime(props) {
+  return (
+    <Time {...props}
+      timeTextStyle={{
+        right: {
+          color: 'gray',
+          fontSize: 8,
+        },
+        left: {
+          color: 'gray',
+          fontSize: 8,
+        }
+      }}
+      containerStyle={{
+        right: {
+          alignItems: 'flex-start',
+          width: 46,
+        },
+        left: {
+          alignItems: 'flex-end',
+          width: 46,
+        }
+      }}
+    />
+  );
+}
+function renderInputToolbar(props) {
+  return (
+    <InputToolbar
+      {...props}
+      primaryStyle={{borderWidth: 1, borderColor: '#CCC',marginVertical: 6,marginHorizontal:9, borderRadius: 30, backgroundColor: '#f0f0f0'}}
+      textInputProps={{autoFocus: true}}
+    />
+  );
+}
+function renderDay (props) {
+  return (
+    <Day {...props}
+      wrapperStyle={{
+        marginVertical: 10,
+      }}
+    />
+  );
+}
+
+function TestScreen({route, navigation}){
+  return (
+    <View >
+      <Draggable x={75} y={100} renderSize={56} renderColor='black' renderText='A' isCircle shouldReverse onShortPressRelease={()=>alert('touched!!')}/>
+      <Draggable x={200} y={300} renderColor='red' renderText='B'/>
+      <Draggable/>
+    	<Draggable x={50} y={50}>
+    		<Text>aaaa</Text>
+        <Text>bbbb</Text>
+    	</Draggable>
+    </View>
+  );
 }
 
 // 다이어리 구성품
@@ -1061,6 +1529,7 @@ function AnimatableDiaryComponent(props){
   const [makeTime, setMakeTime] = useState(data.diary.makeTime);
   const [totalUpdateCount, setTotalUpdateCount] = useState(data.diary.totalUpdateCount);
   const [nowTime, setNowTime] = useState(Moment());
+  let x, y;
 
   useFocusEffect(()=>{
     if(makeTime != data.diary.makeTime) setMakeTime(data.diary.makeTime);
@@ -1086,24 +1555,26 @@ function AnimatableDiaryComponent(props){
   };
 
   return (
-    <View style={{margin: 5}}>
+    <View style={{margin: 5}} onLayout={(e)=>{x = e.nativeEvent.layout.x; y = e.nativeEvent.layout.y; console.log('x, y : ', x, y)}}>
+      <Draggable x={x} y={y}>
       <Animatable.View animation='swing' iterationCount={'infinite'}>
       <TouchableOpacity style={{margin: 20, marginBottom: 0, marginTop: 10}} onPress={()=>Alert.alert('다이어리 순서변경 기능', '추가예정')}>
-          <Image style={{height: 190, width: 130}} source={data.diary.diaryImg} resizeMode='contain'/>
+          <View style={{position:'absolute', left:3, top:5, height: 185, width:130, backgroundColor: '#CCC', borderBottomRightRadius: 8, borderTopRightRadius: 8}}/>
+          <Image style={{height: 190, width: 130}} source={diaryImgList[data.diary.diarySetting.color]} resizeMode='contain'/>
           <View>
-            <Text adjustsFontSizeToFit={true} style={{width: 130, fontSize: 16,  color: 'black', fontWeight:'bold', alignSelf: 'center'}}>{data.product.title}</Text>
+            <Text adjustsFontSizeToFit={true} style={{width: 130, fontSize: 16,  color: 'black', fontWeight:'bold', alignSelf: 'center', marginBottom: 3, marginTop:3}}>{data.product.title}</Text>
             <View style={{flexDirection: 'column', marginBottom: 5}}>
               {makeTime.isSameOrAfter(nowTime, 'day')
-                ? <Text style={{fontSize: 8, color: 'gray'}}>오늘 생성함</Text>
-                : <Text style={{fontSize: 8, color: 'gray'}}>{makeTime.format('L')} ~ {nowTime.format('L')}</Text>}
-              <Text style={{fontSize: 8, color: 'gray'}}>총 {totalUpdateCount}회 기록</Text>
+                ? <View><Text style={{fontSize: 8, color: 'gray'}}>오늘 생성한 다이어리</Text><Text style={{fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:62}}>총 {totalUpdateCount}회 기록</Text></View>
+                : <View><Text style={{fontSize: 8, color: 'gray'}}>{makeTime.format('L')} ~ {nowTime.format('L')}</Text><Text style={{fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:30}}>총 {totalUpdateCount}회 기록</Text></View>}
             </View>
           </View>
     </TouchableOpacity>
     </Animatable.View>
-    <TouchableOpacity onPress={eraseDiaryAlertHandler} style={{position: 'absolute', left: 18, top:18, backgroundColor: '#999', height: 30, width: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center'}}>
-      <Text>X</Text>
+    <TouchableOpacity onPress={eraseDiaryAlertHandler} style={{position: 'absolute', left: 18, top:18, backgroundColor: '#DDD', height: 34, width: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center'}}>
+      <Text style={{fontWeight:'bold'}}>X</Text>
     </TouchableOpacity>
+    </Draggable>
   </View>
   );
 }
@@ -1123,15 +1594,14 @@ function DiaryComponent(props){
   return (
     <TouchableOpacity style={{margin: 20, marginBottom: 0, marginTop: 10}} onPress={()=>{props.nav.navigate('Diary', {id: id})}}>
       <View style={{margin: 5}}>
-        <Image style={{height: 190, width: 130}} source={data.diary.diaryImg} resizeMode='contain'/>
+        <View style={{position:'absolute', left:3, top:5, height: 185, width:130, backgroundColor: '#CCC', borderBottomRightRadius: 8, borderTopRightRadius: 8}}/>
+        <Image style={{height: 190, width: 130}} source={diaryImgList[data.diary.diarySetting.color]} resizeMode='contain'/>
         <View>
-          <Text style={{width: 130, fontSize: 16, color: 'black', fontWeight:'bold', alignSelf: 'center'}}>{data.product.title}</Text>
+          <Text adjustsFontSizeToFit={true} style={{width: 130, fontSize: 16, color: 'black', fontWeight:'bold', alignSelf: 'center', marginBottom: 3, marginTop:3}}>{data.product.title}</Text>
           <View style={{flexDirection: 'column', marginBottom: 5}}>
             {makeTime.isSameOrAfter(nowTime, 'day')
-              ? <Text style={{fontSize: 8, color: 'gray'}}>오늘 생성함</Text>
-              : <Text style={{fontSize: 8, color: 'gray'}}>{makeTime.format('L')} ~ {nowTime.format('L')}</Text>}
-
-            <Text style={{fontSize: 8, color: 'gray'}}>총 {totalUpdateCount}회 기록</Text>
+              ? <View><Text style={{fontSize: 8, color: 'gray'}}>오늘 생성한 다이어리</Text><Text style={{fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:62}}>총 {totalUpdateCount}회 기록</Text></View>
+              : <View><Text style={{fontSize: 8, color: 'gray'}}>{makeTime.format('L')} ~ {nowTime.format('L')}</Text><Text style={{fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:30}}>총 {totalUpdateCount}회 기록</Text></View>}
           </View>
         </View>
       </View>
@@ -1176,8 +1646,8 @@ function DiaryYear(props){
 
   return (
     <View style={{paddingVertical: 5, marginBottom: 20}}>
-      <View style={{backgroundColor: '#555', borderRadius: 12, marginLeft: 20, width: 70}}>
-        <Text style={{color: 'white', fontSize: 20, marginVertical: 2, marginHorizontal: 10}}>{year}</Text>
+      <View style={{backgroundColor: '#999', borderRadius: 12, marginLeft: 20, width: 70}}>
+        <Text style={{color: 'white', fontSize: 20, marginVertical: 2, alignSelf: 'center'}}>{year}</Text>
       </View>
     </View>
   );
@@ -1187,7 +1657,7 @@ function DiaryDate(props){
 
   return (
       <View style={{flexDirection: 'row', height: 40, alignItems: 'center'}}>
-        <View style={{width: 12, height: 12, borderRadius: 6, backgroundColor: 'gray', marginLeft: 50}}/>
+        <View style={{width: 10, height: 10, borderRadius: 5, backgroundColor: '#CCC', marginLeft: 50, marginBottom:3}}/>
         <TouchableOpacity onPress={()=>Alert.alert('날짜 편집 모드')}>
           <Text style={{marginLeft: 20, fontSize: 20, color: 'black', marginBottom:5}}>{date}</Text>
         </TouchableOpacity>
@@ -1210,7 +1680,7 @@ function DiaryTextWithDate(props){
       headerTitleAlign: 'center',
       headerRight: (props) => (
         <TouchableOpacity onPress={onEndEditingHandler}>
-        <Text style={{fontSize:20, marginRight: 20, justifyContent: 'center'}}>완료</Text>
+          <Text style={{fontSize:20, marginRight: 20, justifyContent: 'center'}}>완료</Text>
         </TouchableOpacity>
       )
     });
@@ -1223,7 +1693,7 @@ function DiaryTextWithDate(props){
       headerTitleAlign: 'left',
       headerRight: (props) => (
         <TouchableOpacity onPress={handler}>
-          <MaterialCommunityIcons name="arrow-down-circle-outline" style={{marginRight: 20}} size={40} color="black" />
+          <Image source={downArrow} style={{width:30, height:30, marginRight:20}}/>
         </TouchableOpacity>
       )
     });
@@ -1231,6 +1701,15 @@ function DiaryTextWithDate(props){
       setEditMode(true);
     }, 500);
   };
+  useEffect(
+    () => props.nav.addListener('beforeRemove', (e) => {
+      if(editMode){
+        onEndEditingHandler();
+      }
+    }),
+    [props.nav]
+  );
+
 
   return (
     <View onLayout={(event) => {
@@ -1241,7 +1720,7 @@ function DiaryTextWithDate(props){
       {showDate && <DiaryDate date={props.message.createdAt.format('MMDD')} />}
       <View style={{paddingLeft: 90, flexWrap:'wrap'}}>
         <TouchableOpacity onPress={()=>setEditMode(true)}>
-          <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{marginLeft: 30, fontSize: 13, padding:3, borderRadius: 5}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
+          <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{fontFamily: 'NanumGothic', textAlign: 'center', marginLeft: -15, fontSize: 14, padding:3, borderRadius: 5,width:screenWidth *0.76}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
         </TouchableOpacity>
       </View>
       <View style={{marginBottom: 30, marginRight: 20, alignItems: 'flex-end'}}>
@@ -1256,7 +1735,9 @@ function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
   const id = route.params.id;
   const data = dataList[id-1];
   let time = false;
-  let lastDate = data.diary.diarymessageList[data.diary.diarymessageList.length-1].createdAt;
+  let lastDate = data.diary.diarymessageList.length>0 ? data.diary.diarymessageList[data.diary.diarymessageList.length-1].createdAt : null;
+  let goToEnd = route.params.goToEnd;
+  let thisScrollView;
 
   const [showDropbox, setShowDropbox] = React.useState(false);      // 다이어리 공유 옵션 바
   const [showTime, setShowTime] = useState(false);                  // 시간 선택 표시창
@@ -1270,7 +1751,7 @@ function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
         headerTitle: data.product.title,
         headerRight: (props) => (
           <TouchableOpacity onPress={diaryOptionFocusHandler}>
-            <MaterialCommunityIcons name="arrow-down-circle-outline" style={{marginRight: 20}} size={40} color="black" />
+            <Image source={downArrow} style={{width:30, height:30, marginRight:20}}/>
           </TouchableOpacity>
         )
       });
@@ -1281,7 +1762,7 @@ function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
       navigation.setOptions({
         headerRight: (props) => (
           <TouchableOpacity onPress={diaryOptionBlurHandler}>
-            <MaterialCommunityIcons name="arrow-down-circle-outline" style={{marginRight: 20}} size={40} color="black" />
+            <Image source={downArrow} style={{width:30, height:30, marginRight:20}}/>
           </TouchableOpacity>
         )
       });
@@ -1291,14 +1772,13 @@ function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
       headerTitle: data.product.title,
       headerRight: (props) => (
         <TouchableOpacity onPress={diaryOptionFocusHandler}>
-          <MaterialCommunityIcons name="arrow-down-circle-outline" style={{marginRight: 20}} size={40} color="black" />
+          <Image source={downArrow} style={{width:30, height:30, marginRight:20}}/>
         </TouchableOpacity>
       )
     });
   }, [navigation, route]);
 
   const getMinusContentPositionHandler = (value) => {
-    console.log('getMinusContentPositionHandler: ', value);
     setMinusPos(value);
   }
 
@@ -1306,8 +1786,9 @@ function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
     <View style={{flex:1, flexDirection: 'column', backgroundColor: 'white'}}>
       {numberOfMessage === 0
         ? <NoDataInDiary/>
-        : <ScrollView onContentSizeChange={(contentWidth, contentHeight)=>{setContentHeight(contentHeight); console.log('contentHeight: ', contentHeight)}}>
-            <View style={{position: 'absolute', flex:1, flexDirection: 'column', left: 55, top:38, width: 2, borderRadius: 1, backgroundColor: 'gray', height: minusPos-15}}/>
+        : <KeyboardAvoidingView behavior={'height'}>
+          <ScrollView ref={ref=>{thisScrollView = ref}} onLayout={()=>{goToEnd && thisScrollView.scrollToEnd({animated: true}); goToEnd = null;}} onContentSizeChange={(contentWidth, contentHeight)=>setContentHeight(contentHeight)}>
+            <View style={{position: 'absolute', flex:1, flexDirection: 'column', left: 54, top:32, width: 1, borderRadius: 1, backgroundColor: '#DDD', height: minusPos-15<40?40:minusPos-15}}/>
             {data.diary.diarymessageList.map((message, i)=>{
                 let options = {first: false, last: false, sameDate: false, sameYear: false};
 
@@ -1330,7 +1811,9 @@ function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
                 return <DiaryTextWithDate  options={options} key={i.toString()}  nav={navigation} message={message} title={data.product.title} handler={diaryOptionFocusHandler} minusHandler={getMinusContentPositionHandler}/>;
               })
             }
+            <View style={{height: 160}}/>
         </ScrollView>
+        </KeyboardAvoidingView>
       }
       {showDropbox && <MyDropList handler={diaryOptionBlurHandler}/>}
       {showTime && <DateTimePicker />}
@@ -1348,7 +1831,10 @@ function MyPageScreen({navigation}) {
     <View style={{flex:1, flexDirection: 'column'}}>
       <View style={{margin:15, marginBottom: 0, alignItems: 'center', borderBottomWidth: 1, height: 170, justifyContent: 'center'}}>
         <TouchableOpacity onPress={()=>{}}>
-          <Image source={{uri: image}} style={{height: 80, width: 80, borderRadius: 40, backgroundColor: 'gray', marginTop: 20, marginBottom: 12}}/>
+          {image
+            ? <Image source={{uri: image}} style={{height: 80, width: 80, borderRadius: 40, backgroundColor: 'gray', marginTop: 20, marginBottom: 12}}/>
+            : <View style={{height: 80, width: 80, borderRadius: 40, backgroundColor: 'gray', marginTop: 20, marginBottom: 12}}/>
+          }
         </TouchableOpacity>
         <TouchableOpacity onPress={()=>{}}>
           <View style={{flexDirection: 'row'}}>
@@ -1681,6 +2167,8 @@ function MainStackHomePage({navigation}) {
           headerTitle: getHeaderTitle(route, '채팅'),
           headerTitleAlign: 'left',
           headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerBackTitleVisible: false,
+          headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
           headerRight: mainHeaderRightHandler(route, navigation)})}
         component={MainPageScreen}
@@ -1692,11 +2180,13 @@ function MainStackHomePage({navigation}) {
           headerTitleAlign: 'center',
           headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
           cardStyle: {backgroundColor: 'white'},
+          headerBackTitleVisible: false,
+          headerTintColor: 'black',
           headerRight: (props) => (
             <TouchableOpacity
             onPress={() => chatSettingButtonHandler(navigation)}
             >
-            <Octicons name="three-bars" style={{marginRight:10}} size={30} color="black" />
+              <Octicons name="three-bars" style={{marginRight:11, marginTop:2}} size={27} color="black" />
             </TouchableOpacity>
           )}}
         component={MyChatRoomScreen}
@@ -1708,6 +2198,8 @@ function MainStackHomePage({navigation}) {
           headerTitleAlign: 'center',
           headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
           cardStyle: {backgroundColor: 'white'},
+          headerBackTitleVisible: false,
+          headerTintColor: 'black',
           headerTransparent: true,
         }}
         component={SubscribeContentScreen}
@@ -1716,8 +2208,10 @@ function MainStackHomePage({navigation}) {
         name="Diary"
         options={{
           title: "내 다이어리",
-          headerTitleAlign: 'left',
+          headerTitleAlign: 'center',
           headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerBackTitleVisible: false,
+          headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
           }}
         component={DynamicDiaryScreen}
@@ -1728,6 +2222,8 @@ function MainStackHomePage({navigation}) {
           title: "My",
           headerTitleAlign: 'center',
           headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerBackTitleVisible: false,
+          headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
           }}
         component={MyPageScreen}
@@ -1738,6 +2234,8 @@ function MainStackHomePage({navigation}) {
           title: "비밀번호 변경",
           headerTitleAlign: 'center',
           headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerBackTitleVisible: false,
+          headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
           }}
         component={MyChangePasswordPage}
@@ -1748,6 +2246,8 @@ function MainStackHomePage({navigation}) {
           title: "이용 내역",
           headerTitleAlign: 'center',
           headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerBackTitleVisible: false,
+          headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
           }}
         component={UserHistoryPage}
@@ -1758,6 +2258,8 @@ function MainStackHomePage({navigation}) {
           title: "고객센터",
           headerTitleAlign: 'center',
           headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerBackTitleVisible: false,
+          headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
           }}
         component={ServiceCenterPage}
@@ -1768,6 +2270,8 @@ function MainStackHomePage({navigation}) {
           title: "서비스 소개",
           headerTitleAlign: 'center',
           headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerBackTitleVisible: false,
+          headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
           }}
         component={ServiceIntroductionPage}
@@ -1778,6 +2282,8 @@ function MainStackHomePage({navigation}) {
           title: "도움말",
           headerTitleAlign: 'center',
           headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerBackTitleVisible: false,
+          headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
           }}
         component={HelpPage}
@@ -1788,6 +2294,8 @@ function MainStackHomePage({navigation}) {
           title: "공지사항",
           headerTitleAlign: 'center',
           headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerBackTitleVisible: false,
+          headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
           }}
         component={NoticePage}
@@ -1798,6 +2306,8 @@ function MainStackHomePage({navigation}) {
           title: "문의",
           headerTitleAlign: 'center',
           headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerBackTitleVisible: false,
+          headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
           }}
         component={QuestionPage}
@@ -1914,6 +2424,9 @@ export default function App() {
   );  // 유저 인증 함수 등록
   const [notification, setNotification] = useState(null);
   const [messageText, setMessageText] = useState('');
+  const [loaded, error] = Font.useFonts({
+    NanumGothic: require('./assets/font/NanumGothic.ttf'),
+  });
 
   const handleNotification = (notify) => {
     setNotification(notify);
