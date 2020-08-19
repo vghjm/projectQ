@@ -25,8 +25,8 @@ import Draggable from 'react-native-draggable'; // https://github.com/tongyy/rea
 import * as Font from 'expo-font';          // https://docs.expo.io/versions/latest/sdk/font/
 
 // https://velog.io/@max9106/React-Native-%EB%A6%AC%EC%95%A1%ED%8A%B8-%EB%84%A4%EC%9D%B4%ED%8B%B0%EB%B8%8Creact-native-%ED%91%B8%EC%8B%9C%EC%95%8C%EB%9E%8C-expo-jkk16hzg5d
-const PUSH_REGISTRATION_ENDPOINT = 'http://4774a5cc0602.ngrok.io/pushalarm/token';
-const MESSAGE_ENPOINT = 'http://4774a5cc0602.ngrok.io/pushalarm/message';
+const PUSH_REGISTRATION_ENDPOINT = 'http://d9123c6a6cd1.ngrok.io/pushalarm/token';
+const MESSAGE_ENPOINT = 'http://d9123c6a6cd1.ngrok.io/pushalarm/message';
 
 const introImage1 = {uri: "https://cdn.crowdpic.net/detail-thumb/thumb_d_F78FC0AA8923C441588C382B19DF0BF8.jpg"};
 const introImage2 = {uri: "https://previews.123rf.com/images/romeolu/romeolu1601/romeolu160100122/50594417-%EB%88%88-%EB%B0%B0%EA%B2%BD.jpg"};
@@ -45,6 +45,7 @@ const subOff = require('./assets/icon/subOff.png');
 const splash = require('./assets/icon/splash2.png');
 const upArrow = require('./assets/icon/up_arrow.png');
 const downArrow = require('./assets/icon/down_arrow.png');
+const defaultUser = require('./assets/img/default_user.png');
 const diaryImgList = [
   require('./assets/icon/diary_1.png'),
   require('./assets/icon/diary_2.png'),
@@ -482,7 +483,7 @@ let realTestData1 = {
     lastMessageTime: Moment('20200705 0811'), newItemCount: 0, lastId:10, chatmessageList: thankQChatmessageListData, chatroomSetting: {color: 0},
   },
   diary: {
-    makeTime: Moment('20200702 21:10:34'), lastId:0, totalUpdateCount: 0, diarymessageList: [], diarySetting: {color: 4}
+    makeTime: Moment('20200702 211034'), lastId:0, totalUpdateCount: 0, diarymessageList: [], diarySetting: {color: 4, pos:1}
   },
   push: {
     isRandomPushType: false, pushStartTime: Moment('20200812 0830'), pushEndTime: Moment('20200812 0830'),
@@ -521,7 +522,7 @@ let realTestData2 = {
     lastMessageTime:  Moment('20200712 0842'), newItemCount: 0, lastId:10, chatmessageList: highlightChatmessageListData, chatroomSetting: {color: 0},
   },
   diary: {
-    makeTime:  Moment('20200709 221034'), lastId:0, totalUpdateCount: 0, diarymessageList: [], diarySetting: {color: 5}
+    makeTime:  Moment('20200709 221034'), lastId:0, totalUpdateCount: 0, diarymessageList: [], diarySetting: {color: 5, pos:2}
   },
   push: {
     isRandomPushType: false, pushStartTime: Moment('20200812 0830'), pushEndTime: Moment('20200812 0830'),
@@ -554,10 +555,10 @@ let realTestData3 = {
     ]
   },
   chatroom: {
-    lastMessageTime: Moment('20200813 2107'), newItemCount: 0, lastId:13, chatmessageList: qTalkChatmessageListData, chatroomSetting: {color: 0},
+    lastMessageTime: Moment('20200813 2107'), newItemCount: 0, lastId:11, chatmessageList: qTalkChatmessageListData, chatroomSetting: {color: 0},
   },
   diary: {
-    makeTime: Moment('20200809 233834'), lastId:4, totalUpdateCount: 4, diarymessageList: qTalkDiaryMessageListData, diarySetting: {color: 9}
+    makeTime: Moment('20200809 233834'), lastId:4, totalUpdateCount: 4, diarymessageList: qTalkDiaryMessageListData, diarySetting: {color: 9, pos:3}
   },
   push: {
     isRandomPushType: false, pushStartTime: Moment('20200812 2100'), pushEndTime: Moment(),
@@ -574,10 +575,11 @@ let userData = {
   username: '기본 사용자',
   email: 'aa2@naver.com',
   password: '1234!',
+  userImg: null,
   numberOfSubscribe: 3,
   numberOfChatroom: 3,
   numberOfDiary: 3,
-  diaryOrder: [1, 2, 3],
+  myDiaryList: [{id:1, pos:1}, {id:2, pos:2}, {id:3, pos:3}],
   chatroomOrder: [1, 2, 3],
   lastDiaryColor: 1,      // 다이어리 색 분배의 유사랜덤
 };
@@ -588,6 +590,7 @@ const screenWidth = Dimensions.get('window').width;
 let pressDiaryEditButton = false;  // diary 편집버튼 누름 상태값
 let global_p_id = 0;               // 채팅창 사이드 메뉴에서 다른 상품정보로 보내기 위한 상품 id 값
 let editDiaryTextMode = false;     // 다이어리 편집모드 상태값
+let global_y = 0;         // 다이어리리스트 스크린의 스크롤 값
 
 // 인증 페이지
 function IntroScreen1() {
@@ -805,6 +808,73 @@ function pushTestHandler(handler){
   return ;
 }
 
+// 드래그 기능 추가
+function diaryPosToRealPos(diaryPos){
+  let realPos ={x:0, y:0};
+
+  if(diaryPos%2===1){
+    // 왼쪽
+    realPos.x = 0;
+  }else{
+    realPos.x = screenWidth-185;
+  }
+  realPos.y = (Math.ceil(diaryPos/2)-1) * 280;
+
+  return realPos;
+}
+function realPosToDiaryPos(realPos){
+  let diaryPos = 0;
+  console.log('x, y : ', realPos.x, realPos.y);
+
+  if(realPos.y <= 0){
+    diaryPos = 1;
+  }else{
+    diaryPos = Math.floor(realPos.y/320)*2 + 1;
+  }
+  if(diaryPos > userData.numberOfDiary){
+    diaryPos = userData.numberOfDiary;
+    if(userData.numberOfDiary%2 === 0) diaryPos-=1;
+  }
+  if(realPos.x >= screenWidth/2) diaryPos+=1;
+
+  return diaryPos;
+}
+function DraggableDiary({id, changePosHandler, nav, updateDiary}){
+  const [z, setZ] = useState(1);
+  let diaryIndex = userData.myDiaryList.findIndex(obj => obj.id === id);
+  let pos = diaryPosToRealPos(userData.myDiaryList[diaryIndex].pos);
+
+  const zUp = () =>{
+    if(z!=2) setZ(2);
+  }
+  const zDown = () =>{
+    if(z!=1) setZ(1);
+  }
+  return (
+    <Draggable x={pos.x} y={pos.y} z={z} shouldReverse onDragRelease={(event, gestureState) => {zDown();  changePosHandler(userData.myDiaryList[diaryIndex].pos, realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY}));}} onDrag={(event, gestureState)=>{zUp(); console.log('x, y ~~ : ', gestureState.moveX, global_y+gestureState.moveY); console.log('pos: ', realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY}))}} >
+      <AnimatableDiaryComponent id={id} nav={nav} updateDiary={updateDiary}/>
+    </Draggable>
+  );
+}
+function BasiceDiary({id, changePosHandler, nav}){
+  const [z, setZ] = useState(1);
+  let diaryIndex = userData.myDiaryList.findIndex(obj => obj.id === id);
+  let pos = diaryPosToRealPos(userData.myDiaryList[diaryIndex].pos);
+
+  const zUp = () =>{
+    if(z!=2) setZ(2);
+  }
+  const zDown = () =>{
+    if(z!=1) setZ(1);
+  }
+  return (
+    <Draggable x={pos.x} y={pos.y} z={z} disabled={true} shouldReverse onDragRelease={(event, gestureState) => {zDown();  changePosHandler(userData.myDiaryList[diaryIndex].pos, realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY}));}} onDrag={(event, gestureState)=>{zUp(); console.log('x, y ~~ : ', gestureState.moveX, global_y+gestureState.moveY); console.log('pos: ', realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY}))}} >
+      <DiaryComponent id={id} nav={nav}/>
+    </Draggable>
+  );
+}
+
+
 // 메인 페이지
 function MainPageScreen({navigation, route}){
   return (
@@ -943,29 +1013,65 @@ function MyChatListScreen({navigation, route}){
   );
 }
 function MyDiaryScreen({route, navigation}){
-  const [editMode, setEditMode] = React.useState(false);
-  const [numberOfDiary, setNumberOfDiary] = useState(userData.numberOfDiary);
+  const [editMode, setEditMode] = React.useState(false);    // 편집모드 중인경우 애니메이션 기능
+  const [numberOfDiary, setNumberOfDiary] = useState(-1); // 다이어리의 수
+  const [updated, setUpdated] = useState(1);      // 강제 스크린 업데이트
+  const [backgroundWidth, setBackgroundWidth] = useState(0); // 배경의 크기
 
-  const changeDiaryHandler = () => {
-    setNumberOfDiary(userData.numberOfDiary);
+  const changePosHandler = (start, end) => {
+    if(end > userData.numberOfDiary){
+      userData.myDiaryList.forEach((obj) => {
+        if(obj.pos > start){
+          obj.pos -= 1;
+        }else if(obj.pos === start){
+          obj.pos = userData.numberOfDiary;
+        }
+      })
+    }else {
+      let startIndex = userData.myDiaryList.findIndex(obj => obj.pos === start);
+      let endIndex = userData.myDiaryList.findIndex(obj => obj.pos === end);
+      console.log('start, end : ', start, end);
+      userData.myDiaryList[startIndex].pos = end;
+      userData.myDiaryList[endIndex].pos = start;
+    }
+    setUpdated(updated+1);
+  }; // 다이어리간의 위치를 바꿔주는 기능
+
+  const setBackgroundWidthFunc = () => {
+    let size = Math.ceil(userData.numberOfDiary/2)*300;
+    if(size <= screenHeight-90) setBackgroundWidth(screenHeight-90);
+    else setBackgroundWidth(size);
+    console.log('update backgroundWidth');
   }
+
+  const updateDiary = (erasePos) => {
+    userData.myDiaryList.forEach(obj => {
+      if(obj.pos > erasePos) obj.pos -= 1;
+    });
+    setBackgroundWidthFunc();
+    setNumberOfDiary(userData.numberOfDiary);
+    setUpdated(updated+1);
+  };
+
   useFocusEffect(()=>{
     if(editMode != pressDiaryEditButton) setEditMode(pressDiaryEditButton);
-    if(numberOfDiary != userData.numberOfDiary) setNumberOfDiary(userData.numberOfDiary);
+    if(numberOfDiary != userData.numberOfDiary){
+      setNumberOfDiary(userData.numberOfDiary);
+      setBackgroundWidthFunc();
+    }
   });
 
   return (
-    <View style={{flex:1, flexDirection: 'column', backgroundColor: 'white'}}>
-      <ScrollView>
-        <View style={{flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between'}}>
-          {userData.diaryOrder.map((id)=>{
-            return editMode ?
-              <AnimatableDiaryComponent key={id} id={id} nav={navigation} handler={changeDiaryHandler}/> :
-              <DiaryComponent key={id} id={id} nav={navigation}/>
-          })}
-        </View>
-      </ScrollView>
-    </View>
+    <ScrollView onScroll={(event) => {global_y = event.nativeEvent.contentOffset.y; console.log('scroll: ', global_y)}}>
+      <View style={{width: screenWidth, height: backgroundWidth, backgroundColor: 'white'}}>
+        {numberOfDiary < 1 && <View style={{flex:1, flexDirection: 'column',  justifyContent: 'center', alignItems: 'center'}}><Text>생성된 다이어리가 없습니다.</Text></View>}
+        {userData.myDiaryList.map((obj) => {
+          return editMode ?
+            <DraggableDiary key={obj.id} id={obj.id} nav={navigation} changePosHandler={changePosHandler} updateDiary={updateDiary}/> :
+            <BasiceDiary key={obj.id} id={obj.id} nav={navigation} changePosHandler={changePosHandler}/>
+        })}
+      </View>
+    </ScrollView>
   );
 }
 
@@ -1007,8 +1113,6 @@ function completeDiaryButtonHandler(route, navigation){
 
   return navigation.navigate('MyDiaryScreen', {editMode: false});
 }
-
-
 
 // 화면 구성품
 function ChatroomContentLayout(props){
@@ -1092,7 +1196,7 @@ function diaryInitializeFunction(id){
     // 초기버전 다이어리 만듦
     userData.numberOfDiary += 1; // 다이어리 확장을 알림
     data.hasDiary = true; // 다이어리를 보이게 함
-    userData.diaryOrder.push(id);    // 위치 등록
+    userData.myDiaryList.push({id:id, pos: userData.numberOfDiary});
 
     // 다이어리 초기 데이터 구성
     userData.lastDiaryColor += 1;
@@ -1324,6 +1428,7 @@ function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
   const [messages, setMessages] = useState([]);
   const id = route.params.id;
   const data = dataList[id-1];
+  const [update, setUpdate] = useState(0);
 
   useEffect(() => {
     setMessages(data.chatroom.chatmessageList);                 // 메세지 로드
@@ -1333,6 +1438,17 @@ function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
     // 채팅방 확인
     data.chatroom.newItemCount = 0;
   }, []);
+
+  const updateFunc = () => {
+    setUpdate(update+1);
+  };
+  console.log('messages List\n', messages);
+
+  const onDelete = useCallback((messageIdToDelete) => {
+    console.log('delete message Id: ', messageIdToDelete);
+    data.chatroom.chatmessageList.splice(data.chatroom.chatmessageList.findIndex(chatmessage => chatmessage._id === messageIdToDelete), 1);
+    setMessages(previousMessages => previousMessages.filter(message => message._id !== messageIdToDelete));
+  },[]);
 
   const onSend = useCallback((messages = []) => {
     // 메세지 화면 표시
@@ -1358,8 +1474,8 @@ function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
     }else{
       let topMessage = data.diary.diarymessageList[data.diary.lastId-1];
       let checkTime = Moment.duration(topMessage.createdAt.diff(message.createdAt)).asMinutes();
-      if(-15 <= checkTime && checkTime <= 0){
-        // 같은 메세지로 인정
+      if(-1 <= checkTime && checkTime <= 0){
+        // 같은 메세지로 인정 15분 간격
         topMessage.linkedMessageList.push(message._id);
         topMessage.text += ' ' + message.text;
       }else{
@@ -1369,6 +1485,19 @@ function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
     }
 
   }, []);
+
+  const onLongPress = (context, message) => {
+    if(message.user._id === 1){
+      // 유저 메시지 확인
+      let alertMessage = '';
+      if(message.text.length > 17){
+        alertMessage = message.text.substring(0, 13)+'... 메시지를 삭제하시겠습니까?';
+      }else{
+        alertMessage = message.text + ' 메시지를 삭제하시겠습니까?';
+      }
+      Alert.alert('메시지 삭제 확인', alertMessage, [{text: '취소'}, {text:'삭제', onPress:() => onDelete(message._id)}]);
+    }
+  }
 
   return (
       <GiftedChat
@@ -1390,6 +1519,7 @@ function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
         scrollToBottom ={true}
         alignTop={true}
         maxInputLength={10}
+        onLongPress={onLongPress}
       />
 
   )
@@ -1508,20 +1638,6 @@ function renderDay (props) {
   );
 }
 
-function TestScreen({route, navigation}){
-  return (
-    <View >
-      <Draggable x={75} y={100} renderSize={56} renderColor='black' renderText='A' isCircle shouldReverse onShortPressRelease={()=>alert('touched!!')}/>
-      <Draggable x={200} y={300} renderColor='red' renderText='B'/>
-      <Draggable/>
-    	<Draggable x={50} y={50}>
-    		<Text>aaaa</Text>
-        <Text>bbbb</Text>
-    	</Draggable>
-    </View>
-  );
-}
-
 // 다이어리 구성품
 function AnimatableDiaryComponent(props){
   const id = props.id;
@@ -1544,10 +1660,11 @@ function AnimatableDiaryComponent(props){
     data.hasDiary = false;        // 다이어리 null 셋팅
     data.hasChatroom = false;     // 채팅창 제거
     data.isSubscribe = false;     // 구독 제거
-    userData.diaryOrder.splice(userData.diaryOrder.indexOf(id), 1); // 다이어리 순서열에서 제거
+    let thisPos = userData.myDiaryList[userData.myDiaryList.findIndex(obj => obj.id===id)].pos;
+    userData.myDiaryList.splice(userData.myDiaryList.findIndex(obj=>obj.id===id), 1); // 다이어리 순서열에서 제거
     userData.chatroomOrder.splice(userData.chatroomOrder.indexOf(id), 1); // 채팅창 순서열에서 제거
 
-    props.handler();    // 화면 렌더링 시작
+    props.updateDiary(thisPos);    // 화면 렌더링 시작
   }
 
   const eraseDiaryAlertHandler = () => {
@@ -1556,9 +1673,8 @@ function AnimatableDiaryComponent(props){
 
   return (
     <View style={{margin: 5}} onLayout={(e)=>{x = e.nativeEvent.layout.x; y = e.nativeEvent.layout.y; console.log('x, y : ', x, y)}}>
-      <Draggable x={x} y={y}>
       <Animatable.View animation='swing' iterationCount={'infinite'}>
-      <TouchableOpacity style={{margin: 20, marginBottom: 0, marginTop: 10}} onPress={()=>Alert.alert('다이어리 순서변경 기능', '추가예정')}>
+      <TouchableOpacity style={{margin: 20, marginBottom: 0, marginTop: 10}}>
           <View style={{position:'absolute', left:3, top:5, height: 185, width:130, backgroundColor: '#CCC', borderBottomRightRadius: 8, borderTopRightRadius: 8}}/>
           <Image style={{height: 190, width: 130}} source={diaryImgList[data.diary.diarySetting.color]} resizeMode='contain'/>
           <View>
@@ -1574,7 +1690,6 @@ function AnimatableDiaryComponent(props){
     <TouchableOpacity onPress={eraseDiaryAlertHandler} style={{position: 'absolute', left: 18, top:18, backgroundColor: '#DDD', height: 34, width: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center'}}>
       <Text style={{fontWeight:'bold'}}>X</Text>
     </TouchableOpacity>
-    </Draggable>
   </View>
   );
 }
@@ -1782,6 +1897,8 @@ function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
     setMinusPos(value);
   }
 
+  console.log('diary state \n', data.diary.diarymessageList);
+
   return (
     <View style={{flex:1, flexDirection: 'column', backgroundColor: 'white'}}>
       {numberOfMessage === 0
@@ -1823,25 +1940,74 @@ function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
 
 // 마이페이지
 function MyPageScreen({navigation}) {
-  const [myDiaryCount, setMyDiaryCount] = React.useState(10);
-  const [totalCount, setTotalCount] = React.useState(256);
-  const [image, setImage] = React.useState(null);
+  const [myDiaryCount, setMyDiaryCount] = useState(10);
+  const [totalCount, setTotalCount] = useState(256);
+  const [image, setImage] = React.useState(userData.userImg);
+  const [username, setUsername] = useState(userData.username);
+  const [editMode, setEditMode] = useState(false);
+
+  const getPermissionAsync = async () => {
+    if (Constants.platform.ios) {
+      const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+      if (status !== 'granted') {
+        alert('카메라기능 사용자권한이 필요합니다.');
+      }
+    }
+  };
+
+  const onEndEditingHandler = () => {
+    userData.username = username;
+    console.log('onEndEditingHandler');
+    setEditMode(false);
+  };
+
+  const startEditModeHandler = () => {
+    if(!editMode){
+      setEditMode(true);
+    }
+  };
+
+  useFocusEffect(() => {
+    if(!editMode) setEditMode(false);
+  });
+
+  const _pickImage = async () => {
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+      if (!result.cancelled) {
+        userData.userImg = result;
+        setImage(result);
+      }
+
+      console.log(result);
+    } catch (E) {
+      console.log(E);
+    }
+  };
 
   return (
     <View style={{flex:1, flexDirection: 'column'}}>
       <View style={{margin:15, marginBottom: 0, alignItems: 'center', borderBottomWidth: 1, height: 170, justifyContent: 'center'}}>
-        <TouchableOpacity onPress={()=>{}}>
+        <TouchableOpacity onPress={()=>getPermissionAsync().then(_pickImage()).catch(e => console.log('getPermissionAsync error: ', e))}>
           {image
-            ? <Image source={{uri: image}} style={{height: 80, width: 80, borderRadius: 40, backgroundColor: 'gray', marginTop: 20, marginBottom: 12}}/>
-            : <View style={{height: 80, width: 80, borderRadius: 40, backgroundColor: 'gray', marginTop: 20, marginBottom: 12}}/>
+            ? <Image source={image} style={{height: 80, width: 80, borderRadius: 40, backgroundColor: '#EEE', marginTop: 20, marginBottom: 12}}/>
+            : <Image source={defaultUser} style={{height: 80, width: 80, borderRadius: 40, backgroundColor: '#EEE', marginTop: 20, marginBottom: 12}}/>
           }
         </TouchableOpacity>
-        <TouchableOpacity onPress={()=>{}}>
-          <View style={{flexDirection: 'row'}}>
-            <Text style={{fontWeight: 'bold', fontSize: 20, marginLeft: 20}}>사용자 이름</Text>
+        <View style={{flexDirection: 'row'}}>
+          {editMode
+          ? <TextInput autoFocus={true} maxLength={10} selectTextOnFocus={true} onEndEditing={onEndEditingHandler} style={{fontWeight: 'bold', fontSize: 20, marginLeft: 20}} value={username}  onChangeText={text=>setUsername(text)}/>
+          : <Text style={{fontWeight: 'bold', fontSize: 20, marginLeft: 20}}>{username}</Text>
+          }
+          <TouchableOpacity onPress={startEditModeHandler}>
             <EvilIcons name="pencil" size={30} color="black"  style={{marginLeft:5, justifyContent: 'center'}}/>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
       </View>
       <View style={{}}>
         <View style={{marginHorizontal: 15, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#DDD'}}>
