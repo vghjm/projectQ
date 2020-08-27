@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Dimensions , ActivityIndicator, Platform,TouchableHighlight, TouchableWithoutFeedback, AsyncStorage, ImageBackground, Text, View, StyleSheet, TouchableOpacity, TextInput, CheckBox, KeyboardAvoidingView, Alert, Button, ScrollView, SafeAreaView, Image }
+import { Clipboard, Dimensions , ActivityIndicator, Platform,TouchableHighlight, TouchableWithoutFeedback, AsyncStorage, ImageBackground, Text, View, StyleSheet, TouchableOpacity, TextInput, CheckBox, KeyboardAvoidingView, Alert, Button, ScrollView, SafeAreaView, Image }
 from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, getFocusedRouteNameFromRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -23,10 +23,17 @@ import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npm
 import { GiftedChat, Bubble , Send, InputToolbar, Time, Day, Composer } from 'react-native-gifted-chat' // https://github.com/FaridSafi/react-native-gifted-chat
 import Draggable from 'react-native-draggable'; // https://github.com/tongyy/react-native-draggable
 import * as Font from 'expo-font';          // https://docs.expo.io/versions/latest/sdk/font/
+import uuid from 'react-native-uuid';       // https://www.npmjs.com/package/react-native-uuid
+import Hyperlink from 'react-native-hyperlink'; // https://www.npmjs.com/package/react-native-hyperlink
+import * as WebBrowser from 'expo-web-browser';
+import * as Print from 'expo-print'
+import * as Sharing from 'expo-sharing'
+import * as FileSystem from 'expo-file-system'
 
 // https://velog.io/@max9106/React-Native-%EB%A6%AC%EC%95%A1%ED%8A%B8-%EB%84%A4%EC%9D%B4%ED%8B%B0%EB%B8%8Creact-native-%ED%91%B8%EC%8B%9C%EC%95%8C%EB%9E%8C-expo-jkk16hzg5d
-const PUSH_REGISTRATION_ENDPOINT = 'http://d9123c6a6cd1.ngrok.io/pushalarm/token';
-const MESSAGE_ENPOINT = 'http://d9123c6a6cd1.ngrok.io/pushalarm/message';
+const HTTP = 'http://7add0d616f36.ngrok.io';
+const PUSH_REGISTRATION_ENDPOINT = HTTP+'/pushalarm/token';
+const MESSAGE_ENPOINT = HTTP+'pushalarm/message';
 
 const introImage1 = {uri: "https://cdn.crowdpic.net/detail-thumb/thumb_d_F78FC0AA8923C441588C382B19DF0BF8.jpg"};
 const introImage2 = {uri: "https://previews.123rf.com/images/romeolu/romeolu1601/romeolu160100122/50594417-%EB%88%88-%EB%B0%B0%EA%B2%BD.jpg"};
@@ -66,154 +73,30 @@ const MyServiceStack = createStackNavigator();
 const ServiceCenterStack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 
-// 새로운 임시 데이터
-let defaultQuestionListData = [
-  '오늘은 어땠어?',
-  '오늘의 가장 즐거웠던 점은 뭐야?',
-  '랜덤~ 랜덤~ 질문',
-  '오늘의 날씨는 어땠어?',
-  '이 앱은 어떤거 같아?',
-  '오늘의 점심은 뭐야?',
-  '7은 행운의 숫자지',
+// 임시 데이터
+const noticeMessage = [
+  {
+    id: 1,
+    title: '위치기반 서비스 이용약관 사전 안내',
+    date: '2019-03-26',
+    message: '안녕하세요 큐모먼트입니다.\n큐모먼트서비스를 이용해 주셔서 감사합니다. 앞으로도 큐모먼트에 많은 성원 부탁드립니다.\n다이어리 다운로드 방법\n\n1. PDF다운로드 받기\n2. 링크 내보내기'
+  }, {
+    id: 2,
+    title: '제목이 너무 길면 어떻게 되는지 알고 싶어요 제목이 너무 길면 어떻게 되는지 알고 싶어요',
+    date: '2020-07-22',
+    message: '안녕하세요 큐모먼트입니다.\n큐모먼트서비스를 이용해 주셔서 감사합니다. 앞으로도 큐모먼트에 많은 성원 부탁드립니다.\n다이어리 다운로드 방법\n\n1. PDF다운로드 받기\n2. 링크 내보내기'
+  }
 ];
-
-let defaultProductData = {
-  title: '임시 구독상품명',
-  text: '구독상품 소개 문구, 50자 이내 25자씩 2줄 디자인 상품 배경 이미지 제작, 디자인 상품 로고 제작, 디자인 상품 소개 이미지 정방형 디자인 상품 소개',
-  imageSet: {thumbnailImg: defaultImg, logoImg: defaultImg, mainImg: defaultImg, avatarImg: defaultImg},
-  questionList: defaultQuestionListData,
-};
-let catProductData = {
-  title: '고양이 상품',
-  text: '귀여운 고양이 상품을 구독하고 고양이 알림을 받으세요.',
-  imageSet: {thumbnailImg: catImg, logoImg: catImg, mainImg: catImg, avatarImg: catImg},
-  questionList: defaultQuestionListData,
-};
-let dogProductData = {
-  title: '댕댕이 상품',
-  text: '귀여운 멍멍이 상품을 구독하고 댕댕이 알림을 받으세요.',
-  imageSet: {thumbnailImg: dogImg, logoImg: dogImg, mainImg: dogImg, avatarImg: dogImg},
-  questionList: defaultQuestionListData,
-};
-let carmelProductData = {
-  title: '낙타 상품',
-  text: '귀여운 낙타 상품을 구독하고 CARMEL 알림을 받으세요.',
-  imageSet: {thumbnailImg: carmelImg, logoImg: carmelImg, mainImg: carmelImg, avatarImg: carmelImg},
-  questionList: defaultQuestionListData,
-};
-
-let defaultChatmessageListData = [];
-let testChatmessageListData = [
+const helpMessage = [
   {
-    _id: 7, text: '나의 오늘 답변1', createdAt: Moment('2019-06-24 01:09:34'),
-    user: { _id:1},
-  },
-  { _id: 6, text: '오늘 뭐 했어?', createdAt: Moment('2019-06-23 01:09:34'),
-    user: { _id:2, avatar: 'https://www.daelim.ac.kr/coming_soon.jpg',}
-  },
-  {
-    _id: 5, text: '나의 이전 답변3', createdAt: Moment('2019-06-22 01:09:34'),
-    user: { _id:1},
-  },
-  {
-    _id: 4, text: '나의 이전 답변2', createdAt: Moment('2019-06-21 01:09:34'),
-    user: { _id:1},
-  },
-  {
-    _id: 3, text: '나의 이전 답변1', createdAt: Moment('2019-06-20 01:09:34'),
-    user: { _id:1,},
-  },
-  { _id: 2, text: '오늘 뭐 했어?', createdAt: Moment('2019-06-19 01:09:34'),
-    user: { _id:2, avatar: 'https://www.daelim.ac.kr/coming_soon.jpg',}
-  },
-  {
-    _id: 1, text: '상품정보명' + ' 채팅방입니다.', createdAt: Moment('2019-06-18 01:09:34'),
-    user: { _id:2, avatar: 'https://www.daelim.ac.kr/coming_soon.jpg',},
-  },
-];
-let catChatmessageListData = [
-  {
-    _id: 7, text: '나의 오늘 답변1', createdAt: Moment('2019-06-24 01:09:34'),
-    user: { _id:1},
-  },
-  { _id: 6, text: '오늘 뭐 했어?', createdAt: Moment('2019-06-23 01:09:34'),
-    user: { _id:2, avatar: 'https://image-notepet.akamaized.net/resize/620x-/seimage/20190816%2Ff07bd9f247293aa0317f2c8faba7e83b.png',}
-  },
-  {
-    _id: 5, text: '나의 이전 답변3', createdAt: Moment('2019-06-22 01:09:34'),
-    user: { _id:1},
-  },
-  {
-    _id: 4, text: '나의 이전 답변2', createdAt: Moment('2019-06-21 01:09:34'),
-    user: { _id:1},
-  },
-  {
-    _id: 3, text: '나의 이전 답변1', createdAt: Moment('2019-06-20 01:09:34'),
-    user: { _id:1,},
-  },
-  { _id: 2, text: '오늘 뭐 했어?', createdAt: Moment('2019-06-19 01:09:34'),
-    user: { _id:2, avatar: 'https://image-notepet.akamaized.net/resize/620x-/seimage/20190816%2Ff07bd9f247293aa0317f2c8faba7e83b.png',}
-  },
-  {
-    _id: 1, text: '상품정보명' + ' 채팅방입니다.', createdAt: Moment('2019-06-18 01:09:34'),
-    user: { _id:2, avatar: 'https://image-notepet.akamaized.net/resize/620x-/seimage/20190816%2Ff07bd9f247293aa0317f2c8faba7e83b.png',},
-  },
-];
-let carmelChatmessageListData = [
-  {
-    _id: 7, text: '나의 오늘 답변1', createdAt: Moment('2019-06-24 01:09:34'),
-    user: { _id:1},
-  },
-  { _id: 6, text: '오늘 뭐 했어?', createdAt: Moment('2019-06-23 01:09:34'),
-    user: { _id:2, avatar: 'https://www.jain.re.kr/file/contents/1/201609/30aade86-7056-4948-86a4-a8003c4498ab.jpg',}
-  },
-  {
-    _id: 5, text: '나의 이전 답변3', createdAt: Moment('2019-06-22 01:09:34'),
-    user: { _id:1},
-  },
-  {
-    _id: 4, text: '나의 이전 답변2', createdAt: Moment('2019-06-21 01:09:34'),
-    user: { _id:1},
-  },
-  {
-    _id: 3, text: '나의 이전 답변1', createdAt: Moment('2019-06-20 01:09:34'),
-    user: { _id:1,},
-  },
-  { _id: 2, text: '오늘 뭐 했어?', createdAt: Moment('2019-06-19 01:09:34'),
-    user: { _id:2, avatar: 'https://www.jain.re.kr/file/contents/1/201609/30aade86-7056-4948-86a4-a8003c4498ab.jpg',}
-  },
-  {
-    _id: 1, text: '상품정보명' + ' 채팅방입니다.', createdAt: Moment('2019-06-18 01:09:34'),
-    user: { _id:2, avatar: 'https://www.jain.re.kr/file/contents/1/201609/30aade86-7056-4948-86a4-a8003c4498ab.jpg',},
-  },
-];
-let dogChatmessageListData = [
-  {
-    _id: 7, text: '나의 오늘 답변1', createdAt: Moment('2019-06-24 01:09:34'),
-    user: { _id:1},
-  },
-  { _id: 6, text: '오늘 뭐 했어?', createdAt: Moment('2019-06-23 01:09:34'),
-    user: { _id:2, avatar: 'https://t1.daumcdn.net/cfile/tistory/24283C3858F778CA2E',}
-  },
-  {
-    _id: 5, text: '나의 이전 답변3', createdAt: Moment('2019-06-22 01:09:34'),
-    user: { _id:1},
-  },
-  {
-    _id: 4, text: '나의 이전 답변2', createdAt: Moment('2019-06-21 01:09:34'),
-    user: { _id:1},
-  },
-  {
-    _id: 3, text: '나의 이전 답변1', createdAt: Moment('2019-06-20 01:09:34'),
-    user: { _id:1,},
-  },
-  { _id: 2, text: '오늘 뭐 했어?', createdAt: Moment('2019-06-19 01:09:34'),
-    user: { _id:2, avatar: 'https://t1.daumcdn.net/cfile/tistory/24283C3858F778CA2E',}
-  },
-  {
-    _id: 1, text: '상품정보명' + ' 채팅방입니다.', createdAt: Moment('2019-06-18 01:09:34'),
-    user: { _id:2, avatar: 'https://t1.daumcdn.net/cfile/tistory/24283C3858F778CA2E',},
-  },
+    id: 1,
+    question: '다이어리를 다운받고 싶어요.',
+    answer: '안녕하세요 큐모먼트입니다.\n큐모먼트서비스를 이용해 주셔서 감사합니다. 앞으로도 큐모먼트에 많은 성원 부탁드립니다.\n다이어리 다운로드 방법\n\n1. PDF다운로드 받기\n2. 링크 내보내기'
+  }, {
+    id:2,
+    question: '제목이 너무 길면 어떻게 되는지 알고 싶어요 제목이 너무 길면 어떻게 되는지 알고 싶어요',
+    answer: '안녕하세요 큐모먼트입니다.\n큐모먼트서비스를 이용해 주셔서 감사합니다. 앞으로도 큐모먼트에 많은 성원 부탁드립니다.\n다이어리 다운로드 방법\n\n1. PDF다운로드 받기\n2. 링크 내보내기'
+  }
 ];
 
 let thankQChatmessageListData = [
@@ -345,119 +228,10 @@ let qTalkDiaryMessageListData = [
   { _id: 2, text: '오늘은 집에 왔는데 너무 귀찮아서 놀았어.\n재밌는 영상 보면서 뒹굴거리니깐 안락해ㅋㅋ\n너무 생각없이 놀았나 싶기도 하고 ㅠㅠ', createdAt: Moment('20200811 2108'), islagacy: true, linkedMessageList: []},
   { _id: 3, text: '오늘은 동료들끼리 고기를 좀 구웠어~\n우리가 갔던 곳이 정말 맛있는 집이여서 기분이 좋았어.\n같이 얘기도 하고 고기도 먹으니 신났어', createdAt:Moment('20200812 2110'), islagacy: true, linkedMessageList: []},
   { _id: 4, text: '오늘 특별한 일이 없었던거 같아.\n그냥 열심히 일하고, 기분도 딱히 나쁘지 않았던거 같아.\n하루를 끝내기는 조금 아쉬우니 집 앞에\n산책이나 다녀오려고 해.', createdAt: Moment('20200813 2105'), islagacy: true, linkedMessageList: []},
-]
-
-
-let defaultChatroomSettingData = {
-  getPushAlarm: true,
-};
-let testChatroomSettingData = {
-  getPushAlarm: true,
-};
-
-// chatroom
-let defaultChatroomData = {
-  lastMessageTime: Moment('20200314 1405'), newItemCount: 5, lastId:0, chatmessageList: defaultChatmessageListData, chatroomSetting: defaultChatroomSettingData,
-};
-let testChatroomData = {
-  lastMessageTime: Moment('20200314 1405'), newItemCount: 5, lastId:7, chatmessageList: testChatmessageListData, chatroomSetting: testChatroomSettingData,
-};
-let catChatroomData = {
-  lastMessageTime: Moment('20200314 1405'), newItemCount: 5, lastId:7, chatmessageList: catChatmessageListData, chatroomSetting: defaultChatroomSettingData,
-};
-let dogChatroomData = {
-  lastMessageTime: Moment('20200314 1405'), newItemCount: 5, lastId:7, chatmessageList: dogChatmessageListData, chatroomSetting: defaultChatroomSettingData,
-};
-let carmelChatroomData = {
-  lastMessageTime: Moment('20200314 1405'), newItemCount: 5, lastId:7, chatmessageList: carmelChatmessageListData, chatroomSetting: defaultChatroomSettingData,
-};
-
-let defaultDiarymessageLsitData = [];
-let testDiarymessageLsitData = [
-  { _id: 1, text: '나의 엤날 답변1', createdAt: Moment('20200314 1405'), islagacy: true, linkedMessageList: []},
-  { _id: 2, text: '나의 엤날 답변2', createdAt: Moment('2020-03-15 14:06'), islagacy: true, linkedMessageList: []},
-  { _id: 3, text: '나의 엤날 답변3', createdAt: Moment('2020-03-16 14:10'), islagacy: true, linkedMessageList: []},
-  { _id: 4, text: '나의 엤날 답변4', createdAt: Moment('2020-03-19 14:05'), islagacy: true, linkedMessageList: []},
-  { _id: 5, text: '나의 엤날 답변5', createdAt: Moment('2020-05-21 14:06'), islagacy: true, linkedMessageList: []},
-  { _id: 6, text: '나의 엤날 답변6 나의 엤날 답변7 나의 엤날 답변8 나의 엤날 답변9', createdAt: Moment('2020-05-27 14:10'), islagacy: true, linkedMessageList: []},
 ];
-let catDiarymessageLsitData = [
-  { _id: 1, text: '나의 엤날 답변1', createdAt: Moment('20190826 1405'), islagacy: true, linkedMessageList: []},
-  { _id: 2, text: '나의 엤날 답변2', createdAt: Moment('2020-03-16 12:06'), islagacy: true, linkedMessageList: []},
-  { _id: 3, text: '나의 엤날 답변3', createdAt: Moment('2020-03-16 14:10'), islagacy: true, linkedMessageList: []},
-  { _id: 4, text: '나의 엤날 답변4', createdAt: Moment('2020-03-16 15:05'), islagacy: true, linkedMessageList: []},
-  { _id: 5, text: '나의 엤날 답변5', createdAt: Moment('2020-05-16 16:06'), islagacy: true, linkedMessageList: []},
-  { _id: 6, text: '나의 엤날 답변6 나의 엤날 답변7 나의 엤날 답변8 나의 엤날 답변9', createdAt: Moment('2020-05-27 14:10'), islagacy: true, linkedMessageList: []},
-];
-let dogDiarymessageLsitData = [
-  { _id: 1, text: '나의 엤날 답변1', createdAt: Moment('20200314 1405'), islagacy: true, linkedMessageList: []},
-  { _id: 2, text: '나의 엤날 답변2', createdAt: Moment('2020-03-15 14:06'), islagacy: true, linkedMessageList: []},
-  { _id: 3, text: '나의 엤날 답변3', createdAt: Moment('2020-03-16 14:10'), islagacy: true, linkedMessageList: []},
-  { _id: 4, text: '나의 엤날 답변4', createdAt: Moment('2020-03-19 14:05'), islagacy: true, linkedMessageList: []},
-  { _id: 5, text: '나의 엤날 답변5', createdAt: Moment('2020-05-21 14:06'), islagacy: true, linkedMessageList: []},
-  { _id: 6, text: '나의 엤날 답변6 나의 엤날 답변7 나의 엤날 답변8 나의 엤날 답변9', createdAt: Moment('2020-05-21 15:10'), islagacy: true, linkedMessageList: []},
-];
-let carmelDiarymessageLsitData = [
-  { _id: 1, text: '나의 엤날 답변1', createdAt: Moment('20200314 1405'), islagacy: true, linkedMessageList: []},
-  { _id: 2, text: '나의 엤날 답변2', createdAt: Moment('2020-03-14 15:06'), islagacy: true, linkedMessageList: []},
-  { _id: 3, text: '나의 엤날 답변3', createdAt: Moment('2020-03-14 16:10'), islagacy: true, linkedMessageList: []},
-  { _id: 4, text: '나의 엤날 답변4', createdAt: Moment('2020-03-14 17:05'), islagacy: true, linkedMessageList: []},
-  { _id: 5, text: '나의 엤날 답변5', createdAt: Moment('2020-05-21 18:06'), islagacy: true, linkedMessageList: []},
-  { _id: 6, text: '나의 엤날 답변6 나의 엤날 답변7 나의 엤날 답변8 나의 엤날 답변9', createdAt: Moment('2020-05-27 14:10'), islagacy: true, linkedMessageList: []},
-];
-
-let defaultDiarySettingData = {
-  position: 1,
-  color: 1,
-};
-let testDiarySettingData = {
-  color: 2,
-};
-let catDiarySettingData = {
-  color: 3,
-};
-let dogDiarySettingData = {
-  color: 4,
-};
-let carmelDiarySettingData = {
-  color: 5,
-};
-
-// diary
-let testDiaryData = {
-  makeTime: Moment('20200421 1405'), lastId:6, diaryImg: diaryImg, totalUpdateCount: 5, diarymessageList: testDiarymessageLsitData, diarySetting: testDiarySettingData,
-};
-let defaultDiaryData = {
-  makeTime: Moment(), lastId:0, diaryImg: diaryImg, totalUpdateCount: 5, diarymessageList: defaultDiarymessageLsitData, diarySetting: defaultDiarySettingData,
-};
-let catDiaryData = {
-  makeTime: Moment('20200421 1405'), lastId:6, diaryImg: diaryImg, totalUpdateCount: 19, diarymessageList: catDiarymessageLsitData, diarySetting: catDiarySettingData,
-};
-let dogDiaryData = {
-  makeTime: Moment('20200517 2318'), lastId:6, diaryImg: diaryImg, totalUpdateCount: 4, diarymessageList: dogDiarymessageLsitData, diarySetting: dogDiarySettingData,
-};
-let carmelDiaryData = {
-  makeTime: Moment('20200801 1123'), lastId:6, diaryImg: diaryImg, totalUpdateCount: 32, diarymessageList: carmelDiarymessageLsitData, diarySetting: carmelDiarySettingData,
-};
-
-// push
-let defaultPushData = {
-  isRandomPushType: false, pushStartTime: Moment('20200805 090000'), pushEndTime: Moment(),
-};
-let catPushData = {
-  isRandomPushType: true, pushStartTime: Moment('20200805 090000'), pushEndTime: Moment(),
-};
-let dogPushData = {
-  isRandomPushType: false, pushStartTime: Moment('20200805 090000'), pushEndTime: Moment(),
-};
-let carmelPushData = {
-  isRandomPushType: false, pushStartTime: Moment('20200805 090000'), pushEndTime: Moment(),
-};
-
-
 
 let realTestData1 = {
-  id: 1, isAvailable: true, hasDiary:true, hasChatroom: true, isSubscribe:false,
+  id: 1, isAvailable: true, hasDiary:true, hasChatroom: true, isSubscribe:true,
   product: {
     title: 'THANK Q 감사노트',
     text: '매일 당신에게 질문하는 감사 일기장',
@@ -480,17 +254,17 @@ let realTestData1 = {
     ]
   },
   chatroom: {
-    lastMessageTime: Moment('20200705 0811'), newItemCount: 0, lastId:10, chatmessageList: thankQChatmessageListData, chatroomSetting: {color: 0},
+    lastMessageTime: Moment('20200705 0811'), newItemCount: 0, chatmessageList: thankQChatmessageListData,
   },
   diary: {
-    makeTime: Moment('20200702 211034'), lastId:0, totalUpdateCount: 0, diarymessageList: [], diarySetting: {color: 4, pos:1}
+    makeTime: Moment('20200702 211034'), totalUpdateCount: 0, diarymessageList: []
   },
   push: {
     isRandomPushType: false, pushStartTime: Moment('20200812 0830'), pushEndTime: Moment('20200812 0830'),
   },
 };
 let realTestData2 = {
-  id: 2, isAvailable: true, hasDiary:true, hasChatroom: true, isSubscribe:false,
+  id: 2, isAvailable: true, hasDiary:true, hasChatroom: true, isSubscribe:true,
   product: {
     title: 'Q 하이라이트',
     text: '오늘을 의미있게 만들 순간을, 미리 적는 일기장',
@@ -519,10 +293,10 @@ let realTestData2 = {
     ]
   },
   chatroom: {
-    lastMessageTime:  Moment('20200712 0842'), newItemCount: 0, lastId:10, chatmessageList: highlightChatmessageListData, chatroomSetting: {color: 0},
+    lastMessageTime:  Moment('20200712 0842'), newItemCount: 0,  chatmessageList: highlightChatmessageListData,
   },
   diary: {
-    makeTime:  Moment('20200709 221034'), lastId:0, totalUpdateCount: 0, diarymessageList: [], diarySetting: {color: 5, pos:2}
+    makeTime:  Moment('20200709 221034'),  totalUpdateCount: 0, diarymessageList: [],
   },
   push: {
     isRandomPushType: false, pushStartTime: Moment('20200812 0830'), pushEndTime: Moment('20200812 0830'),
@@ -555,13 +329,13 @@ let realTestData3 = {
     ]
   },
   chatroom: {
-    lastMessageTime: Moment('20200813 2107'), newItemCount: 0, lastId:11, chatmessageList: qTalkChatmessageListData, chatroomSetting: {color: 0},
+    lastMessageTime: Moment('20200813 2107'), newItemCount: 0,  chatmessageList: qTalkChatmessageListData,
   },
   diary: {
-    makeTime: Moment('20200809 233834'), lastId:4, totalUpdateCount: 4, diarymessageList: qTalkDiaryMessageListData, diarySetting: {color: 9, pos:3}
+    makeTime: Moment('20200809 233834'), totalUpdateCount: 4, diarymessageList: qTalkDiaryMessageListData,
   },
   push: {
-    isRandomPushType: false, pushStartTime: Moment('20200812 2100'), pushEndTime: Moment(),
+    isRandomPushType: true, pushStartTime: Moment('20200812 0830'), pushEndTime: Moment('20200812 1130'),
   },
 };
 
@@ -576,21 +350,41 @@ let userData = {
   email: 'aa2@naver.com',
   password: '1234!',
   userImg: null,
-  numberOfSubscribe: 3,
-  numberOfChatroom: 3,
-  numberOfDiary: 3,
-  myDiaryList: [{id:1, pos:1}, {id:2, pos:2}, {id:3, pos:3}],
-  chatroomOrder: [1, 2, 3],
-  lastDiaryColor: 1,      // 다이어리 색 분배의 유사랜덤
+  mySubscribeList: [{id:1, pushStartTime: Moment('20200811 0830'), pushEndTime: Moment('20200811 0830')}, {id:2, pushStartTime: Moment('20200811 0830'), pushEndTime: Moment('20200811 0830')}, {id:3, pushStartTime: Moment('20200812 0830'), pushEndTime: Moment('20200812 1130')}],
+  myChatroomList: [{id:1, getPushAlarm:true, key:'1'}, {id:2, getPushAlarm:false, key:'2'}, {id:3, getPushAlarm:true, key:'3'}],
+  myDiaryList: [{id:1, pos:1, color:1}, {id:2, pos:2, color:2}, {id:3, pos:3, color:3}],
+};
+let informData = {
+  introduction: [],
+  help: helpMessage,
+  notice: noticeMessage,
 };
 
+// 기기 화면 사이즈
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
+
 // 컨트롤 변수
 let pressDiaryEditButton = false;  // diary 편집버튼 누름 상태값
 let global_p_id = 0;               // 채팅창 사이드 메뉴에서 다른 상품정보로 보내기 위한 상품 id 값
 let editDiaryTextMode = false;     // 다이어리 편집모드 상태값
 let global_y = 0;         // 다이어리리스트 스크린의 스크롤 값
+
+// 유용한 함수
+function chooseRandomly(a){
+  return a[Math.floor(Math.random() * a.length)];
+}
+function diarySortByDate(myDiaryMessageList){
+  myDiaryMessageList.sort((a, b) => {
+    return a.createdAt > b.createdAt;
+  });
+}
+function isEmail(email){
+  const emailRegex = /^(([^<>()\[\].,;:\s@"]+(\.[^<>()\[\].,;:\s@"]+)*)|(".+"))@(([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{2,})$/i;
+
+  return emailRegex.test(email);
+}
+
 
 // 인증 페이지
 function IntroScreen1() {
@@ -621,7 +415,7 @@ function IntroScreen3() {
   return (
     <ImageBackground source={introImage3} style={{resizeMode: 'cover', flex:1, flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-end'}}>
       <TouchableOpacity onPress={introSkip}>
-        <Text style={{fontSize: 24, color: 'blue', marginRight: 40, marginBottom: 40}}>[로그인]</Text>
+        <Text style={{fontSize: 24, color: 'blue', marginRight: 40, marginBottom: 40}}>[가입하기]</Text>
       </TouchableOpacity>
     </ImageBackground>
   );
@@ -641,6 +435,51 @@ function SignInScreen({navigation}){
   const [autoLoginChecked, setAutoLoginChecked] = React.useState(true);
   const { signIn } = React.useContext(AuthContext);
 
+
+
+  const loginHandler = async () => {
+    // email check
+    // https://velog.io/@marcus/React-Form-Login-Validation-fpjsepzu0x
+    if(isEmail(username)){
+      console.log(`email: ${username}, password:${password}`);
+      let response = await fetch(HTTP+'/user/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json;charset=utf-8',
+        },
+        body: JSON.stringify({
+          email: username,
+          password: password
+        }),
+      });
+
+      if (response.ok) { // HTTP 상태 코드가 200~299일 경우
+        // 응답 몬문을 받습니다(관련 메서드는 아래에서 설명).
+        let json = await response.json();
+        console.log('response\n', json);
+        if(json.res === 'no email'){
+          Alert.alert('해당하는 이메일의 계정이 없습니다.');
+        }else if(json.res === 'password mismatch'){
+          Alert.alert('비밀번호가 일치하지 않습니다.');
+        }else if(json.res === 'success'){
+          userData.token = json.token;
+          console.log('login success\ntoken: ', userData.token);
+          userData.email = username;
+          userData.password = password;
+          signIn([username, password, true]);
+        }
+
+      } else {
+        // 서버와 연결이 안됨
+        Alert.alert('서버와 연결이되지 않습니다.');
+      }
+
+    }else{
+      Alert.alert('이메일 형식이 잘못되었습니다.');
+    }
+
+  }
+
   return (
       <ScrollView style={{marginTop:30}}>
       <View style={{flex:1, flexDirection: 'column', alignItems: 'center'}}>
@@ -652,7 +491,7 @@ function SignInScreen({navigation}){
             <CheckBox title="autoLoginCheckBox" value={autoLoginChecked} onValueChange={()=>setAutoLoginChecked(!autoLoginChecked)}/>
             <Text style={{marginTop: 3}}>자동로그인</Text>
           </View>
-          <TouchableOpacity style={{alignItems: 'center', padding: 10, backgroundColor: '#BBB'}} onPress={()=>signIn([username, password, true])}>
+          <TouchableOpacity style={{alignItems: 'center', padding: 10, backgroundColor: '#BBB'}} onPress={loginHandler}>
             <Text style={{fontSize: 21}}>로그인</Text>
           </TouchableOpacity>
           <View style={{flexDirection: 'row', justifyContent: 'center'}}>
@@ -668,9 +507,46 @@ function SignInScreen({navigation}){
 function FindPasswordScreen({navigation}){
   const [email, setEmail] = React.useState('');
   const [username, setUsername] = React.useState('');
-  const [emailError, setEmailError] = React.useState(true);
-  const [usernameError, setUsernameError] = React.useState(true);
-  const [findPasswordError, setFindPasswordError] = React.useState(true);
+  const [emailError, setEmailError] = React.useState(false);
+  const [usernameError, setUsernameError] = React.useState(false);
+  const [findPasswordError, setFindPasswordError] = React.useState(false);
+
+  const findPasswordHandler = async () => {
+    console.log('findPasswordHandler');
+
+    if(!isEmail(email)){
+      if(!emailError) setEmailError(true);
+      return;
+    }
+
+    let response = await fetch(HTTP+'/user/findpw', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8'
+      },
+      body: JSON.stringify({
+        email: email,
+      }),
+    });
+
+    if (response.ok) { // HTTP 상태 코드가 200~299일 경우
+      // 응답 몬문을 받습니다.
+      let json = await response.json();
+      console.log('response\n', json);
+      if(json.res === 'send email success'){
+        Alert.alert('이메일로 새로운 임시 비밀번호를 보냈습니다.', '',[{text: '확인', onPress:() => navigation.popToTop()}]);
+      }else if(json.res === 'send email failed'){
+        Alert.alert('메일 발송이 불가능한 이메일 주소입니다.');
+      }else if(json.res === 'No existing email'){
+        //Alert.alert('미등록된 이메일 주소입니다.');
+        if(!findPasswordError) setFindPasswordError(true);
+      }
+    } else {
+      // 서버와 연결이 안됨
+      Alert.alert('서버와 연결이되지 않습니다.');
+    }
+
+  }
 
   return (
     <View style={{flex:1, flexDirection: 'column'}}>
@@ -679,7 +555,7 @@ function FindPasswordScreen({navigation}){
       <TextInput placeholder='사용자명' style={{borderWidth: 1, margin: 20, marginTop: 10, padding: 5, backgroundColor: '#DDD'}} value={username} onChangeText={(e)=>setUsername(e)} />
       {usernameError && <Text style={{color: 'red', fontSize: 12, marginBottom: 10, marginLeft: 30}}>해당 사용자명이 존재하지 않습니다.</Text>}
       {findPasswordError && <Text style={{color: 'red', fontSize: 12, marginBottom: 10, marginLeft: 30, marginTop: 20}}>입력하신 정보와 일치하는 계정이 없습니다.</Text>}
-      <TouchableOpacity style={{height: 50, margin:20, backgroundColor: '#BBB', alignItems: 'center', justifyContent: 'center'}} onPress={()=>{Alert.alert('제목', '팝업 확인 내용 여기에'); navigation.popToTop();}}>
+      <TouchableOpacity style={{height: 50, margin:20, backgroundColor: '#BBB', alignItems: 'center', justifyContent: 'center'}} onPress={findPasswordHandler}>
         <Text>확인</Text>
       </TouchableOpacity>
     </View>
@@ -689,10 +565,81 @@ function SignUpScreen({navigation}){
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [password2, setPassword2] = React.useState('');
-  const [errorEmailForm, setErrorEmailForm] = React.useState(true);
-  const [errorPasswordForm, setErrorPasswordForm] = React.useState(true);
-  const [errorPasswordNotCorrect, setErrorPasswordNotCorrect] = React.useState(true);
+  const [errorEmailForm, setErrorEmailForm] = React.useState(false);
+  const [errorPasswordForm, setErrorPasswordForm] = React.useState(false);
+  const [errorPasswordNotCorrect, setErrorPasswordNotCorrect] = React.useState(false);
   const { signIn } = React.useContext(AuthContext);
+
+  const informTermsOfUse = () => {
+    // 이용약관
+    WebBrowser.openBrowserAsync('https://www.notion.so/c12e0571d8034d83add6d9976cbf4725');
+  };
+  const personalTerm = () => {
+    // 개인정보
+    WebBrowser.openBrowserAsync('https://www.notion.so/de2d25d45cb641319df224c4b325df96');
+  };
+  const signUpHandler = async () => {
+    let errorCount = 0;
+
+    // 이메일 형식 확인
+    if(isEmail(email)){
+      if(errorEmailForm) setErrorEmailForm(false);
+    }else{
+      errorCount++;
+      if(!errorEmailForm) setErrorEmailForm(true);
+    }
+
+    // 비밀번호 형식 확인
+    if(password.length > 5){
+      if(errorPasswordForm) setErrorPasswordForm(false);
+    }else{
+      errorCount++;
+      if(!errorPasswordForm) setErrorPasswordForm(true);
+    }
+
+    // 비밀번효 확인
+    if(password === password2){
+      if(errorPasswordNotCorrect) setErrorPasswordNotCorrect(false);
+    }else{
+      errorCount++;
+      if(!errorPasswordNotCorrect) setErrorPasswordNotCorrect(true);
+    }
+
+    if(errorCount === 0){
+      // 통과
+      console.log(`SignUp email:${email}, password:${password}`);
+
+      let response = await fetch(HTTP+'/user/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json;charset=utf-8'
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          name : 'default name',
+        }),
+      });
+
+      if (response.ok) { // HTTP 상태 코드가 200~299일 경우
+        // 응답 몬문을 받습니다.
+        let json = await response.json();
+        console.log('response\n', json);
+        if(json.res === 'already existing email'){
+          Alert.alert('이미 존재하는 이메일 입니다.');
+        }else if(json.res === 'signup success'){
+          console.log('signUp success');
+          userData.email = email;
+          userData.password = password;
+          navigation.navigate('SetUsername');
+          signIn([email, password, false]);
+        }
+      } else {
+        // 서버와 연결이 안됨
+        Alert.alert('서버와 연결이되지 않습니다.');
+      }
+    }
+  }
 
   return (
     <View>
@@ -723,13 +670,13 @@ function SignUpScreen({navigation}){
         </View>
         <View style={{flexDirection: 'row'}}>
           <Text style={styles.smallText}>회원가입 시 </Text>
-          <TouchableOpacity onPress={()=>{navigation.navigate('InformTermsOfUse')}}><Text style={[styles.smallText, {color: '#22D'}]}>이용약관</Text></TouchableOpacity>
+          <TouchableOpacity onPress={informTermsOfUse}><Text style={[styles.smallText, {color: '#22D'}]}>이용약관</Text></TouchableOpacity>
           <Text style={styles.smallText}>과 </Text>
-          <TouchableOpacity onPress={()=>{navigation.navigate('InformPersonalInformationProcessingPolicy')}}><Text style={[styles.smallText, {color: '#22D'}]}>개인정보 처리방침</Text></TouchableOpacity>
+          <TouchableOpacity onPress={personalTerm}><Text style={[styles.smallText, {color: '#22D'}]}>개인정보 처리방침</Text></TouchableOpacity>
           <Text style={styles.smallText}>을 확인하였으며, 동의합니다. </Text>
         </View>
         <View>
-          <TouchableOpacity style={{alignItems: 'center', padding: 10, backgroundColor: '#BBB', width: 300, marginTop: 60}} onPress={()=>{navigation.navigate('SetUsername'); signIn([email, password, false])}}>
+          <TouchableOpacity style={{alignItems: 'center', padding: 10, backgroundColor: '#BBB', width: 300, marginTop: 60}} onPress={signUpHandler}>
             <Text>가입하기</Text>
           </TouchableOpacity>
         </View>
@@ -751,61 +698,30 @@ function UserNameSettingScreen({navigation}) {
         <TextInput value={username} onChangeText={(username)=>setUsername(username)} style={styles.singInInputBox} placeholder={"'사용자의 이름'"}/>
       </View>
       <View>
-        <TouchableOpacity style={{alignItems: 'center', padding: 10, backgroundColor: '#BBB', width: 300, marginTop: 60}} onPress={()=>registerUsername(username)}>
+        <TouchableOpacity style={{alignItems: 'center', padding: 10, backgroundColor: '#BBB', width: 300, marginTop: 60}} onPress={()=>{userData.username = username; registerUsername(username)}}>
           <Text>시작하기</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
 }
-function InformTermsOfUseScreen({navigation}) {
-  return (
-    <View style={{flex:1, flexDirection: 'column', margin: 35, flexWrap: 'wrap'}}>
-      <Text style={{fontWeight:'bold', color: 'black', fontSize: 13}}>이용약관1</Text>
-      <Text style={{fontSize: 12, marginBottom: 10}}>이용약관은 다음과 같다.</Text>
-      <Text style={{fontWeight:'bold', color: 'black', fontSize: 13}}>이용약관2</Text>
-      <Text style={{fontSize: 12, marginBottom: 10}}>이용약관은 다음과 같다.</Text>
-      <Text style={{fontWeight:'bold', color: 'black', fontSize: 13}}>이용약관3</Text>
-      <Text style={{fontSize: 12, marginBottom: 10}}>이용약관은 다음과 같다.</Text>
-    </View>
-  );
-}
-function InformPersonalInformationProcessingPolicyScreen({navigation}) {
-  return (
-    <View style={{flex:1, flexDirection: 'column', margin: 40, flexWrap: 'wrap'}}>
-      <Text style={{fontWeight:'bold', color: 'black', fontSize: 13}}>개인정보 처리방침1</Text>
-      <Text style={{fontSize: 12, marginBottom: 10}}>개인정보 처리방침은 다음과 같다.</Text>
-      <Text style={{fontWeight:'bold', color: 'black', fontSize: 13}}>개인정보 처리방침2</Text>
-      <Text style={{fontSize: 12, marginBottom: 10}}>개인정보 처리방침은 다음과 같다.</Text>
-      <Text style={{fontWeight:'bold', color: 'black', fontSize: 13}}>개인정보 처리방침3</Text>
-      <Text style={{fontSize: 12, marginBottom: 10}}>개인정보 처리방침은 다음과 같다.</Text>
-    </View>
-  );
-}
 
 // 푸시 테스트
-function chooseRandomly(a){
-  return a[Math.floor(Math.random() * a.length)];
-}
-function pushMessage(id){
+function pushMessage(id){ // 랜덤한 질문 메시지를 만들어 채팅방에 추가함
   let data = dataList[id-1];
   let product = data.product;
   let chatroom = data.chatroom;
   let avatar = product.imageSet.avatarImg.uri?? product.imageSet.avatarImg;
-  let newMessage = { _id: chatroom.lastId+1, text: chooseRandomly(product.questionList), createdAt: Moment(),
+  let newMessage = { _id: uuid.v1(), text: chooseRandomly(product.questionList), createdAt: Moment(),
     user: { _id:2, avatar: avatar}
   };
   chatroom.newItemCount += 1;
-  chatroom.lastId += 1;
   chatroom.chatmessageList.unshift(_.cloneDeep(newMessage));
   chatroom.lastMessageTime = Moment();
-
-  return ;
 }
-function pushTestHandler(handler){
-  pushMessage(chooseRandomly(userData.chatroomOrder));
-  handler();  // update screen
-  return ;
+function pushTestHandler(handler){  // 간단한 푸시 테스트함수
+  pushMessage(chooseRandomly(userData.mySubscribeList).id);
+  handler();  // 화면 강제 업데이트
 }
 
 // 드래그 기능 추가
@@ -824,6 +740,7 @@ function diaryPosToRealPos(diaryPos){
 }
 function realPosToDiaryPos(realPos){
   let diaryPos = 0;
+  let numberOfDiary = userData.myDiaryList.length;
   console.log('x, y : ', realPos.x, realPos.y);
 
   if(realPos.y <= 0){
@@ -831,32 +748,33 @@ function realPosToDiaryPos(realPos){
   }else{
     diaryPos = Math.floor(realPos.y/320)*2 + 1;
   }
-  if(diaryPos > userData.numberOfDiary){
-    diaryPos = userData.numberOfDiary;
-    if(userData.numberOfDiary%2 === 0) diaryPos-=1;
+
+  if(diaryPos > numberOfDiary){
+    diaryPos = numberOfDiary;
+    if(numberOfDiary%2 === 0) diaryPos-=1;
   }
   if(realPos.x >= screenWidth/2) diaryPos+=1;
 
   return diaryPos;
 }
-function DraggableDiary({id, changePosHandler, nav, updateDiary}){
+function DraggableDiary({id, changePosHandler, nav, updateDiary, cancelDrag}){ // 애니메이션 다이어리에 드래그 기능 추가
   const [z, setZ] = useState(1);
   let diaryIndex = userData.myDiaryList.findIndex(obj => obj.id === id);
   let pos = diaryPosToRealPos(userData.myDiaryList[diaryIndex].pos);
 
   const zUp = () =>{
-    if(z!=2) setZ(2);
+    if(z!=10) setZ(10);
   }
   const zDown = () =>{
     if(z!=1) setZ(1);
   }
   return (
-    <Draggable x={pos.x} y={pos.y} z={z} shouldReverse onDragRelease={(event, gestureState) => {zDown();  changePosHandler(userData.myDiaryList[diaryIndex].pos, realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY}));}} onDrag={(event, gestureState)=>{zUp(); console.log('x, y ~~ : ', gestureState.moveX, global_y+gestureState.moveY); console.log('pos: ', realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY}))}} >
+    <Draggable x={pos.x} y={pos.y} z={z}  shouldReverse onDragRelease={(event, gestureState) => {zDown();  changePosHandler(userData.myDiaryList[diaryIndex].pos, realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY})); cancelDrag(true)}} onDrag={(event)=>{zUp(); cancelDrag(false);}} >
       <AnimatableDiaryComponent id={id} nav={nav} updateDiary={updateDiary}/>
     </Draggable>
   );
 }
-function BasiceDiary({id, changePosHandler, nav}){
+function BasiceDiary({id, changePosHandler, nav}){  // 기본 다이어리에 위치를 잡아줌, 드래그 기능은 없음
   const [z, setZ] = useState(1);
   let diaryIndex = userData.myDiaryList.findIndex(obj => obj.id === id);
   let pos = diaryPosToRealPos(userData.myDiaryList[diaryIndex].pos);
@@ -874,6 +792,88 @@ function BasiceDiary({id, changePosHandler, nav}){
   );
 }
 
+// 다이어리 html 생성함수 - 미완
+function buildHtml(id) {
+    let name = userData.username;
+    let data = dataList[id-1];
+    let header = '';
+    let body = '';
+
+    header += (name + ' 님의 다이어리');
+    // for (let i = 0; i < contents.length; i++) {
+    //     body += ('<p>' + contents[i] + '</p>')
+    // }
+
+    body += '<table>';
+    for (let i = 0; i < contents.length; i++) {
+        body += '<tr>';
+        body += '<td id="date">' + dateToHtml(dates[i]) + '</td>';
+        body += '<td id="contents">' + contents[i] +
+            '<br><div id = "time">' + timeToHtml(times[i]) + '</div></td>';
+        body += '</tr>';
+    }
+    body += '</table>';
+
+    var fullHTML = '<!DOCTYPE html>' +
+        '<html><head>' +
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+        '<link rel="stylesheet" href="http://dc9822522482.ngrok.io/css/link.css" />' +
+        '<link rel="stylesheet" media="(max-width: 768px)" href="http://dc9822522482.ngrok.io/css/mobilelink.css" /><h1>' +
+        header +
+        '</h1></head><body>' +
+        body +
+        '</body></html>';
+
+    return fullHTML;
+}
+
+// 테ㅐ스트 용
+function TestScreen({navigation}){
+  const [mytext, setMytext] = useState('빈 텍스트 칸');
+
+  const printToPdf = async () => {
+      // https://forums.expo.io/t/expo-print-creating-pdf-and-giving-it-a-file-name/36164
+      const response = await Print.printToFileAsync({ html: '<h1>Test-Invoice</h1>' });
+
+      // this changes the bit after the last slash of the uri (the document's name) to "invoice_<date of transaction"
+
+      const pdfName = `${response.uri.slice(
+          0,
+          response.uri.lastIndexOf('/') + 1
+      )}testPDF_${Moment()}.pdf`;
+
+      await FileSystem.moveAsync({
+          from: response.uri,
+          to: pdfName,
+      });
+      sharePdf(pdfName)
+  }
+
+  const sharePdf = (url) => {
+      Sharing.shareAsync(url)
+  }
+
+  const shareWithLink = () => {
+    let url = 'https://comic.naver.com/index.nhn';
+    Clipboard.setString(url);
+    Alert.alert('링크가 클립보드에 저장됨');
+  }
+
+  return (
+    <ScrollView>
+    <View style={{flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: screenHeight}}>
+      <Text>기능 테스트 공간</Text>
+      <TouchableOpacity onPress={printToPdf} style={{margin:20, borderWidth: 1, borderRadius: 35, height:70, width: 70, backgroundColor: 'pink', alignItems: 'center', justifyContent: 'center'}}>
+        <Text>PDF 생성</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={shareWithLink} style={{margin:20, borderWidth: 1, borderRadius: 35, height:70, width: 70, backgroundColor: '#6495ED', alignItems: 'center', justifyContent: 'center'}}>
+        <Text>링크공유</Text>
+      </TouchableOpacity>
+      <TextInput value={mytext} onChangeText={text => setMytext(text)}/>
+    </View>
+    </ScrollView>
+  );
+}
 
 // 메인 페이지
 function MainPageScreen({navigation, route}){
@@ -917,46 +917,45 @@ function MainPageScreen({navigation, route}){
       <Tab.Screen name="SubscribeListScreen"  component={SubscribeListScreen} />
       <Tab.Screen name="MyChatListScreen"  component={MyChatListScreen}/>
       <Tab.Screen name="MyDiaryScreen"  component={MyDiaryScreen} />
+      <Tab.Screen name="testScreen"  component={TestScreen} />
     </Tab.Navigator>
   );
 }
 function SubscribeListScreen({navigation}){
-  const [numberOfSubscribe, setNumberOfSubscribe] = useState(userData.numberOfSubscribe);
+  const [numberOfSubscribe, setNumberOfSubscribe] = useState(userData.mySubscribeList.length);
 
   useFocusEffect(()=>{
-    if(numberOfSubscribe != userData.numberOfSubscribe) setNumberOfSubscribe(userData.numberOfSubscribe);
+    if(numberOfSubscribe != userData.mySubscribeList.length) setNumberOfSubscribe(userData.mySubscribeList.length);
   }, []);
 
   return (
     <View style={{flex:1, flexDirection: 'column', backgroundColor: 'white', alignItems: 'flex-start'}}>
       <ScrollView styles={{marginHorizontal: 20}} >
         <Text style={{margin:10, fontSize: 17}}>내 구독 상품</Text>
-        {dataList.map(({id, isSubscribe})=>{
-          if(isSubscribe) return <SubscribeContentLayout key={id} id={id}  nav={navigation}/>
-        })}
-
-          <View style={{left:10, right:10, backgroundColor: '#f0f0f0', height:1, marginVertical:7, width: screenWidth*0.98}}/>
-
+          {dataList.map(({id, isSubscribe})=>{
+            if(isSubscribe) return <SubscribeContentLayout key={id} id={id}  nav={navigation}/>
+          })}
+        <View style={{left:10, right:10, backgroundColor: '#f0f0f0', height:1, marginVertical:7, width: screenWidth*0.98}}/>
         <Text style={{margin:10, marginTop:5, borderTopWidth: 1, fontSize: 17, borderColor: '#CCC'}}>구독 가능한 상품</Text>
-        {dataList.map(({id, isSubscribe})=>{
-          if(!isSubscribe) return <SubscribeContentLayout key={id} id={id}  nav={navigation}/>
-        })}
+          {dataList.map(({id, isSubscribe})=>{
+            if(!isSubscribe) return <SubscribeContentLayout key={id} id={id}  nav={navigation}/>
+          })}
         <View style={{height:200}}/>
       </ScrollView>
     </View>
   );
 }
-function HiddenLayer({data, rowMap}){
-  const [alarm, setAlarm] = useState(dataList[data.item.id-1].chatroom.chatroomSetting.getPushAlarm);
+function HiddenLayer({alarmData}){
+  const [alarm, setAlarm] = useState(alarmData);
 
   const alarmOnOffhandler = () => {
     if(alarm) {
       // 알람 끄기
-      dataList[data.item.id-1].chatroom.chatroomSetting.getPushAlarm = false;
+      alarmData = false;
       setAlarm(false);
     } else {
       // 알람 켜기
-      dataList[data.item.id-1].chatroom.chatroomSetting.getPushAlarm = true;
+      alarmData = true;
       setAlarm(true);
     }
   }
@@ -964,19 +963,17 @@ function HiddenLayer({data, rowMap}){
   return (
     <TouchableOpacity onPress={alarmOnOffhandler}>
       <View style={{backgroundColor: '#cffffe', padding:11, paddingLeft: 30, justifyContent: 'center'}}>
-
           {alarm
             ? <Feather name="bell-off" size={34} color="black" />
             : <Feather name="bell" size={34} color="black" />
           }
-
       </View>
     </TouchableOpacity>
   );
 }
 function MyChatListScreen({navigation, route}){
   const [noSubscribe, setNoSubscribe] = useState(true);
-  const [numberOfChatroom, setNumberOfChatroom] = useState(0);
+  const [numberOfChatroom, setNumberOfChatroom] = useState(-1);
   const [listViewData, setListViewData] = useState([]);
   const [updateChatListScreen, setUpdateChatListScreen] = useState(0);
 
@@ -985,10 +982,10 @@ function MyChatListScreen({navigation, route}){
   }
 
   useFocusEffect(()=>{
-    if(userData.numberOfSubscribe === 0 && noSubscribe===false || userData.numberOfSubscribe != 0 && noSubscribe===true) setNoSubscribe(!noSubscribe);
-    if(numberOfChatroom != userData.numberOfChatroom) {
-      setNumberOfChatroom(userData.numberOfChatroom);
-      setListViewData(userData.chatroomOrder.map((id)=>{return {key: id.toString(), id: id}}));
+    if(userData.mySubscribeList.length === 0 && noSubscribe===false || userData.mySubscribeList.length != 0 && noSubscribe===true) setNoSubscribe(!noSubscribe);
+    if(numberOfChatroom != userData.myChatroomList.length) {
+      setNumberOfChatroom(userData.myChatroomList.length);
+      setListViewData(userData.myChatroomList);
     }
   });
 
@@ -997,7 +994,7 @@ function MyChatListScreen({navigation, route}){
       {noSubscribe ? NoSubscribeInform(navigation) : <Text/>}
       <SwipeListView
         data={listViewData}
-        renderHiddenItem={(data, rowMap)=>(<HiddenLayer key={data.item.id.toString()} data={data} rowMap={rowMap}/>)}
+        renderHiddenItem={(data, rowMap)=>(<HiddenLayer key={data.item.id.toString()} alarmData={data.item.getPushAlarm}/>)}
         renderItem={(data, rowMap)=>(
           <ChatroomContentLayout key={data.item.id.toString()} id={data.item.id} nav={navigation}/>
         )}
@@ -1017,14 +1014,19 @@ function MyDiaryScreen({route, navigation}){
   const [numberOfDiary, setNumberOfDiary] = useState(-1); // 다이어리의 수
   const [updated, setUpdated] = useState(1);      // 강제 스크린 업데이트
   const [backgroundWidth, setBackgroundWidth] = useState(0); // 배경의 크기
+  const [cancelScroll, setCancelScroll] = useState(true);
+
+  const changeCnacelScrollHandler = (value) => {
+    if(value !== cancelScroll) setCancelScroll(value);
+  }
 
   const changePosHandler = (start, end) => {
-    if(end > userData.numberOfDiary){
+    if(end > userData.myDiaryList.length){
       userData.myDiaryList.forEach((obj) => {
         if(obj.pos > start){
           obj.pos -= 1;
         }else if(obj.pos === start){
-          obj.pos = userData.numberOfDiary;
+          obj.pos = userData.myDiaryList.length;
         }
       })
     }else {
@@ -1038,10 +1040,10 @@ function MyDiaryScreen({route, navigation}){
   }; // 다이어리간의 위치를 바꿔주는 기능
 
   const setBackgroundWidthFunc = () => {
-    let size = Math.ceil(userData.numberOfDiary/2)*300;
+    let size = Math.ceil(userData.myDiaryList.length/2)*300;
     if(size <= screenHeight-90) setBackgroundWidth(screenHeight-90);
     else setBackgroundWidth(size);
-    console.log('update backgroundWidth');
+    console.log('update backgroundWidth: ', size);
   }
 
   const updateDiary = (erasePos) => {
@@ -1049,25 +1051,27 @@ function MyDiaryScreen({route, navigation}){
       if(obj.pos > erasePos) obj.pos -= 1;
     });
     setBackgroundWidthFunc();
-    setNumberOfDiary(userData.numberOfDiary);
+    setNumberOfDiary(userData.myDiaryList.length);
     setUpdated(updated+1);
   };
 
   useFocusEffect(()=>{
+    console.log('diary Count: ', numberOfDiary, userData.myDiaryList.length);
+    console.log(userData.myDiaryList);
     if(editMode != pressDiaryEditButton) setEditMode(pressDiaryEditButton);
-    if(numberOfDiary != userData.numberOfDiary){
-      setNumberOfDiary(userData.numberOfDiary);
+    if(numberOfDiary != userData.myDiaryList.length){
+      setNumberOfDiary(userData.myDiaryList.length);
       setBackgroundWidthFunc();
     }
   });
 
   return (
-    <ScrollView onScroll={(event) => {global_y = event.nativeEvent.contentOffset.y; console.log('scroll: ', global_y)}}>
+    <ScrollView canCancelContentTouches={cancelScroll} bounces={false} onScroll={(event) => {global_y = event.nativeEvent.contentOffset.y; console.log('scroll: ', global_y)}}>
       <View style={{width: screenWidth, height: backgroundWidth, backgroundColor: 'white'}}>
         {numberOfDiary < 1 && <View style={{flex:1, flexDirection: 'column',  justifyContent: 'center', alignItems: 'center'}}><Text>생성된 다이어리가 없습니다.</Text></View>}
         {userData.myDiaryList.map((obj) => {
           return editMode ?
-            <DraggableDiary key={obj.id} id={obj.id} nav={navigation} changePosHandler={changePosHandler} updateDiary={updateDiary}/> :
+            <DraggableDiary key={obj.id} id={obj.id} nav={navigation} changePosHandler={changePosHandler} updateDiary={updateDiary} cancelDrag={changeCnacelScrollHandler}/> :
             <BasiceDiary key={obj.id} id={obj.id} nav={navigation} changePosHandler={changePosHandler}/>
         })}
       </View>
@@ -1116,7 +1120,7 @@ function completeDiaryButtonHandler(route, navigation){
 
 // 화면 구성품
 function ChatroomContentLayout(props){
-  const id = props.id;``
+  const id = props.id;
   const data = dataList[id-1];
   const productInfo  = dataList[id-1].product;
   const [lastMessageTime, setLastMessageTime] = useState(data.chatroom.lastMessageTime);  // 최신 메세지 업데이트 시간
@@ -1141,7 +1145,7 @@ function ChatroomContentLayout(props){
       <Image source={productInfo.imageSet.thumbnailImg} style={{height: 46, width: 46, margin: 5,borderWidth: 1, borderColor: '#f7f7f7', marginLeft: 10, borderRadius: 23, backgroundColor: '#DDD'}}/>
       <View style={{flexDirection: 'column'}}>
         <Text style={{marginLeft: 10, marginTop: 6, fontSize: 17,fontWeight: '400', width: 220}}>{productInfo.title}</Text>
-        <Text style={{color: '#AAA', fontSize: 12, marginLeft: 13, marginTop:3}}>{data.chatroom.chatmessageList[0].text}</Text>
+        <Text numberOfLines={1} style={{color: '#AAA', fontSize: 12, marginLeft: 13, marginTop:3, width: 230}}>{data.chatroom.chatmessageList[0].text}</Text>
       </View>
       <View style={{flex:1, flexDirection: 'column', alignItems: 'flex-end'}}>
         <Text style={{fontSize: 10, marginRight: 10, marginTop: 0}}>{fromNowTime}</Text>
@@ -1161,7 +1165,7 @@ function SubscribeContentLayout(props){
       <Image resizeMode='cover' source={productInfo.imageSet.thumbnailImg} style={{height: 46, borderWidth: 1, borderColor: '#f7f7f7', width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
       <View style={{flexDirection: 'column'}}>
         <Text style={{marginLeft: 10, marginTop: 6, fontSize: 17,fontWeight: '400', width: 220}}>{productInfo.title}</Text>
-        <Text style={{color: '#AAA', fontSize: 12, marginLeft: 13, marginTop:3}}>{productInfo.text}</Text>
+        <Text numberOfLines={1} style={{color: '#AAA', fontSize: 12, marginLeft: 13, marginTop:3, width: 230}}>{productInfo.text}</Text>
       </View>
     </View>
     </TouchableOpacity>
@@ -1185,8 +1189,8 @@ function getHeaderTitle(route, initialName) {
   return routeName;
 }
 
-// 구독 구성품
-function diaryInitializeFunction(id){
+// 다이어리와 채팅방 초기화 함수
+function diaryInitializeFunction(id){ // 다이어리 초기로 생성 함수
   // 기존의 다이어리 있는지 확인
   const data = dataList[id-1];
   if(data.hasDiary) {
@@ -1194,21 +1198,19 @@ function diaryInitializeFunction(id){
     return ;
   } else {
     // 초기버전 다이어리 만듦
-    userData.numberOfDiary += 1; // 다이어리 확장을 알림
     data.hasDiary = true; // 다이어리를 보이게 함
-    userData.myDiaryList.push({id:id, pos: userData.numberOfDiary});
+    userData.myDiaryList.push({id:id, pos: userData.myDiaryList.length+1, color: Math.floor(Math.random() * 10)});
 
     // 다이어리 초기 데이터 구성
-    userData.lastDiaryColor += 1;
     let makeDiaryData = {
-      makeTime: Moment(),  lastId:0, totalUpdateCount: 0, diarymessageList: [], diarySetting: {color: userData.lastDiaryColor% 10},
+      makeTime: Moment(), totalUpdateCount: 0, diarymessageList: [],
     };
 
     data.diary = _.cloneDeep(makeDiaryData); // 다이어리 데이터 연결
     return ;
   }
 }
-function chatroomInitializeFunction(id){
+function chatroomInitializeFunction(id){ // 채팅방 초기로 생성 함수
   // 기존의 채팅창이 있는지 확인함
   const data = dataList[id-1];
   if(data.hasChatroom) {
@@ -1216,14 +1218,11 @@ function chatroomInitializeFunction(id){
     return ;
   } else {
     // 초기버전 채팅창을 만듦
-    userData.numberOfChatroom += 1; // 채팅창 확장을 알림
+    userData.myChatroomList.push({id: id, getPushAlarm: true, key:id.toString()});
     data.hasChatroom = true; // 채팅창을 보이게 함
-    userData.chatroomOrder.push(id);    // 위치 등록
 
     // 채팅창 초기 데이터 구성
-    let makeChatroomSettingData = {
-      getPushAlarm: true,
-    };
+;
     let makeChatmessageListData = [
       {
         _id: 1, text: data.product.title + ' 채팅방입니다.', createdAt: Moment(),
@@ -1231,7 +1230,7 @@ function chatroomInitializeFunction(id){
       },
     ];
     let makeChatroomData = {
-      lastMessageTime: Moment(), newItemCount: 1, lastId:1, chatmessageList: makeChatmessageListData, chatroomSetting: makeChatroomSettingData,
+      lastMessageTime: Moment(), newItemCount: 1, chatmessageList: makeChatmessageListData,
     };
 
     data.chatroom = _.cloneDeep(makeChatroomData); // 채팅창 데이터 연결
@@ -1239,32 +1238,62 @@ function chatroomInitializeFunction(id){
     return ;
   }
 }
+
+// 취소함수
+function unSubscribe(id){
+  userData.mySubscribeList.splice(userData.mySubscribeList.findIndex(obj => obj.id===id), 1);
+  dataList[id-1].isSubscribe = false;
+
+}
+function deleteChatroom(id){
+  userData.myChatroomList.splice(userData.myChatroomList.findIndex(obj => obj.id===id), 1);
+  dataList[id-1].hasChatroom = false;
+}
+
+// 구독 구성품
 function SubscribeContentScreen({route, navigation}){
   const id = route.params.id;
   const data = dataList[id-1];
 
-  const [isSubscribeButton, setIsSubscribeButton] = React.useState(data.isSubscribe);
+  const [isSubscribeButton, setIsSubscribeButton] = useState(data.isSubscribe);
   const [pushStartTime, setPushStartTime] = useState(data.push.pushStartTime);
   const [pushEndTime, setPushEndTime] = useState(data.push.pushEndTime);
+  let tempTime;
   let thisScrollView = null;
   let goToEnd = route.params.goToEnd??null;
 
+
+  const [dataTimePickerOption, setDataTimePickerOption] = useState(1);  // 바꿀것
   const [show0, setShow0] = useState(false);
   const [show1, setShow1] = useState(false);
   const [show2, setShow2] = useState(false);
+  const [show3, setShow3] = useState(false);
+  const [show4, setShow4] = useState(false);
+
+  useEffect(() => {
+    if(isSubscribeButton){
+      userData.mySubscribeList.some( obj => {
+        if(obj.id === id){
+          setPushStartTime(obj.pushStartTime);
+          setPushEndTime(obj.pushEndTime);
+          return true;
+        }
+      })
+    }
+  }, []);
 
   const subscribeOffHandler = () => {
-    userData.numberOfSubscribe -= 1;
-    data.isSubscribe = !data.isSubscribe; // false
-    setIsSubscribeButton(data.isSubscribe);
+    userData.mySubscribeList.splice(userData.mySubscribeList.findIndex(obj => obj.id === id), 1);
+    data.isSubscribe = false; // false
+    setIsSubscribeButton(false);
+    setPushStartTime(data.push.pushStartTime);
+    setPushEndTime(data.push.pushEndTime);
   };
-
-  const subscribeOnHandler = () => {
-
+  const subscribeOnHandler = (startTime, endTime) => {
     // 시간 설정 성공
-    userData.numberOfSubscribe += 1;
-    data.isSubscribe = !data.isSubscribe; // true
-    setIsSubscribeButton(data.isSubscribe);
+    userData.mySubscribeList.push({id:id, pushStartTime:startTime, pushEndTime:endTime});
+    data.isSubscribe = true; // true
+    setIsSubscribeButton(true);
 
     // 채팅창 초기화 준비
     chatroomInitializeFunction(id);
@@ -1274,38 +1303,40 @@ function SubscribeContentScreen({route, navigation}){
     // 시간  설정 실패 return
   };
   const onChange0 = (event, selectedDate) => {
-    // 취소한 경우
-    if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
-
-    // 시간 등록
-    setPushStartTime(Moment(selectedDate));
-    data.push.pushStartTime = Moment(selectedDate);
-
+    let getTime = Moment(selectedDate);
     setShow0(false); // 시간 선택 종료
+    // 취소한 경우
 
-    setPushEndTime(Moment(selectedDate));
-    data.push.pushEndTime = Moment(selectedDate);
-    subscribeOnHandler();
+    if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
+    // 시간 등록
+    setPushStartTime(getTime);
+    setPushEndTime(getTime);
+    subscribeOnHandler(getTime, getTime);
   };
   const onChange1 = (event, selectedDate) => {
+    let getTime = Moment(selectedDate);
+    setShow1(false); // 시간 선택 종료
     // 취소한 경우
     if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
-
+    setPushStartTime(getTime);
     // 시간 등록
-    setPushStartTime(Moment(selectedDate));
-    data.push.pushStartTime = Moment(selectedDate);
 
-    setShow1(false); // 시간 선택 종료
+    setTimeout(() => {
+      setShow2(true);
 
-    setShow2(true);
+    }, 200);
   };
   const onChange2 = (event, selectedDate) => {
-    if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
-
+    let getTime = Moment(selectedDate);
     setShow2(false);  // 시간 선택 종료
+
+    if(event.type === 'dismissed') {
+      setPushStartTime(data.push.pushStartTime);  //   데이터 복구
+      return Alert.alert('취소하였습니다.')
+    };
+
     setPushEndTime(Moment(selectedDate));
-    data.push.pushEndTime = Moment(selectedDate);
-    subscribeOnHandler();
+    subscribeOnHandler(pushStartTime, getTime);
   };
 
   const subscribeButtonHandler = () => {
@@ -1314,9 +1345,78 @@ function SubscribeContentScreen({route, navigation}){
       Alert.alert('구독을 취소하시겠습니까?', '구독을 취소하여도 채팅기록과 다이어리는 남습니다.', [{text: '취소'}, {text:'구독취소', onPress: subscribeOffHandler}]);
     }else{
       // 구독 신청
-      Alert.alert(data.product.title + ' 상품을 구독하시겠습니까?', '푸시 알람설정을 완료하여 구독을 할 수 있습니다.', [{text:'취소'}, {text:'푸시설정', onPress:()=>{thisScrollView.scrollToEnd({animated: true}); data.push.isRandomPushType ? setShow1(true) : setShow0(true)}}]);
+      Alert.alert(data.product.title + ' 상품을 구독하시겠습니까?', '푸시 알람설정을 완료하여 구독을 할 수 있습니다.', [{text:'취소'}, {text:'푸시설정', onPress:()=>{thisScrollView.scrollToEnd({animated: true}); data.push.isRandomPushType ?  setShow1(true) : setShow0(true)}}]);
     }
   };
+
+  const pushTimeChanger = (type) => {
+    if(show3 || show3) return;
+    if(type === 1){
+      // start
+      setShow3(true);
+    }else{
+      setShow4(true);
+    }
+  }
+  const changePushTime = (start, end) => {
+    let myData = userData.mySubscribeList[userData.mySubscribeList.findIndex(obj => obj.id===id)];
+    myData.pushStartTime = start;
+    myData.pushEndTime = end;
+  }
+  const pushStartChanger = (event, selectedDate) => {
+    let getTime = Moment(selectedDate);
+    setShow3(false);  // 시간 선택 종료
+
+    if(event.type === 'dismissed') {
+      return Alert.alert('취소하였습니다.')
+    };
+
+    setPushStartTime(Moment(selectedDate));
+    changePushTime(getTime, pushEndTime);
+  };
+  const pushEndChanger = (event, selectedDate) => {
+    let getTime = Moment(selectedDate);
+    setShow4(false);  // 시간 선택 종료
+
+    if(event.type === 'dismissed') {
+      return Alert.alert('취소하였습니다.')
+    };
+
+    setPushEndTime(Moment(selectedDate));
+    changePushTime(pushStartTime, getTime);
+  };
+
+  const MyDateTimePicker = ({option}) => {
+    console.log('ooption: ', option);
+    switch(option){
+      case 0:
+        return (<View/>);
+      case 1:
+        return (
+          <View style={{flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', borderWidth: 0, borderColor: 'blue', marginTop:10, paddingLeft:5}}>
+            <Text style={{fontSize: 19}}>푸시알림 수신시간을 설정해 주세요.</Text>
+            <DateTimePicker testID="dateTimePicker" value={pushStartTime.toDate()} mode={'time'} is24Hour={true} display="default" onChange={onChange0}/>
+          </View>
+        )
+      case 2:
+        return (
+          <View style={{flexDirection: ' row', alignItems: 'flex-start', justifyContent: 'space-between', borderWidth: 0, borderColor: 'blue', marginTop:10, paddingLeft:5}}>
+            <Text style={{fontSize: 19}}>푸시알림 시간대를 설정해주세요.</Text>
+            <DateTimePicker testID="dateTimePicker" value={pushStartTime.toDate()} mode={'time'} is24Hour={true} display="default" onChange={onChange1}/>
+          </View>
+        );
+      case 3:
+        return (
+          <View style={{flexDirection: ' row', alignItems: 'flex-start', justifyContent: 'space-between', borderWidth: 0, borderColor: 'blue', marginTop:10, paddingLeft:5}}>
+            <Text style={{fontSize: 19}}>푸시알림 시간대를 설정해주세요.</Text>
+            <Text style={{color: '#AAA', fontSize: 19, marginTop: 5}}>{pushStartTime.format('LT')} 부터</Text>
+            <DateTimePicker testID="dateTimePicker" value={pushStartTime.toDate()} mode={'time'} is24Hour={true} display="default" onChange={onChange2}/>
+          </View>
+        );
+    }
+
+    return (<View/>);
+  }
 
   return (
     <SafeAreaView>
@@ -1350,10 +1450,14 @@ function SubscribeContentScreen({route, navigation}){
               <TouchableOpacity onPress={()=>{Alert.alert('시간 변경')}}>
                 {data.push.isRandomPushType
                   ? <View style={{flexDirection: 'column', justifyContent: 'space-around'}}>
-                      <Text style={{color: '#AAA', fontSize: 19, marginTop:10}}>{pushStartTime.format('LT')} 부터</Text>
-                      <Text style={{color: '#AAA', fontSize: 19}}>{pushEndTime.format('LT')} 사이</Text>
+                      <TouchableOpacity onPress={() => pushTimeChanger(1)}>
+                        <Text style={{color: '#AAA', fontSize: 19, marginTop:10}}>{pushStartTime.format('LT')} 부터</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => pushTimeChanger(2)}>
+                        <Text style={{color: '#AAA', fontSize: 19}}>{pushEndTime.format('LT')} 사이</Text>
+                      </TouchableOpacity>
                     </View>
-                  : <Text style={{fontSize: 19, color: '#AAA', fontSize: 19, marginTop:17, marginBottom:7}}>{pushStartTime.format('LT')}</Text>
+                  : <TouchableOpacity onPress={() => pushTimeChanger(1)}><Text style={{fontSize: 19, color: '#AAA', fontSize: 19, marginTop:17, marginBottom:7}}>{pushStartTime.format('LT')}</Text></TouchableOpacity>
                 }
               </TouchableOpacity>
             </View>
@@ -1367,12 +1471,12 @@ function SubscribeContentScreen({route, navigation}){
             </View>
           }
           {show1 &&
-            <View style={{flexDirection: ' row', alignItems: 'flex-start', justifyContent: 'space-between', borderWidth: 0, borderColor: 'blue', marginTop:10, paddingLeft:5}}>
-              <Text style={{fontSize: 19}}>푸시알림 시간대를 설정해주세요.</Text>
+            <View style={{flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', borderWidth: 0, borderColor: 'blue', marginTop:10, paddingLeft:5}}>
+              <Text style={{fontSize: 19}}>푸시알림 수신시간을 설정해 주세요.</Text>
             </View>
           }
           {show2 &&
-            <View style={{flexDirection: ' row', alignItems: 'flex-start', justifyContent: 'space-between', borderWidth: 0, borderColor: 'blue', marginTop:10, paddingLeft:5}}>
+            <View style={{flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', borderWidth: 0, borderColor: 'blue', marginTop:10, paddingLeft:5}}>
               <Text style={{fontSize: 19}}>푸시알림 시간대를 설정해주세요.</Text>
               <Text style={{color: '#AAA', fontSize: 19, marginTop: 5}}>{pushStartTime.format('LT')} 부터</Text>
             </View>
@@ -1382,6 +1486,8 @@ function SubscribeContentScreen({route, navigation}){
             {show0 && <DateTimePicker testID="dateTimePicker" value={pushStartTime.toDate()} mode={'time'} is24Hour={true} display="default" onChange={onChange0}/>}
             {show1 && <DateTimePicker testID="dateTimePicker" value={pushStartTime.toDate()} mode={'time'} is24Hour={true} display="default" onChange={onChange1}/>}
             {show2 && <DateTimePicker testID="dateTimePicker" value={pushStartTime.toDate()} mode={'time'} is24Hour={true} display="default" onChange={onChange2}/>}
+            {show3 && <DateTimePicker testID="dateTimePicker" value={pushStartTime.toDate()} mode={'time'} is24Hour={true} display="default" onChange={pushStartChanger}/>}
+            {show4 && <DateTimePicker testID="dateTimePicker" value={pushEndTime.toDate()} mode={'time'} is24Hour={true} display="default" onChange={pushEndChanger}/>}
           </View>
         </View>
 
@@ -1404,6 +1510,12 @@ function NoSubscribeInform(navigation){
 }
 function CustomDrawerContent({navigation}) {
 
+  const getOutChatroom = () => {
+    unSubscribe(global_p_id);
+    deleteChatroom(global_p_id);
+    navigation.navigate('MainPage');
+  }
+
   return (
     <DrawerContentScrollView style={{backgroundColor: '#FFF'}}>
       <TouchableOpacity onPress={()=>navigation.closeDrawer()}>
@@ -1413,116 +1525,30 @@ function CustomDrawerContent({navigation}) {
       <DrawerItem label="푸시 메세지 설정" icon={()=><Ionicons name="md-time" style={{marginLeft: 3}} size={20} color="black" />} onPress={() => {navigation.navigate('SubscribeListScreen'); navigation.navigate('contentScreen', {id:global_p_id, goToEnd: true})}} />
       <DrawerItem label="채팅방 나가기" icon={()=><MaterialIcons name="exit-to-app" style={{marginLeft: 1}} size={20} color="black" />}
         onPress={() => {
-          Alert.alert('정말 채팅방을 나가시겠습니까?', '채팅방을 나가면 채팅 내용과 채팅 목록은 사라지고 다이어리에서만 기록을 확인할 수 있습니다.', [{text: '나가기', onPress: ()=>navigation.navigate('MainPage')}, {text:'취소'}]);}} />
+          Alert.alert('정말 채팅방을 나가시겠습니까?', '채팅방을 나가면 채팅 내용과 채팅 목록은 사라지고 다이어리에서만 기록을 확인할 수 있습니다.', [{text: '나가기', onPress: getOutChatroom}, {text:'취소'}]);}} />
     </DrawerContentScrollView>
   );
 }
-function makeDiaryMessage(id, message){
-  const data = dataList[id-1];
-  let diaryForm = { _id: data.diary.lastId+1, text: message.text, createdAt: message.createdAt, islagacy: false, linkedMessageList: [message._id]}
+function makeDiaryMessage(id, message){ // 다이어리 메세지 생성기능
+  let data = dataList[id-1];
+  let diaryForm = { _id: uuid.v1(), text: '', createdAt: message.createdAt, islagacy: false, linkedMessageList: [{id: message._id, text:message.text}]};
   data.diary.diarymessageList.push(_.cloneDeep(diaryForm));
   data.diary.totalUpdateCount += 1;
-  data.diary.lastId+=1;
 }
-function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
-  const [messages, setMessages] = useState([]);
-  const id = route.params.id;
-  const data = dataList[id-1];
-  const [update, setUpdate] = useState(0);
+function deleteMessage(id, messageId){ // 다이어리와 연동중이면 해당하는 메시지를 지운다.
+  let data = dataList[id-1];
+  //let deleteIndex = null;
 
-  useEffect(() => {
-    setMessages(data.chatroom.chatmessageList);                 // 메세지 로드
-    navigation.setOptions({ headerTitle: data.product.title }); // 채팅방 제목 설정
-    global_p_id = id;                                           // 전역변수에 현재 관심 id 설정
-
-    // 채팅방 확인
-    data.chatroom.newItemCount = 0;
-  }, []);
-
-  const updateFunc = () => {
-    setUpdate(update+1);
-  };
-  console.log('messages List\n', messages);
-
-  const onDelete = useCallback((messageIdToDelete) => {
-    console.log('delete message Id: ', messageIdToDelete);
-    data.chatroom.chatmessageList.splice(data.chatroom.chatmessageList.findIndex(chatmessage => chatmessage._id === messageIdToDelete), 1);
-    setMessages(previousMessages => previousMessages.filter(message => message._id !== messageIdToDelete));
-  },[]);
-
-  const onSend = useCallback((messages = []) => {
-    // 메세지 화면 표시
-    setMessages(previousMessages => GiftedChat.append(previousMessages, messages));
-
-    // 메세지 가공
-    let message = _.cloneDeep(messages[0]);   // 메세지 복사
-    message.createdAt = Moment(message.createdAt);  // 시간정보를 Moment로 커버
-    data.chatroom.lastId += 1;
-    message._id = data.chatroom.lastId; // 아이디 부여
-    if(message.user._id !== 1) {
-      message.user.avatar = data.product.imageSet.avatarImg.uri;
-    }
-
-    // 채팅방에 저장
-    data.chatroom.lastMessageTime = Moment();
-    data.chatroom.chatmessageList.unshift(_.cloneDeep(message));
-
-    // 다이어리에 저장
-    if(data.diary.lastId === 0) {
-      // 첫 메세지
-      makeDiaryMessage(id, message);
-    }else{
-      let topMessage = data.diary.diarymessageList[data.diary.lastId-1];
-      let checkTime = Moment.duration(topMessage.createdAt.diff(message.createdAt)).asMinutes();
-      if(-1 <= checkTime && checkTime <= 0){
-        // 같은 메세지로 인정 15분 간격
-        topMessage.linkedMessageList.push(message._id);
-        topMessage.text += ' ' + message.text;
-      }else{
-        // 새로운 메세지 생성
-        makeDiaryMessage(id, message);
+  data.diary.diarymessageList.some(message => {
+    if(!message.islagacy){
+      // 연동중이면
+      let deleteIndex = message.linkedMessageList.findIndex(obj => obj.id === messageId);
+      if(deleteIndex !== -1){
+        message.linkedMessageList.splice(deleteIndex, 1);
+        return true;
       }
     }
-
-  }, []);
-
-  const onLongPress = (context, message) => {
-    if(message.user._id === 1){
-      // 유저 메시지 확인
-      let alertMessage = '';
-      if(message.text.length > 17){
-        alertMessage = message.text.substring(0, 13)+'... 메시지를 삭제하시겠습니까?';
-      }else{
-        alertMessage = message.text + ' 메시지를 삭제하시겠습니까?';
-      }
-      Alert.alert('메시지 삭제 확인', alertMessage, [{text: '취소'}, {text:'삭제', onPress:() => onDelete(message._id)}]);
-    }
-  }
-
-  return (
-      <GiftedChat
-        messages={messages}
-        onSend={messages => onSend(messages)}
-        user={{ _id: 1}}
-        placeholder ={''}
-        alwaysShowSend ={true}
-        locale={'ko'}
-        showAvatarForEveryMessage={true}
-        renderBubble={renderBubble}
-        renderSend={renderSend}
-        renderLoading={renderLoading}
-        renderTime ={renderTime}
-        renderDay={renderDay}
-        bottomOffset ={-15}
-        renderInputToolbar={renderInputToolbar}
-        renderComposer={renderComposer}
-        scrollToBottom ={true}
-        alignTop={true}
-        maxInputLength={10}
-        onLongPress={onLongPress}
-      />
-
-  )
+  });
 }
 function renderLoading() {
   return (
@@ -1637,6 +1663,101 @@ function renderDay (props) {
     />
   );
 }
+function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
+  const [messages, setMessages] = useState([]);
+  const id = route.params.id;
+  let data = dataList[id-1];
+  const [update, setUpdate] = useState(0);
+
+  useEffect(() => {
+    setMessages(data.chatroom.chatmessageList);                 // 메세지 로드
+    navigation.setOptions({ headerTitle: data.product.title }); // 채팅방 제목 설정
+    global_p_id = id;                                           // 전역변수에 현재 관심 id 설정
+
+    // 채팅방 확인
+    data.chatroom.newItemCount = 0;
+  }, []);
+
+  const updateFunc = () => {
+    setUpdate(update+1);
+  }; // 화면 업데이트
+  console.log('messages last\n', messages[0]);
+
+  const onDelete = useCallback((messageIdToDelete) => {
+    console.log('delete message Id: ', messageIdToDelete);
+    data.chatroom.chatmessageList.splice(data.chatroom.chatmessageList.findIndex(chatmessage => chatmessage._id === messageIdToDelete), 1); // 데이터에서 지우기
+    setMessages(previousMessages => previousMessages.filter(message => message._id !== messageIdToDelete)); // 채팅방에서 지우기
+    deleteMessage(id, messageIdToDelete); // 다이어리에서 지우기
+  },[]);
+
+  const onSend = useCallback((messages = []) => {
+    // 메세지 화면 표시
+    setMessages(previousMessages => GiftedChat.append(previousMessages, messages));
+
+    // 메세지 가공
+    let message = _.cloneDeep(messages[0]);   // 메세지 복사
+    message.createdAt = Moment(message.createdAt);  // 시간정보를 Moment로 커버
+
+    // 채팅방에 저장
+    data.chatroom.lastMessageTime = Moment();
+    data.chatroom.chatmessageList.unshift(_.cloneDeep(message));
+
+    // 다이어리에 저장
+    if(data.diary.diarymessageList.length === 0) {
+      // 첫 메세지
+      makeDiaryMessage(id, message);
+    }else{
+      let topMessage = data.diary.diarymessageList[data.diary.diarymessageList.length-1];
+      let checkTime = Moment.duration(topMessage.createdAt.diff(message.createdAt)).asMinutes();
+      if(-1 <= checkTime && checkTime <= 0 && !topMessage.islagacy){
+        // 같은 메세지로 인정 15분 간격
+        topMessage.linkedMessageList.push({id: message._id, text: message.text});
+      }else{
+        // 새로운 메세지 생성
+        makeDiaryMessage(id, message);
+      }
+    }
+
+  }, []);
+
+  const onLongPress = (context, message) => {
+    if(message.user._id === 1){
+      // 유저 메시지 확인
+      let alertMessage = '';
+      if(message.text.length > 17){
+        alertMessage = message.text.substring(0, 13)+'... 메시지를 삭제하시겠습니까?';
+      }else{
+        alertMessage = message.text + ' 메시지를 삭제하시겠습니까?';
+      }
+      Alert.alert('메시지 삭제 확인', alertMessage, [{text: '취소'}, {text:'삭제', onPress:() => onDelete(message._id)}]);
+    }
+  }
+
+  return (
+      <GiftedChat
+        messages={messages}
+        onSend={messages => onSend(messages)}
+        user={{ _id: 1}}
+        placeholder ={''}
+        alwaysShowSend ={true}
+        locale={'ko'}
+        showAvatarForEveryMessage={true}
+        renderBubble={renderBubble}
+        renderSend={renderSend}
+        renderLoading={renderLoading}
+        renderTime ={renderTime}
+        renderDay={renderDay}
+        bottomOffset ={-15}
+        renderInputToolbar={renderInputToolbar}
+        renderComposer={renderComposer}
+        scrollToBottom ={true}
+        alignTop={true}
+        maxInputLength={10}
+        onLongPress={onLongPress}
+      />
+
+  )
+}
 
 // 다이어리 구성품
 function AnimatableDiaryComponent(props){
@@ -1645,6 +1766,7 @@ function AnimatableDiaryComponent(props){
   const [makeTime, setMakeTime] = useState(data.diary.makeTime);
   const [totalUpdateCount, setTotalUpdateCount] = useState(data.diary.totalUpdateCount);
   const [nowTime, setNowTime] = useState(Moment());
+  let mydiarySettingIndex = userData.myDiaryList.findIndex(obj => obj.id === id);
   let x, y;
 
   useFocusEffect(()=>{
@@ -1653,30 +1775,28 @@ function AnimatableDiaryComponent(props){
     if(!nowTime.isSameOrAfter(nowTime, 'day')) setNowTime(Moment());
   });
 
-  const eraseDiaryHandler = () => {
-    userData.numberOfDiary -= 1;  // 다이어리 수가 변함을 알림, 렌더링
-    userData.numberOfChatroom -= 1; // 채팅장 수 감소
-    userData.numberOfSubscribe -= 1; // 구독 수 감소
-    data.hasDiary = false;        // 다이어리 null 셋팅
-    data.hasChatroom = false;     // 채팅창 제거
-    data.isSubscribe = false;     // 구독 제거
-    let thisPos = userData.myDiaryList[userData.myDiaryList.findIndex(obj => obj.id===id)].pos;
-    userData.myDiaryList.splice(userData.myDiaryList.findIndex(obj=>obj.id===id), 1); // 다이어리 순서열에서 제거
-    userData.chatroomOrder.splice(userData.chatroomOrder.indexOf(id), 1); // 채팅창 순서열에서 제거
-
-    props.updateDiary(thisPos);    // 화면 렌더링 시작
+  const eraseDiaryHandler = () => { // 다이어리 삭제 기능
+    let thisPos = userData.myDiaryList[userData.myDiaryList.findIndex(obj => obj.id === id)].pos;  // 현재 위치 확인
+    userData.mySubscribeList.splice(userData.mySubscribeList.findIndex(obj => obj.id === id), 1);  // 구독 제거
+    userData.myChatroomList.splice(userData.myChatroomList.findIndex(obj => obj.id === id), 1);    // 채팅창 제거
+    userData.myDiaryList.splice(userData.myDiaryList.findIndex(obj => obj.id === id), 1);          // 다이어리 제거
+    data.hasDiary = false;        // 다이어리 없음 셋팅
+    data.hasChatroom = false;     // 채팅창 없음 셋팅
+    data.isSubscribe = false;     // 구독 없음 셋팅
+    data.diary.totalUpdateCount = 0;
+    props.updateDiary(thisPos);    // 화면 렌더링 & 현재 다이어리보다 높은 위치의 다이어리를 모두 한 칸 아래로 압축
   }
 
-  const eraseDiaryAlertHandler = () => {
+  const eraseDiaryAlertHandler = () => { // 다이어리 삭제할 건지 더 물어봄
     Alert.alert('정말로 '+data.product.title+'을 삭제하시겠습니까?', '다이어리를 삭제하면 현재 상품에 대한 다이어리와 채팅 기록이 모두 사라지며 구독이 취소됩니다.', [{text: '취소'}, {text: '확인', onPress: eraseDiaryHandler}]);
   };
 
   return (
     <View style={{margin: 5}} onLayout={(e)=>{x = e.nativeEvent.layout.x; y = e.nativeEvent.layout.y; console.log('x, y : ', x, y)}}>
       <Animatable.View animation='swing' iterationCount={'infinite'}>
-      <TouchableOpacity style={{margin: 20, marginBottom: 0, marginTop: 10}}>
+      <View style={{margin: 20, marginBottom: 0, marginTop: 10}}>
           <View style={{position:'absolute', left:3, top:5, height: 185, width:130, backgroundColor: '#CCC', borderBottomRightRadius: 8, borderTopRightRadius: 8}}/>
-          <Image style={{height: 190, width: 130}} source={diaryImgList[data.diary.diarySetting.color]} resizeMode='contain'/>
+          <Image style={{height: 190, width: 130}} source={diaryImgList[userData.myDiaryList[mydiarySettingIndex].color]} resizeMode='contain'/>
           <View>
             <Text adjustsFontSizeToFit={true} style={{width: 130, fontSize: 16,  color: 'black', fontWeight:'bold', alignSelf: 'center', marginBottom: 3, marginTop:3}}>{data.product.title}</Text>
             <View style={{flexDirection: 'column', marginBottom: 5}}>
@@ -1685,7 +1805,7 @@ function AnimatableDiaryComponent(props){
                 : <View><Text style={{fontSize: 8, color: 'gray'}}>{makeTime.format('L')} ~ {nowTime.format('L')}</Text><Text style={{fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:30}}>총 {totalUpdateCount}회 기록</Text></View>}
             </View>
           </View>
-    </TouchableOpacity>
+    </View>
     </Animatable.View>
     <TouchableOpacity onPress={eraseDiaryAlertHandler} style={{position: 'absolute', left: 18, top:18, backgroundColor: '#DDD', height: 34, width: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center'}}>
       <Text style={{fontWeight:'bold'}}>X</Text>
@@ -1699,6 +1819,7 @@ function DiaryComponent(props){
   const [makeTime, setMakeTime] = useState(data.diary.makeTime);
   const [totalUpdateCount, setTotalUpdateCount] = useState(data.diary.totalUpdateCount);
   const [nowTime, setNowTime] = useState(Moment());
+  let mydiarySettingIndex = userData.myDiaryList.findIndex(obj => obj.id === id);
 
   useFocusEffect(()=>{
     if(makeTime != data.diary.makeTime) setMakeTime(data.diary.makeTime);
@@ -1710,7 +1831,7 @@ function DiaryComponent(props){
     <TouchableOpacity style={{margin: 20, marginBottom: 0, marginTop: 10}} onPress={()=>{props.nav.navigate('Diary', {id: id})}}>
       <View style={{margin: 5}}>
         <View style={{position:'absolute', left:3, top:5, height: 185, width:130, backgroundColor: '#CCC', borderBottomRightRadius: 8, borderTopRightRadius: 8}}/>
-        <Image style={{height: 190, width: 130}} source={diaryImgList[data.diary.diarySetting.color]} resizeMode='contain'/>
+        <Image style={{height: 190, width: 130}} source={diaryImgList[userData.myDiaryList[mydiarySettingIndex].color]} resizeMode='contain'/>
         <View>
           <Text adjustsFontSizeToFit={true} style={{width: 130, fontSize: 16, color: 'black', fontWeight:'bold', alignSelf: 'center', marginBottom: 3, marginTop:3}}>{data.product.title}</Text>
           <View style={{flexDirection: 'column', marginBottom: 5}}>
@@ -1773,21 +1894,43 @@ function DiaryDate(props){
   return (
       <View style={{flexDirection: 'row', height: 40, alignItems: 'center'}}>
         <View style={{width: 10, height: 10, borderRadius: 5, backgroundColor: '#CCC', marginLeft: 50, marginBottom:3}}/>
-        <TouchableOpacity onPress={()=>Alert.alert('날짜 편집 모드')}>
+        <TouchableOpacity onPress={props.onPressHandler}>
           <Text style={{marginLeft: 20, fontSize: 20, color: 'black', marginBottom:5}}>{date}</Text>
         </TouchableOpacity>
       </View>
   );
 }
 function DiaryTextWithDate(props){
+  // 옵션 셋팅 변수
   const showYear = props.options.first || !props.options.sameYear;
   const showDate = props.options.first || !props.options.sameDate;
   const last = props.options.last;
   const title = props.title;
-  const [myMessage, setMyMessage] = React.useState(props.message.text);
-  const [editMode, setEditMode] = React.useState(true);
-  let handler = props.handler;
-  let minusHandler = props.minusHandler;
+  const [myMessage, setMyMessage] = useState(props.message.text); // 표시되는 메시지
+  const [editMode, setEditMode] = useState(true);                 // 편집모드 확인
+  let handler = props.handler;                                    // 우상단 기능 구현함수
+  let minusHandler = props.minusHandler;                          // 마지막 항목의 크기를 측정해감
+  const [saveLastMessage, setSaveLastMessage] = useState('');     // 초기 메시지 저장 & 변경 확인용
+
+  // 시간 및 날짜 편집용 변수
+  const [showTimeChanger, setShowTimeChanger] = useState(false);
+  const [showDateChanger, setShowDateChanger] = useState(false);
+
+  const timeChangerHandler = (event, selectedDate) => {
+    setShowTimeChanger(false);
+    if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
+
+    props.message.createdAt = Moment(selectedDate);
+    props.diarySort();
+  }
+  const dateChangerHandler = (event, selectedDate) => {
+    setShowDateChanger(false);
+    if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
+
+    props.message.createdAt = Moment(selectedDate);
+    props.diarySort();
+  }
+
 
   const onFocusHandler = () => {
     props.nav.setOptions({
@@ -1800,9 +1943,26 @@ function DiaryTextWithDate(props){
       )
     });
   };
-  const onEndEditingHandler = () => {
+  const onEndEditingHandler = () => { // 글쓰기 끝냄 처리
     setEditMode(false);
-    props.message.text = myMessage;
+    //console.log('myMessage\n', myMessage);
+    if(myMessage === ''){
+      props.data.diary.diarymessageList.splice(props.diaryId, 1);
+      props.diarySort();
+    }else if(props.message.islagacy){
+      // 연동 아님
+      if(saveLastMessage != myMessage){
+        //console.log('연동중 다름 발생! ', saveLastMessage, myMessage);
+        props.message.text = myMessage;
+      }
+    }else {
+      if(saveLastMessage != myMessage){
+        //console.log('비 연동중 다름 발생! ', saveLastMessage, myMessage);
+        props.message.islagacy = true;
+        props.message.text = myMessage;
+      }
+    }
+
     props.nav.setOptions({
       headerTitle: title,
       headerTitleAlign: 'left',
@@ -1816,14 +1976,23 @@ function DiaryTextWithDate(props){
       setEditMode(true);
     }, 500);
   };
-  useEffect(
-    () => props.nav.addListener('beforeRemove', (e) => {
-      if(editMode){
-        onEndEditingHandler();
-      }
-    }),
-    [props.nav]
-  );
+
+  useEffect(() => {
+    if(!props.message.islagacy){
+      // 연동중
+      let sumMessage = '';
+      props.message.linkedMessageList.forEach(message => {
+        if(sumMessage === '') sumMessage = message.text;
+        else sumMessage += ' ' + message.text;
+      })
+      setMyMessage(sumMessage);
+      setSaveLastMessage(sumMessage);
+    }else{
+      setSaveLastMessage(props.message.text);
+    }
+  }, []);
+
+
 
 
   return (
@@ -1832,33 +2001,153 @@ function DiaryTextWithDate(props){
         if(last) minusHandler(y);
     }}>
       {showYear && <DiaryYear year={props.message.createdAt.format('YYYY')} />}
-      {showDate && <DiaryDate date={props.message.createdAt.format('MMDD')} />}
+      {showDate && <DiaryDate date={props.message.createdAt.format('MMDD')} onPressHandler={() => setShowDateChanger(true)} />}
+      {showDateChanger && <DateTimePicker testID="DiaryDatePicker" value={props.message.createdAt.toDate()} mode={'date'}  display="default" onChange={dateChangerHandler}/>}
       <View style={{paddingLeft: 90, flexWrap:'wrap'}}>
         <TouchableOpacity onPress={()=>setEditMode(true)}>
           <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{fontFamily: 'NanumGothic', textAlign: 'center', marginLeft: -15, fontSize: 14, padding:3, borderRadius: 5,width:screenWidth *0.76}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
         </TouchableOpacity>
       </View>
       <View style={{marginBottom: 30, marginRight: 20, alignItems: 'flex-end'}}>
-        <TouchableOpacity onPress={()=>Alert.alert('시간 편집 모드')}>
+        <TouchableOpacity onPress={()=>setShowTimeChanger(true)}>
           <Text style={{fontSize:10, color: '#AAA'}}>{props.message.createdAt.format('LT')}</Text>
         </TouchableOpacity>
       </View>
+      {showTimeChanger && <DateTimePicker testID="DiaryTimePicker" value={props.message.createdAt.toDate()} mode={'time'} is24Hour={true} display="default" onChange={timeChangerHandler}/>}
+    </View>
+  );
+}
+function LastDiaryTextWithDate(props){// 마지막 다이어리만위 위해 만들었음, 나중에 통합 필요
+  // 옵션 셋팅 변수
+  const showYear = props.options.first || !props.options.sameYear;
+  const showDate = props.options.first || !props.options.sameDate;
+  const last = props.options.last;
+  const title = props.title;
+  const [myMessage, setMyMessage] = useState(props.message.text); // 표시되는 메시지
+  const [editMode, setEditMode] = useState(true);                 // 편집모드 확인
+  let handler = props.handler;                                    // 우상단 기능 구현함수
+  let minusHandler = props.minusHandler;                          // 마지막 항목의 크기를 측정해감
+  const [saveLastMessage, setSaveLastMessage] = useState('');     // 초기 메시지 저장 & 변경 확인용
+
+  // 시간 및 날짜 편집용 변수
+  const [showTimeChanger, setShowTimeChanger] = useState(false);
+  const [showDateChanger, setShowDateChanger] = useState(false);
+
+  const timeChangerHandler = (event, selectedDate) => {
+    setShowTimeChanger(false);
+    if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
+
+    props.message.createdAt = Moment(selectedDate);
+    props.diarySort();
+  }
+  const dateChangerHandler = (event, selectedDate) => {
+    setShowDateChanger(false);
+    if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
+
+    props.message.createdAt = Moment(selectedDate);
+    props.diarySort();
+  }
+
+
+  const onFocusHandler = () => {
+    props.nav.setOptions({
+      headerTitle: '내 기록편집',
+      headerTitleAlign: 'center',
+      headerRight: (props) => (
+        <TouchableOpacity onPress={onEndEditingHandler}>
+          <Text style={{fontSize:20, marginRight: 20, justifyContent: 'center'}}>완료</Text>
+        </TouchableOpacity>
+      )
+    });
+  };
+  const onEndEditingHandler = () => { // 글쓰기 끝냄 처리
+    setEditMode(false);
+    //console.log('myMessage\n', myMessage);
+    if(myMessage === ''){
+      props.data.diary.diarymessageList.splice(props.diaryId, 1);
+      props.diarySort();
+    }else if(props.message.islagacy){
+      // 연동 아님
+      if(saveLastMessage != myMessage){
+        //console.log('연동중 다름 발생! ', saveLastMessage, myMessage);
+        props.message.text = myMessage;
+      }
+    }else {
+      if(saveLastMessage != myMessage){
+        //console.log('비 연동중 다름 발생! ', saveLastMessage, myMessage);
+        props.message.islagacy = true;
+        props.message.text = myMessage;
+      }
+    }
+
+    props.nav.setOptions({
+      headerTitle: title,
+      headerTitleAlign: 'left',
+      headerRight: (props) => (
+        <TouchableOpacity onPress={handler}>
+          <Image source={downArrow} style={{width:30, height:30, marginRight:20}}/>
+        </TouchableOpacity>
+      )
+    });
+    setTimeout(()=>{
+      setEditMode(true);
+    }, 500);
+  };
+
+  useEffect(() => {
+    if(!props.message.islagacy){
+      // 연동중
+      let sumMessage = '';
+      props.message.linkedMessageList.forEach(message => {
+        if(sumMessage === '') sumMessage = message.text;
+        else sumMessage += ' ' + message.text;
+      })
+      setMyMessage(sumMessage);
+      setSaveLastMessage(sumMessage);
+    }else{
+      setSaveLastMessage(props.message.text);
+    }
+  }, []);
+
+
+
+
+  return (
+    <View onLayout={(event) => {
+        var {x, y, width, height} = event.nativeEvent.layout;
+        if(last) minusHandler(y);
+    }}>
+      {showYear && <DiaryYear year={props.message.createdAt.format('YYYY')} />}
+      {showDate && <DiaryDate date={props.message.createdAt.format('MMDD')} onPressHandler={() => setShowDateChanger(true)} />}
+      {showDateChanger && <DateTimePicker testID="DiaryDatePicker" value={props.message.createdAt.toDate()} mode={'date'}  display="default" onChange={dateChangerHandler}/>}
+      <View style={{paddingLeft: 90, flexWrap:'wrap'}}>
+        <TouchableOpacity onPress={()=>setEditMode(true)}>
+          <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{fontFamily: 'NanumGothic', textAlign: 'center', marginLeft: -15, fontSize: 14, padding:3, borderRadius: 5,width:screenWidth *0.76}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
+        </TouchableOpacity>
+      </View>
+      <View style={{marginBottom: 30, marginRight: 20, alignItems: 'flex-end'}}>
+        <TouchableOpacity onPress={()=>setShowTimeChanger(true)}>
+          <Text style={{fontSize:10, color: '#AAA'}}>{props.message.createdAt.format('LT')}</Text>
+        </TouchableOpacity>
+      </View>
+      {showTimeChanger && <DateTimePicker testID="DiaryTimePicker" value={props.message.createdAt.toDate()} mode={'time'} is24Hour={true} display="default" onChange={timeChangerHandler}/>}
     </View>
   );
 }
 function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
   const id = route.params.id;
-  const data = dataList[id-1];
+  let data = dataList[id-1];
   let time = false;
   let lastDate = data.diary.diarymessageList.length>0 ? data.diary.diarymessageList[data.diary.diarymessageList.length-1].createdAt : null;
   let goToEnd = route.params.goToEnd;
   let thisScrollView;
 
-  const [showDropbox, setShowDropbox] = React.useState(false);      // 다이어리 공유 옵션 바
+  const [showDropbox, setShowDropbox] = useState(false);      // 다이어리 공유 옵션 바
   const [showTime, setShowTime] = useState(false);                  // 시간 선택 표시창
   const [numberOfMessage, setNumberOfMessage] = useState(data.diary.diarymessageList.length);
   const [contentHeight, setContentHeight] = useState(10000);
   const [minusPos, setMinusPos] = useState(0);
+  const [updated, setUpdated] = useState(0);
 
   const diaryOptionBlurHandler = () => {
       setShowDropbox(false);
@@ -1894,10 +2183,22 @@ function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
   }, [navigation, route]);
 
   const getMinusContentPositionHandler = (value) => {
-    setMinusPos(value);
+    if(value != minusPos) setMinusPos(value);
+    //console.log('setMinusPos: ', minusPos);
   }
 
-  console.log('diary state \n', data.diary.diarymessageList);
+  const diarySort = () => {
+    //console.log('sorting -------------------------------------- ');
+    diarySortByDate(data.diary.diarymessageList);
+    lastDate = data.diary.diarymessageList.length>0 ? data.diary.diarymessageList[data.diary.diarymessageList.length-1].createdAt : null;
+    //console.log('lastDate: ', lastDate.format('LL'));
+    //setUpdated(updated+1);
+    setNumberOfMessage(data.diary.diarymessageList.length);
+    //navigation.navigate('Diary', {id:id});
+  }
+
+
+  //console.log('diary state \n', data.diary.diarymessageList);
 
   return (
     <View style={{flex:1, flexDirection: 'column', backgroundColor: 'white'}}>
@@ -1923,9 +2224,13 @@ function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
                 } else {
                   time = message.createdAt;
                 }
-                if(message.createdAt.isSameOrAfter(lastDate, 'day') && !options.sameDate) options.last = true;
+                if(message.createdAt.isSameOrAfter(lastDate, 'day') && !options.sameDate) {
+                  options.last = true;
+                  //console.log('last Message: ', message.text);
+                  return <LastDiaryTextWithDate data={data} diaryId={i} diarySort={diarySort} options={options} key={i.toString()}  nav={navigation} id={id} message={message} title={data.product.title} handler={diaryOptionFocusHandler} minusHandler={getMinusContentPositionHandler}/>;
+                }
 
-                return <DiaryTextWithDate  options={options} key={i.toString()}  nav={navigation} message={message} title={data.product.title} handler={diaryOptionFocusHandler} minusHandler={getMinusContentPositionHandler}/>;
+                return <DiaryTextWithDate data={data} diaryId={i} diarySort={diarySort} options={options} key={i.toString()}  nav={navigation} id={id} message={message} title={data.product.title} handler={diaryOptionFocusHandler} minusHandler={getMinusContentPositionHandler}/>;
               })
             }
             <View style={{height: 160}}/>
@@ -1945,6 +2250,9 @@ function MyPageScreen({navigation}) {
   const [image, setImage] = React.useState(userData.userImg);
   const [username, setUsername] = useState(userData.username);
   const [editMode, setEditMode] = useState(false);
+  const { signOut } = React.useContext(AuthContext);
+
+  const [tempText, setTempText] = useState('aaaa');
 
   const getPermissionAsync = async () => {
     if (Constants.platform.ios) {
@@ -1956,8 +2264,11 @@ function MyPageScreen({navigation}) {
   };
 
   const onEndEditingHandler = () => {
-    userData.username = username;
-    console.log('onEndEditingHandler');
+    if(username !== ''){
+      userData.username = username;
+    }else{
+      setUsername(userData.username);
+    }
     setEditMode(false);
   };
 
@@ -1969,6 +2280,13 @@ function MyPageScreen({navigation}) {
 
   useFocusEffect(() => {
     if(!editMode) setEditMode(false);
+    setMyDiaryCount(userData.myDiaryList.length);
+
+    let total = 0;
+    userData.myDiaryList.forEach(obj => {
+      total += dataList[obj.id-1].diary.totalUpdateCount;
+    })
+    setTotalCount(total);
   });
 
   const _pickImage = async () => {
@@ -1999,10 +2317,10 @@ function MyPageScreen({navigation}) {
             : <Image source={defaultUser} style={{height: 80, width: 80, borderRadius: 40, backgroundColor: '#EEE', marginTop: 20, marginBottom: 12}}/>
           }
         </TouchableOpacity>
-        <View style={{flexDirection: 'row'}}>
+        <View style={{flexDirection: 'row', marginLeft:20}}>
           {editMode
-          ? <TextInput autoFocus={true} maxLength={10} selectTextOnFocus={true} onEndEditing={onEndEditingHandler} style={{fontWeight: 'bold', fontSize: 20, marginLeft: 20}} value={username}  onChangeText={text=>setUsername(text)}/>
-          : <Text style={{fontWeight: 'bold', fontSize: 20, marginLeft: 20}}>{username}</Text>
+          ? <TextInput autoFocus={true} maxLength={10} selectTextOnFocus={true} onEndEditing={onEndEditingHandler} style={{fontSize: 20, height: 30, width:150}} value={username}  onChangeText={text=>setUsername(text)}/>
+          : <Text style={{fontWeight: 'bold', fontSize: 20}}>{username}</Text>
           }
           <TouchableOpacity onPress={startEditModeHandler}>
             <EvilIcons name="pencil" size={30} color="black"  style={{marginLeft:5, justifyContent: 'center'}}/>
@@ -2012,10 +2330,7 @@ function MyPageScreen({navigation}) {
       <View style={{}}>
         <View style={{marginHorizontal: 15, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#DDD'}}>
           <EvilIcons name="lock" color="black" size={45} style={{marginVertical: 15, marginLeft: -10}}/>
-          <TouchableOpacity onPress={()=>{
-            Alert.alert('정말 로그아웃 하시겠습니까?','로그인 페이지로 이동합니다.',[{text:'취소'}, {text:'확인', onPress:()=>{
-              Alert.alert('아직 미구현', '로그인 페이지로 이동할 예정');
-            }}])}}>
+          <TouchableOpacity onPress={()=>Alert.alert('정말 로그아웃 하시겠습니까?','로그인 페이지로 이동합니다.',[{text:'취소'}, {text:'확인', onPress:signOut}])}>
             <Text style={{fontSize: 22, marginLeft: 3}}>로그아웃</Text>
           </TouchableOpacity>
         </View>
@@ -2051,30 +2366,57 @@ function MyChangePasswordPage({navigation}) {
   const [nextPassword, setNextPassword] = useState('');
   const [nextAdditionalPassword, setAdditionalNextPassword] = useState('');
   const [warnPrevPasswordError, setWarnPrevPasswordError] = useState(false);
-  const [warnNextPasswordError, setWarnNextPasswordError] = useState(true);
+  const [warnNextPasswordError, setWarnNextPasswordError] = useState(false);
   const [warnNotCorrectPasswordError, setWarnNotCorrectPasswordError] = useState(false);
+
+  const changePasswordHandler = () => {
+    let errorCout = 0;
+    if(prevPassword !== userData.password){
+      if(warnPrevPasswordError === false) setWarnPrevPasswordError(true);
+      errorCout++;
+    }else{
+      if(warnPrevPasswordError === true) setWarnPrevPasswordError(false);
+    }
+    if(nextPassword !== nextAdditionalPassword){
+      if(warnNotCorrectPasswordError === false) setWarnNotCorrectPasswordError(true);
+      errorCout++;
+    }else{
+      if(warnNotCorrectPasswordError === true) setWarnNotCorrectPasswordError(false);
+    }
+    if(nextPassword.length < 5){
+      if(warnNextPasswordError === false) setWarnNextPasswordError(true);
+      errorCout++;
+    }else{
+      if(warnNextPasswordError === true) setWarnNextPasswordError(false);
+    }
+    if(errorCout === 0){
+      userData.password = nextPassword;
+      // navigation.navigate('MyServicePage');
+      Alert.alert('비밀번호가 변경되었습니다.');
+    }
+  }
 
   return (
     <ScrollView>
     <View style={{flex:1, flexDirection: 'column', justifyContent: 'space-around'}}>
       <View style={{margin: 20}}>
         <Text style={{marginVertical: 5, fontWeight:'bold', fontSize: 20}}>현재 비밀번호</Text>
-        <TextInput value={prevPassword} style={{borderWidth: 1, backgroundColor: '#DDD', fontSize: 30}} secureTextEntry={true} onChange={(text)=>setPrevPassword(text)}/>
+        <TextInput value={prevPassword} style={{borderWidth: 1, backgroundColor: '#DDD', fontSize: 30}} secureTextEntry={true} onChangeText={(text)=>setPrevPassword(text)}/>
         <Text style={{color: warnPrevPasswordError? '#D00f':'#D000', fontSize: 11, marginLeft: 15, marginVertical: 5}}>올바른 비밀번호를 입력해주세요. 현재 비밀번호와 다릅니다.</Text>
       </View>
       <View style={{margin: 20}}>
         <Text style={{marginVertical: 5, fontWeight:'bold', fontSize: 20}}>새 비밀번호</Text>
-        <TextInput value={nextPassword} style={{borderWidth: 1, backgroundColor: '#DDD', fontSize: 30}} secureTextEntry={true} onChange={(text)=>setNextPassword(text)}/>
+        <TextInput value={nextPassword} style={{borderWidth: 1, backgroundColor: '#DDD', fontSize: 30}} secureTextEntry={true} onChangeText={(text)=>setNextPassword(text)}/>
         <Text style={{fontSize: 11, marginLeft: 15, marginVertical: 5}}>6~16자 영문, 소문자, 숫자만 사용 가능 합니다.</Text>
         <Text style={{color: warnNextPasswordError? '#D00f':'#D000', fontSize: 11, marginLeft: 15, marginVertical: 5}}>비밀번호를 올바른 형식으로 입력해주세요.</Text>
       </View>
       <View style={{margin: 20}}>
         <Text style={{marginVertical: 5, fontWeight:'bold', fontSize: 20}}>새 비밀번호 확인</Text>
-        <TextInput value={nextAdditionalPassword} style={{borderWidth: 1, backgroundColor: '#DDD', fontSize: 30}} secureTextEntry={true} onChange={(text)=>setAdditionalNextPassword(text)}/>
+        <TextInput value={nextAdditionalPassword} style={{borderWidth: 1, backgroundColor: '#DDD', fontSize: 30}} secureTextEntry={true} onChangeText={(text)=>setAdditionalNextPassword(text)}/>
         <Text style={{color: warnNotCorrectPasswordError? '#D00f':'#D000', fontSize: 11, marginLeft: 15, marginVertical: 5}}>새 비밀번호와 동일하게 입력해주세요.</Text>
       </View>
       <View style={{margin: 20}}>
-        <TouchableOpacity onPress={()=>{Alert.alert('비밀번호가 변경되었습니다.', '다시 로그인 해주세요.', [{text: '확인'}])}} style={{borderRadius: 1, backgroundColor: '#CCC', alignItems: 'center', justifyContent: 'center', flex:1}}>
+        <TouchableOpacity onPress={changePasswordHandler} style={{borderRadius: 1, backgroundColor: '#CCC', alignItems: 'center', justifyContent: 'center', flex:1}}>
           <Text style={{margin:10, fontSize: 22}}>변경완료</Text>
         </TouchableOpacity>
       </View>
@@ -2092,7 +2434,7 @@ class SubscribeContentBoxComponent extends React.Component{
       <View style={styles.myShadow}>
         <Text style={{marginLeft: 20, marginVertical: 10, fontSize: 20, fontWeight: 'bold'}}>{this.props.title}</Text>
         <Text style={{marginLeft:40, marginVertical: 0, fontSize: 20, fontWeight: 'bold'}}>내 기록   <Text style={{fontSize: 25, fontWeight: 'normal'}}>{this.props.count}</Text></Text>
-        <Text style={{marginLeft:40, marginVertical: 4, marginBottom: 10, fontSize: 20, fontWeight: 'bold'}}>기간        <Text style={{fontSize: 13, fontWeight: 'normal'}}>{this.props.startDate} ~ {'2020.6.10'}</Text></Text>
+        <Text style={{marginLeft:40, marginVertical: 4, marginBottom: 10, fontSize: 20, fontWeight: 'bold'}}>기간        <Text style={{fontSize: 13, fontWeight: 'normal'}}>{this.props.startDate.format('LL')} ~ {Moment().format('LL')}</Text></Text>
       </View>
     );
   }
@@ -2101,10 +2443,10 @@ function UserHistoryPage({navigation}) {
   return (
     <ScrollView style={{flex:1, flexDirection: 'column', backgroundColor: '#fff'}}>
       <Text style={{margin:20, fontWeight:'bold', fontSize: 20}}>나의 구독 내역</Text>
-      <SubscribeContentBoxComponent title={'구독 상품명1'} count={51} startDate={'2020.3.12'}/>
-      <SubscribeContentBoxComponent title={'구독 상품명2'} count={5} startDate={'2020.4.12'}/>
-      <SubscribeContentBoxComponent title={'구독 상품명3'} count={123} startDate={'2020.3.30'}/>
-      <SubscribeContentBoxComponent title={'구독 상품명4'} count={17} startDate={'2020.7.28'}/>
+      {userData.myDiaryList.map(diary => {
+        let data = dataList[diary.id-1];
+        return <SubscribeContentBoxComponent key={diary.id} title={data.product.title} count={data.diary.totalUpdateCount} startDate={data.diary.makeTime}/>;
+      })}
     </ScrollView>
   );
 }
@@ -2119,11 +2461,8 @@ function ServiceCenterPage({navigation}) {
       <TouchableOpacity style={{height: 90, justifyContent: 'center', borderBottomWidth: 1, borderColor: '#DDD'}} onPress={()=>navigation.push('Help')}>
         <Text style={{marginLeft: 30, fontSize: 20}}>도움말</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={{height: 90, justifyContent: 'center', borderBottomWidth: 1, borderColor: '#DDD'}} onPress={()=>navigation.push('Notice')}>
+      <TouchableOpacity style={{height: 90, justifyContent: 'center', borderColor: '#DDD'}} onPress={()=>navigation.push('Notice')}>
         <Text style={{marginLeft: 30, fontSize: 20}}>공지사항</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={{height: 90, justifyContent: 'center'}} onPress={()=>navigation.push('Question')}>
-        <Text style={{marginLeft: 30, fontSize: 20}}>문의하기</Text>
       </TouchableOpacity>
     </View>
   );
@@ -2161,18 +2500,12 @@ class HelpContentComponent extends React.Component{
   }
 }
 function HelpPage({navigation}) {
-  const helpMessage = [{
-    question: '다이어리를 다운받고 싶어요.',
-    answer: '안녕하세요 큐모먼트입니다.\n큐모먼트서비스를 이용해 주셔서 감사합니다. 앞으로도 큐모먼트에 많은 성원 부탁드립니다.\n다이어리 다운로드 방법\n\n1. PDF다운로드 받기\n2. 링크 내보내기'
-  }, {
-    question: '제목이 너무 길면 어떻게 되는지 알고 싶어요 제목이 너무 길면 어떻게 되는지 알고 싶어요',
-    answer: '안녕하세요 큐모먼트입니다.\n큐모먼트서비스를 이용해 주셔서 감사합니다. 앞으로도 큐모먼트에 많은 성원 부탁드립니다.\n다이어리 다운로드 방법\n\n1. PDF다운로드 받기\n2. 링크 내보내기'
-  }]
-
   return (
     <ScrollView style={{flex:1, flexDirection: 'column', marginTop: 10}}>
-      <HelpContentComponent question={helpMessage[0].question} answer={helpMessage[0].answer}/>
-      <HelpContentComponent question={helpMessage[1].question} answer={helpMessage[1].answer}/>
+      {informData.help.map( message => {
+        return <HelpContentComponent key={message.id} question={message.question} answer={message.answer}/>
+      })}
+      <View style={{flex:1, height: 600}}/>
     </ScrollView>
   );
 }
@@ -2192,7 +2525,7 @@ class NoticeContentComponent extends React.Component{
         <Text style={{marginLeft: 20, marginBottom: 15, fontSize: 12, fontWeight:this.state.showMessage?'bold':'normal'}}>{this.props.date}</Text>
         <MaterialCommunityIcons style={{position: 'absolute', right: 0, marginRight: 15, marginTop: 20}} name={this.state.showMessage? "chevron-up":"chevron-down"} size={30} color="black" />
         {this.state.showMessage &&
-          <View style={{marginLeft: 30, marginBottom: 5, marginTop:10}}>
+          <View style={{marginLeft: 30, marginBottom: 5, marginTop:10, marginRight:20}}>
             <Text>{this.props.message}</Text>
           </View>
         }
@@ -2201,124 +2534,13 @@ class NoticeContentComponent extends React.Component{
   }
 }
 function NoticePage({navigation}) {
-  const noticeMessage = [{
-    title: '위치기반 서비스 이용약관 사전 안내',
-    date: '2019-03-26',
-    message: '안녕하세요 큐모먼트입니다.\n큐모먼트서비스를 이용해 주셔서 감사합니다. 앞으로도 큐모먼트에 많은 성원 부탁드립니다.\n다이어리 다운로드 방법\n\n1. PDF다운로드 받기\n2. 링크 내보내기'
-  }, {
-    title: '제목이 너무 길면 어떻게 되는지 알고 싶어요 제목이 너무 길면 어떻게 되는지 알고 싶어요',
-    date: '2020-07-22',
-    message: '안녕하세요 큐모먼트입니다.\n큐모먼트서비스를 이용해 주셔서 감사합니다. 앞으로도 큐모먼트에 많은 성원 부탁드립니다.\n다이어리 다운로드 방법\n\n1. PDF다운로드 받기\n2. 링크 내보내기'
-  }]
-
   return (
     <ScrollView style={{flex:1, flexDirection: 'column', marginTop: 10}}>
-      <NoticeContentComponent title={noticeMessage[0].title} date={noticeMessage[0].date} message={noticeMessage[0].message}/>
-      <NoticeContentComponent title={noticeMessage[1].title} date={noticeMessage[1].date} message={noticeMessage[1].message}/>
-      <NoticeContentComponent title={noticeMessage[0].title} date={noticeMessage[0].date} message={noticeMessage[0].message}/>
-      <NoticeContentComponent title={noticeMessage[1].title} date={noticeMessage[1].date} message={noticeMessage[1].message}/>
+      {informData.notice.map( message => {
+        return  <NoticeContentComponent key={message.id} title={message.title} date={message.date} message={message.message}/>
+      })}
+      <View style={{flex:1, height: 600}}/>
     </ScrollView>
-  );
-}
-class MyQuestionContentComponent extends React.Component{
-  constructor(props){
-    super(props);
-
-    this.state = {
-      showMessage: false,
-      isAnswered: this.props.QuestionMessage.isAnswered,
-      title: this.props.QuestionMessage.title,
-      message: this.props.QuestionMessage.message,
-      answer: this.props.QuestionMessage.answer,
-    }
-  }
-
-  render(){
-    return (
-      <TouchableOpacity onPress={()=>{this.setState(previousState => ({showMessage: !previousState.showMessage}))}} style={{flexDirection: 'column', borderColor: '#666', marginHorizontal: 10, marginVertical: 6, borderWidth: 1, borderRadius: 10}}>
-        <View style={{flexDirection: 'row'}}>
-          <Text style={{alignSelf: 'center', marginLeft: 10, borderWidth: 1, borderRadius: 5, borderColor: this.props.QuestionMessage.isAnswered?'blue':'red', padding:2, color: this.props.QuestionMessage.isAnswered?'blue':'red'}}>{this.props.QuestionMessage.isAnswered?'답변완료':'답변예정'}</Text>
-          <Text style={{marginLeft: 15, marginVertical: 16, fontSize: 17, marginRight: 43, textDecorationLine: this.state.showMessage?'underline':'none', fontWeight:this.state.showMessage?'bold':'normal'}}>{this.props.QuestionMessage.title}</Text>
-          <MaterialCommunityIcons style={{position: 'absolute', right: 0, marginRight: 15, marginTop: 14}} name={this.state.showMessage? "chevron-up":"chevron-down"} size={30} color="black" />
-        </View>
-        {this.state.showMessage &&
-          <View style={{marginLeft: 30, marginBottom: 10, marginTop:10, marginRight: 30}}>
-            <Text style={{fontSize:20, fontWeight:'bold', marginVertical: 10}}>문의 내용</Text>
-            <Text style={{marginBottom: 10}}>{this.props.QuestionMessage.message}</Text>
-            <Text style={{fontSize:20, fontWeight:'bold', marginVertical: 10}}>답변 내용</Text>
-            <Text>{this.props.QuestionMessage.answer}</Text>
-          </View>
-        }
-      </TouchableOpacity>
-    );
-  }
-}
-class MyQuestionFormComponent extends React.Component{
-  constructor(props){
-    super(props);
-    this.state={
-      type: '',
-      title: '',
-      message: '',
-    }
-  }
-
-  render(){
-    return (
-      <View style={{flex:1, flexDirection: 'column', marginHorizontal: 20, marginVertical: 10}}>
-        <TouchableOpacity style={{borderWidth: 1, borderRadius: 10, justifyContent: 'center', padding: 8}} onPress={()=>Alert.alert('미구현!', '드롭박스기능 공부하여 추가할 예정')}>
-          <Text>문의 유형 선택</Text>
-        </TouchableOpacity>
-        <TextInput style={{borderWidth: 1, borderRadius: 10, padding:15, marginVertical: 20}}  value={this.title} placeholder={'문의 제목'} onChange={(text)=>this.setState(preState=>({title: text}))}/>
-        <TextInput multiline style={{borderWidth: 1, borderRadius: 10, padding:15, minHeight: 230}}  value={this.message} placeholder={'문의 내용'} onChange={(text)=>this.setState(preState=>({message: text}))}/>
-        <Text style={{fontSize: 10, marginVertical: 20}}>문의 내용 등록 시<Text style={{color:'blue'}} onPress={()=>Alert.alert('미구현!', '개인정보 처리방침 페이지로 링크 연결 예정')}> 개인정보 처리방침</Text>을 확인하였으며 동의합니다.</Text>
-        <TouchableOpacity style={{marginTop: 45, marginBottom: 25, paddingVertical: 8, borderWidth: 1, backgroundColor: '#545', justifyContent: 'center', alignItems: 'center'}} onPress={()=>Alert.alert('미구현!', '문의정보를 받아와 저장하는 기능 구현 예정')}>
-          <Text style={{color:'white', fontSize: 20}}>문의하기</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-}
-function QuestionPage({navigation}) {
-  const [myQuestionTab, setMyQuestionTab] = React.useState(true);
-  const QuestionMessage = [{
-    isAnswered: false,
-    title: '문의 제목1',
-    message: '안녕하세요 큐모먼트입니다.\n큐모먼트서비스를 이용해 주셔서 감사합니다. 앞으로도 큐모먼트에 많은 성원 부탁드립니다.\n다이어리 다운로드 방법\n\n1. PDF다운로드 받기\n2. 링크 내보내기',
-    answer: '안녕하세요 큐모먼트입니다.\n큐모먼트서비스를 이용해 주셔서 감사합니다. 앞으로도 큐모먼트에 많은 성원 부탁드립니다.\n다이어리 다운로드 방법\n\n1. PDF다운로드 받기\n2. 링크 내보내기',
-  },{
-    isAnswered: true,
-    title: '문의 제목2',
-    message: '안녕하세요 큐모먼트입니다.\n큐모먼트서비스를 이용해 주셔서 감사합니다. 앞으로도 큐모먼트에 많은 성원 부탁드립니다.\n다이어리 다운로드 방법\n\n1. PDF다운로드 받기\n2. 링크 내보내기',
-    answer: '안녕하세요 큐모먼트입니다.\n큐모먼트서비스를 이용해 주셔서 감사합니다. 앞으로도 큐모먼트에 많은 성원 부탁드립니다.\n다이어리 다운로드 방법\n\n1. PDF다운로드 받기\n2. 링크 내보내기',
-  },{
-    isAnswered: true,
-    title: '문의 제목3',
-    message: '안녕하세요 큐모먼트입니다.\n큐모먼트서비스를 이용해 주셔서 감사합니다. 앞으로도 큐모먼트에 많은 성원 부탁드립니다.\n다이어리 다운로드 방법\n\n1. PDF다운로드 받기\n2. 링크 내보내기',
-    answer: '안녕하세요 큐모먼트입니다.\n큐모먼트서비스를 이용해 주셔서 감사합니다. 앞으로도 큐모먼트에 많은 성원 부탁드립니다.\n다이어리 다운로드 방법\n\n1. PDF다운로드 받기\n2. 링크 내보내기',
-  }];
-
-  return (
-    <View style={{flex:1, flexDirection: 'column', backgroundColor: 'white'}}>
-      <View style={{marginHorizontal: 15, marginVertical: 5, flexDirection: 'row', justifyContent: 'space-between', borderWidth: 1, borderRadius: 21, borderColor: '#AAA', backgroundColor: '#AAA'}}>
-        <TouchableOpacity onPress={()=>setMyQuestionTab(true)}>
-          <Text style={{borderWidth: 0, borderRadius: 20, fontSize: 18, fontWeight:'bold', paddingVertical: 10, paddingHorizontal: 30, backgroundColor: myQuestionTab?'white':'#AAA'}}>내 문의 내역</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={()=>setMyQuestionTab(false)}>
-          <Text style={{borderWidth: 0, borderRadius: 20, fontSize: 18, fontWeight:'bold',  paddingVertical: 10, paddingHorizontal: 40, backgroundColor:  myQuestionTab?'#AAA':'white'}}>문의하기</Text>
-        </TouchableOpacity>
-      </View>
-      <ScrollView style={{flex:1, flexDirection: 'column', marginTop: 15}}>
-      {myQuestionTab ?
-        <View>
-          <MyQuestionContentComponent  QuestionMessage={QuestionMessage[0]}/>
-          <MyQuestionContentComponent  QuestionMessage={QuestionMessage[1]}/>
-          <MyQuestionContentComponent  QuestionMessage={QuestionMessage[2]}/>
-        </View> :
-        <MyQuestionFormComponent/>
-      }
-      </ScrollView>
-    </View>
   );
 }
 
@@ -2466,18 +2688,6 @@ function MainStackHomePage({navigation}) {
           }}
         component={NoticePage}
       />
-      <Stack.Screen
-        name="Question"
-        options={{
-          title: "문의",
-          headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
-          headerBackTitleVisible: false,
-          headerTintColor: 'black',
-          cardStyle: {backgroundColor: 'white'},
-          }}
-        component={QuestionPage}
-      />
     </Stack.Navigator>
   );
 }
@@ -2511,7 +2721,7 @@ export default function App() {
           return {
             ...prevState,
             isSignout: true,
-            userToken: null,
+            isLoading: false,
             login: false,
           };
         case 'INTRO_SKIP':
@@ -2525,11 +2735,6 @@ export default function App() {
             ...prevState,
             username: action.username,
             login: true,
-          };
-        case 'SET_DIARY_EDIT_MODE':
-          return {
-            ...prevState,
-            diaryMode: action.diaryMode,
           };
       }
     },
@@ -2658,6 +2863,9 @@ export default function App() {
     setMessageText('');
   }
 
+  //usage
+  var testUUID = uuid.v1();
+  console.log('uuid: ', testUUID);
 
   return (
     <AuthContext.Provider value={authContext}>
@@ -2708,8 +2916,6 @@ export default function App() {
             <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: true, headerTitle: '비밀번호 찾기', headerTitleAlign: 'center'}} name="FindPassword" component={FindPasswordScreen}/>
             <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: false}} name="SignUp" component={SignUpScreen}/>
             <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: false}} name="SetUsername" component={UserNameSettingScreen}/>
-            <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: true, headerTitle: '이용약관', headerTitleAlign: 'center'}} name="InformTermsOfUse" component={InformTermsOfUseScreen}/>
-            <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: true, headerTitle: '개인정보 처리방침', headerTitleAlign: 'center'}} name="InformPersonalInformationProcessingPolicy" component={InformPersonalInformationProcessingPolicyScreen}/>
           </Stack.Navigator>
         </NavigationContainer>
       ) : (
