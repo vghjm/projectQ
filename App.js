@@ -31,6 +31,11 @@ import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 
+// my component
+import InlineTextInput from './component/InlineTextInput';
+import LoginForm from './component/LoginForm';
+import {ThemeContext} from './component/context/ThemeContext';
+
 // https://velog.io/@max9106/React-Native-%EB%A6%AC%EC%95%A1%ED%8A%B8-%EB%84%A4%EC%9D%B4%ED%8B%B0%EB%B8%8Creact-native-%ED%91%B8%EC%8B%9C%EC%95%8C%EB%9E%8C-expo-jkk16hzg5d
 const HTTP = 'http://7672cb849f61.ngrok.io';
 const PUSH_REGISTRATION_ENDPOINT = HTTP+'/pushalarm/token';
@@ -3047,6 +3052,9 @@ export default function App() {
       } catch (e) {
         // Restoring token failed
       }
+      let testUUID = uuid.v4();
+      console.log('uuid: ', testUUID);
+      console.log('time: ', Moment().toDate());
 
       // After restoring token, we may need to validate it in production apps
 
@@ -3123,20 +3131,18 @@ export default function App() {
     // Defined in next step
   };
 
-  useEffect(()=>{
-    //usage
-    var testUUID = uuid.v4();
-    console.log('uuid: ', testUUID);
-    console.log('time: ', Moment().toDate());
-    console.log('loaded font\n', loaded);
+  const [theme, setTheme] = useState({
+    default: '#d9d9d9',
+    light: ['#e8efd9','#d7e4bd', '#b9c89c'],
+    logo: q_moment,
   });
 
 
-
   return (
+    <ThemeContext.Provider value={theme}>
     <AuthContext.Provider value={authContext}>
       {state.isLoading === true ? (
-        <View style={{flex:1, alignItems: 'center', justifyContent: 'center'}}>
+        <View style={{flex:1, marginTop:30}}>
           <Text>스플래쉬 화면</Text>
           <Text> 유저 정보 여부에 따라 다음으로 분기 </Text>
           <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'RESTORE_TOKEN', token: 'dummy-auth-token', autoConfig: true });}}>
@@ -3165,7 +3171,7 @@ export default function App() {
       ) : state.login === false ? (
         <NavigationContainer>
           <Stack.Navigator>
-            <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: false}} name="SignIn" component={SignInScreen}/>
+            <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: false}} name="SignIn" component={LoginForm}/>
             <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: true, headerTitle: '비밀번호 찾기', headerTitleAlign: 'center'}} name="FindPassword" component={FindPasswordScreen}/>
             <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: false}} name="SignUp" component={SignUpScreen}/>
             <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: false}} name="SetUsername" component={UserNameSettingScreen}/>
@@ -3180,6 +3186,7 @@ export default function App() {
         </NavigationContainer>
       )}
     </AuthContext.Provider>
+    </ThemeContext.Provider>
   );
 }
 
