@@ -31,15 +31,15 @@ import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 
+
 // my component
 import InlineTextInput from './component/InlineTextInput';
-import LoginForm from './component/LoginForm';
+import LoginNavigation from './component/LoginForm';
 import {ThemeContext} from './component/context/ThemeContext';
+import {AuthContext, authContext} from './component/context/AuthContext';
+import {HTTP, PUSH_REGISTRATION_ENDPOINT} from './utils/constants';
 
 // https://velog.io/@max9106/React-Native-%EB%A6%AC%EC%95%A1%ED%8A%B8-%EB%84%A4%EC%9D%B4%ED%8B%B0%EB%B8%8Creact-native-%ED%91%B8%EC%8B%9C%EC%95%8C%EB%9E%8C-expo-jkk16hzg5d
-const HTTP = 'http://7672cb849f61.ngrok.io';
-const PUSH_REGISTRATION_ENDPOINT = HTTP+'/pushalarm/token';
-const MESSAGE_ENPOINT = HTTP+'pushalarm/message';
 
 const introImage1 = {uri: "https://cdn.crowdpic.net/detail-thumb/thumb_d_F78FC0AA8923C441588C382B19DF0BF8.jpg"};
 const introImage2 = {uri: "https://previews.123rf.com/images/romeolu/romeolu1601/romeolu160100122/50594417-%EB%88%88-%EB%B0%B0%EA%B2%BD.jpg"};
@@ -49,13 +49,11 @@ const dogImg = {uri: "https://t1.daumcdn.net/cfile/tistory/24283C3858F778CA2E"};
 const catImg = {uri: 'https://image-notepet.akamaized.net/resize/620x-/seimage/20190816%2Ff07bd9f247293aa0317f2c8faba7e83b.png'};
 const carmelImg = {uri: 'https://www.jain.re.kr/file/contents/1/201609/30aade86-7056-4948-86a4-a8003c4498ab.jpg'};
 const diaryImg = require('./assets/diary.jpg');
-const logo = require('./assets/icon/Q_banner.png');
-const q_moment = require('./assets/icon/Q_1.png');
+const logo = require('./assets/img/icon.png');
 const bookOn = require('./assets/icon/book_on.png');
 const bookOff = require('./assets/icon/book_off.png');
 const subOn = require('./assets/icon/subOn.png');
 const subOff = require('./assets/icon/subOff.png');
-const splash = require('./assets/icon/splash2.png');
 const upArrow = require('./assets/icon/up_arrow.png');
 const downArrow = require('./assets/icon/down_arrow.png');
 const defaultUser = require('./assets/img/default_user.png');
@@ -71,7 +69,7 @@ const diaryImgList = [
   require('./assets/icon/diary_9.png'),
   require('./assets/icon/diary_10.png'),
 ];
-const AuthContext = React.createContext();
+
 const ControllContext = React.createContext();
 const Tab = createMaterialTopTabNavigator();
 const Stack = createStackNavigator();
@@ -3042,6 +3040,33 @@ export default function App() {
       diaryMode: false,
     }
   );  // 유저 인증 정보
+
+  const authContext = React.useMemo(
+    () => ({
+      signIn: async data => {
+        console.log(`SignIn email:${data.email}, password:${data.password}`);
+        // 인증
+        let result;
+
+        registerForPushNotificationsAsync();
+        dispatch({ type: 'SIGN_IN', token: data.token, login: true });
+      },
+      signOut: () => dispatch({ type: 'SIGN_OUT' }),
+      signUp: async data => {
+        // In a production app, we need to send user data to server and get a token
+        // We will also need to handle errors if sign up failed
+        // After getting token, we need to persist the token using `AsyncStorage`
+        // In the example, we'll use a dummy token
+        console.log('signUp');
+
+        dispatch({ type: 'SIGN_IN', token: 'dummy-auth-token' });
+      },
+      introSkip: () => dispatch({type: 'INTRO_SKIP'}),
+      registerUsername: data => dispatch({type: 'SET_USERNAME', username: data}),
+    }),
+    []
+  );  // 유저 인증 함수 등록
+
   React.useEffect(() => {
     // Fetch the token from storage then navigate to our appropriate place
     const bootstrapAsync = async () => {
@@ -3065,32 +3090,7 @@ export default function App() {
 
     bootstrapAsync();
   }, []); // 초기화시 데이터 로딩 여기서
-  const authContext = React.useMemo(
-    () => ({
-      signIn: async data => {
-        // In a production app, we need to send some data (usually username, password) to server and get a token
-        // We will also need to handle errors if sign in failed
-        // After getting token, we need to persist the token using `AsyncStorage`
-        // In the example, we'll use a dummy token
-        console.log('singIn:' + data);
-        registerForPushNotificationsAsync();
-        dispatch({ type: 'SIGN_IN', token: 'dummy-auth-token', login: data[2] });
-      },
-      signOut: () => dispatch({ type: 'SIGN_OUT' }),
-      signUp: async data => {
-        // In a production app, we need to send user data to server and get a token
-        // We will also need to handle errors if sign up failed
-        // After getting token, we need to persist the token using `AsyncStorage`
-        // In the example, we'll use a dummy token
-        console.log('signUp');
 
-        dispatch({ type: 'SIGN_IN', token: 'dummy-auth-token' });
-      },
-      introSkip: () => dispatch({type: 'INTRO_SKIP'}),
-      registerUsername: data => dispatch({type: 'SET_USERNAME', username: data}),
-    }),
-    []
-  );  // 유저 인증 함수 등록
   const [notification, setNotification] = useState(null);
   const [loaded, error] = Font.useFonts({
     UhBeeSeulvely: require('./assets/font/UhBeeSeulvely.ttf'),
@@ -3134,7 +3134,7 @@ export default function App() {
   const [theme, setTheme] = useState({
     default: '#d9d9d9',
     light: ['#e8efd9','#d7e4bd', '#b9c89c'],
-    logo: q_moment,
+    logo: logo,
   });
 
 
@@ -3142,7 +3142,7 @@ export default function App() {
     <ThemeContext.Provider value={theme}>
     <AuthContext.Provider value={authContext}>
       {state.isLoading === true ? (
-        <View style={{flex:1, marginTop:30}}>
+        <View style={{flex:1, marginTop:30, alignItems: 'center', justifyContent: 'center'}}>
           <Text>스플래쉬 화면</Text>
           <Text> 유저 정보 여부에 따라 다음으로 분기 </Text>
           <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'RESTORE_TOKEN', token: 'dummy-auth-token', autoConfig: true });}}>
@@ -3169,14 +3169,7 @@ export default function App() {
           </Tab.Navigator>
         </NavigationContainer>
       ) : state.login === false ? (
-        <NavigationContainer>
-          <Stack.Navigator>
-            <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: false}} name="SignIn" component={LoginForm}/>
-            <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: true, headerTitle: '비밀번호 찾기', headerTitleAlign: 'center'}} name="FindPassword" component={FindPasswordScreen}/>
-            <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: false}} name="SignUp" component={SignUpScreen}/>
-            <Stack.Screen options={{cardStyle: {backgroundColor: 'white'}, headerShown: false}} name="SetUsername" component={UserNameSettingScreen}/>
-          </Stack.Navigator>
-        </NavigationContainer>
+        <LoginNavigation/>
       )
       : (
         <NavigationContainer>
