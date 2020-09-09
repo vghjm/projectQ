@@ -38,6 +38,7 @@ import LoginNavigation from './component/LoginForm';
 import {ThemeContext} from './component/context/ThemeContext';
 import {AuthContext, authContext} from './component/context/AuthContext';
 import {HTTP, PUSH_REGISTRATION_ENDPOINT} from './utils/constants';
+import IntroNavigation from './component/IntroForm';
 
 // https://velog.io/@max9106/React-Native-%EB%A6%AC%EC%95%A1%ED%8A%B8-%EB%84%A4%EC%9D%B4%ED%8B%B0%EB%B8%8Creact-native-%ED%91%B8%EC%8B%9C%EC%95%8C%EB%9E%8C-expo-jkk16hzg5d
 
@@ -3156,18 +3157,7 @@ export default function App() {
           </TouchableOpacity>
         </View>
       ) : state.userToken === null ? (
-        <NavigationContainer>
-          <Tab.Navigator backBehavior={null} tabBarOptions={{
-            tabStyle: {backgroundColor: '#FFF', height: 0},
-            showIcon: false,
-            showLabel: false,
-          }}>
-            <Tab.Screen name="Intro1" component={IntroScreen1} />
-            <Tab.Screen name="Intro2" component={IntroScreen2} />
-            <Tab.Screen name="Intro3" component={IntroScreen3} />
-            <Tab.Screen name="Intro4" component={IntroScreen4} />
-          </Tab.Navigator>
-        </NavigationContainer>
+        <IntroNavigation/>
       ) : state.login === false ? (
         <LoginNavigation/>
       )
