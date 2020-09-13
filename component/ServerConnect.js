@@ -18,41 +18,25 @@ const httpConnection = (address, data, type) => {
   });
 }
 
-
 export async function login(email, password){
+  let reply = {ok: false, data: null, message: ''};
   let response = await httpConnection(Constants.LOGIN, {email: email, password: password}, POST);
-  let out = {status: false, data: null};
-
-  const noEmailErrorFromLogin = () => {
-    Alert.alert('noEmailErrorFromLogin');
-  }
-  const passwordMismatchFromLogin = () => {
-    Alert.alert('passwordMismatchFromLogin');
-  }
-
-  const loginHandler = (data) => {
-    //Alert.alert('로그인 성공');
-    out = {
-      status: true,
-      data:{token: data.token, username:data.name},
-    };
-    //console.log('data: ', data);
-    //console.log('out: ', out);
-  }
 
   if(response.ok){ // HTTP 상태 코드가 200~299일 경우
     // 응답 몬문을 받습니다.
     let json = await response.json();
-    if(json.res === 'no email') noEmailErrorFromLogin();
-    else if(json.res === 'password mismatch') passwordMismatchFromLogin();
-    else if(json.res === 'success') loginHandler(json);
-    else unkownErrorHandler(json);
-
-    return out;
+    if(json.res === 'no email') reply.message = 'noEmail';
+    else if(json.res === 'password mismatch') reply.message = 'passwordMismatching';
+    else if(json.res === 'success'){
+      reply.ok = true;
+      reply.data = {token: json.token, username: json.username};
+    }
+    else reply.message = 'unkown';
   }else{
-    Alert.alert(['Connection Failed', '서버와 연결이 되지 않습니다.']);
-    return out;
+    reply.message = 'noConnect';
   }
+
+  return reply;
 }
 
 export async function loadProductData(token){

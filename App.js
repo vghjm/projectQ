@@ -353,7 +353,7 @@ let realTestData3 = {
 */
 // dataList - id, isAvailable, hasDiary, hasChatroom, isSubscribe, product, diary, push
 let dataList = [];
-
+  
 let userData = {
   token: null,
   username: null,
@@ -2975,7 +2975,7 @@ export default function App() {
             login: action.login,
             userData: action.userData,
           };
-        case 'SIGN_IN':
+        case 'LOGIN':
           return {
             ...prevState,
             login: true,
@@ -3011,12 +3011,40 @@ export default function App() {
     () => ({
       signIn: async data => {
         console.log(`SignIn email:${data.email}, password:${data.password}`);
-        // 인증
-        let result = await Connection.login(data.email, data.password);
-        //console.log('result: ', result);
+        let reply = {ok: false, data: null, message: ''};
+        let response = await Connection.login(data.email, data.password);
 
-        if(result.status){
-          // load
+        if(response.ok){
+          let pushRegistered = await registerForPushNotificationsAsync({email: data.email, username:response.data.username});
+
+          if(pushRegistered){
+            reply.ok = true;
+            reply.data = response.data;
+          }else{
+            reply.message = 'pushRegisterError';
+          }
+        }else{
+          reply.message = response.message;
+        }
+
+        return reply;
+      },
+      login: async data => {
+        let userdata = {
+          token: data.token,
+          username: data.username,
+          email: data.email,
+          password: data.password,
+          userImg: null,
+          mySubscribeList: [],
+          myChatroomList: [],
+          myDiaryList: [],
+        };
+        // *추가 구독 및 다이어리 정보 불러올 것
+
+        dispatch({ type: 'LOGIN', userData: userData }),
+      },
+      loadProduct: () => {
           let loadUserData = {
             token: result.data.token,
             username: result.data.username,
@@ -3035,16 +3063,12 @@ export default function App() {
             console.log('load data successely');
             dataList = await Storage.saveProductData(responseProductData.data);
             let diaryData = await Storage.saveDiaryData(responseDiaryData.data);
-            registerForPushNotificationsAsync();
-            //console.log('responseProductData: ', responseProductData);
-            dispatch({ type: 'SIGN_IN', login: true, userData: loadUserData});
-          }else{
-            console.log('load data failed');
-            Alert.alert('데이토 로딩에 실패하였습니다.');
           }
-        }
       },
       signOut: () => dispatch({ type: 'SIGN_OUT' }),
+      findpw: (email) => {
+
+      },
       signUp: async data => {
         // In a production app, we need to send user data to server and get a token
         // We will also need to handle errors if sign up failed
@@ -3094,7 +3118,7 @@ export default function App() {
     console.log('notification', notify);
   };
 
-  const registerForPushNotificationsAsync = async () => {
+  const registerForPushNotificationsAsync = async (userData) => {
     const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
     if (status !== 'granted') {
       Alert.alert('알림 권한 획득 실패!');
@@ -3103,7 +3127,7 @@ export default function App() {
     let token = await Notifications.getExpoPushTokenAsync();
     // Defined in following steps
     Notifications.addListener(handleNotification);
-    console.log(`registerForPushNotificationsAsync\nstatus: ${status}\ntoken: ${token}\nemail: ${state.userData.email}, username: ${state.userData.username}`);
+    console.log(`registerForPushNotificationsAsync\nstatus: ${status}\ntoken: ${token}\nemail: ${userData.email}, username: ${userData.username}`);
 
     return fetch(PUSH_REGISTRATION_ENDPOINT, {
       method: 'POST',

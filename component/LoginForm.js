@@ -54,9 +54,9 @@ function SignIn({navigation}){
   const [password, setPassword] = useState('');
   const [autoLoginChecked, setAutoLoginChecked] = useState(true);
   const [isTouchable, setIsTouchable] = useState(false);
-  const [nowPressingButton, setNowPressingButton] = useState(false);
   const theme = useContext(ThemeContext);
-  const {signIn} = useContext(AuthContext);
+  const {signIn, ogin} = useContext(AuthContext);
+  let nowPressingButton = false;
 
   const emailUpdateHandler = (text) => {
     if(text!==email) setEmail(text);
@@ -73,14 +73,21 @@ function SignIn({navigation}){
 
   const loginHandler = async () => {
     if(nowPressingButton) return;
-    else setNowPressingButton(true);
+    else nowPressingButton = true;
 
     if(isEmailValid(email) && isPasswordValid(password)){
-      let reasponse = await signIn({email: email, password:password});
+      let response = await signIn({email: email, password:password});
+      nowPressingButton = false;
+
+      if(response.ok){
+        login({token: response.data.token, username: response.data.username, email: email, password: password});
+      }else{
+        Alert.alert('로그인 중 에러발생', response.message);
+      }
     }else{
       Alert.alert('이메일 또는 비밀번호 형식이 맞지 않습니다.');
+      nowPressingButton = false;
     }
-    setNowPressingButton(false);
   }
 
   return (
@@ -102,11 +109,12 @@ function FindPassword({navigation}){
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState(false);
   const [isTouchable, setIsTouchable] = useState(false);
-  const [nowPressingButton, setNowPressingButton] = useState(false);
   const [findPasswordError, setFindPasswordError] = useState(false);
   const theme = useContext(ThemeContext);
+  const {findpw} = useContext(AuthContext);
+  let nowPressingButton = false;
 
-  useEffect(() => { // 로그인 가능 체크
+  useEffect(() => { // 누름가능여부 체크
     if(email !== ''){
       if(!isTouchable) setIsTouchable(true);
     }else if(isTouchable) setIsTouchable(false);
@@ -118,12 +126,22 @@ function FindPassword({navigation}){
 
   const onPressHandler = async () => {
     if(nowPressingButton) return;
-    else setNowPressingButton(true);
+    else nowPressingButton = true;
 
     if(isEmailValid(email)){
-      let a;
+      let response = await findpw(email);
+
+      if(response.ok){
+        Alert.alert('등록된 이메일로 임시 패스워드를 보냈습니다.');
+      }else{
+        Alert.alert('등록되지 않은 이메일 입니다.');
+      }
+      nowPressingButton = false;
+    }else{
+      Alert.alert('이메일 형식이 맞지 않습니다.');
+      nowPressingButton = false;
     }
-    setNowPressingButton(false);
+
   }
 
   return (
@@ -150,7 +168,7 @@ function SignUp({navigation}){
   const [nowPressingButton, setNowPressingButton] = useState(false);
   const theme = useContext(ThemeContext);
 
-  useEffect(() => { // 로그인 가능 체크
+  useEffect(() => { // 누름가능여부 체크
     if(email !== '' && password !== '' && nextPassword !== ''){
       if(!isTouchable) setIsTouchable(true);
     }else if(isTouchable) setIsTouchable(false);
@@ -219,7 +237,7 @@ function SetUsername({navigation}){
   const [nowPressingButton, setNowPressingButton] = useState(false);
   const theme = useContext(ThemeContext);
 
-  useEffect(() => { // 버튼 누름가능여부 체크
+  useEffect(() => { // 누름가능여부 체크
     if(username !== ''){
       if(!isTouchable) setIsTouchable(true);
     }else if(isTouchable) setIsTouchable(false);
