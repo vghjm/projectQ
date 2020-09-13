@@ -1,7 +1,7 @@
 import React from 'react';
 import {Dimensions} from 'react-native';
 
-export const HTTP = 'http://7672cb849f61.ngrok.io';
+export const HTTP = 'http://82651c28714d.ngrok.io';
 export const PUSH_REGISTRATION_ENDPOINT = HTTP + '/pushalarm/token';
 export const MESSAGE_ENPOINT = HTTP + 'pushalarm/message';
 export const LOGIN = HTTP + '/user/login';
@@ -21,6 +21,8 @@ export const TIMESET = HTTP + '/subscribe/timesetting';
 export const MAKELINK = HTTP + '/makelink';
 export const SETPUSHTOKEN = HTTP + '/token';
 export const MESSAGE = HTTP + '/message';
+
+export const FILE = HTTP + '/files/';
 
 export const HEIGHT = Dimensions.get('window').height;
 export const WIDTH = Dimensions.get('window').width;

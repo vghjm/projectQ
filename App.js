@@ -39,6 +39,8 @@ import {ThemeContext} from './component/context/ThemeContext';
 import {AuthContext, authContext} from './component/context/AuthContext';
 import {HTTP, PUSH_REGISTRATION_ENDPOINT} from './utils/constants';
 import IntroNavigation from './component/IntroForm';
+import * as Connection from './component/ServerConnect';
+import * as Storage from './component/StorageControll';
 
 // https://velog.io/@max9106/React-Native-%EB%A6%AC%EC%95%A1%ED%8A%B8-%EB%84%A4%EC%9D%B4%ED%8B%B0%EB%B8%8Creact-native-%ED%91%B8%EC%8B%9C%EC%95%8C%EB%9E%8C-expo-jkk16hzg5d
 
@@ -79,6 +81,7 @@ const ServiceCenterStack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 
 // 임시 데이터
+
 const noticeMessage = [
   {
     id: 1,
@@ -104,6 +107,7 @@ const helpMessage = [
   }
 ];
 
+/*
 let thankQChatmessageListData = [
   {
     _id: 10, text: '그랬구나~!~! 정말 감사한 기억이겠다😌', createdAt: Moment('20200705 0810'),
@@ -346,22 +350,10 @@ let realTestData3 = {
     isRandomPushType: true, pushStartTime: Moment('20200812 0830'), pushEndTime: Moment('20200812 1130'),
   },
 };
+*/
+// dataList - id, isAvailable, hasDiary, hasChatroom, isSubscribe, product, diary, push
+let dataList = [];
 
-let dataList = [
-  realTestData1,
-  realTestData2,
-  realTestData3,
-];
-  let userData_backup = {
-  token: 'aadfnlkas235kj2',
-  username: '기본 사용자',
-  email: 'aa2@naver.com',
-  password: '1234!',
-  userImg: null,
-  mySubscribeList: [{id:1, pushStartTime: Moment('20200811 0830'), pushEndTime: Moment('20200811 0830')}, {id:2, pushStartTime: Moment('20200811 0830'), pushEndTime: Moment('20200811 0830')}, {id:3, pushStartTime: Moment('20200812 0830'), pushEndTime: Moment('20200812 1130')}],
-  myChatroomList: [{id:1, getPushAlarm:true, key:'1'}, {id:2, getPushAlarm:false, key:'2'}, {id:3, getPushAlarm:true, key:'3'}],
-  myDiaryList: [{id:1, pos:1, color:1}, {id:2, pos:2, color:2}, {id:3, pos:3, color:3}],
-};
 let userData = {
   token: null,
   username: null,
@@ -372,6 +364,8 @@ let userData = {
   myChatroomList: [],
   myDiaryList: [],
 };
+
+
 let informData = {
   introduction: [],
   help: helpMessage,
@@ -409,48 +403,7 @@ function isEmail(email){
 
 
 // 인증 페이지
-function IntroScreen1() {
-  const { introSkip } = React.useContext(AuthContext);
-
-  return (
-    <ImageBackground source={introImage1} style={styles.backgroundImg}>
-      <TouchableOpacity style={styles.skipButton} onPress={introSkip}>
-        <Text style={{fontSize: 24, marginRight: 20, color: 'blue', marginTop: 20}}>[Skip]</Text>
-      </TouchableOpacity>
-    </ImageBackground>
-  );
-}
-function IntroScreen2() {
-  const { introSkip } = React.useContext(AuthContext);
-
-  return (
-    <ImageBackground source={introImage2} style={styles.backgroundImg}>
-      <TouchableOpacity style={styles.skipButton} onPress={introSkip}>
-        <Text style={{fontSize: 24, marginRight: 20, color: 'blue', marginTop: 20}}>[Skip]</Text>
-      </TouchableOpacity>
-    </ImageBackground>
-  );
-}
-function IntroScreen3() {
-  const { introSkip } = React.useContext(AuthContext);
-
-  return (
-    <ImageBackground source={introImage3} style={{resizeMode: 'cover', flex:1, flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-end'}}>
-      <TouchableOpacity onPress={introSkip}>
-        <Text style={{fontSize: 24, color: 'blue', marginRight: 40, marginBottom: 40}}>[가입하기]</Text>
-      </TouchableOpacity>
-    </ImageBackground>
-  );
-}
-function IntroScreen4() {
-  const { introSkip } = React.useContext(AuthContext);
-
-  useFocusEffect(introSkip, []);
-
-  return (
-    <View style={{backgroundColor: 'white'}}/>
-  );
-}
+/*
 async function loadingProductData() {
   let loadDataFailure = true;
 
@@ -923,6 +876,7 @@ function UserNameSettingScreen({navigation}) {
     </KeyboardAvoidingView>
   );
 }
+*/
 
 // 푸시 테스트
 function pushMessage(id){
@@ -2986,59 +2940,70 @@ function MainStackHomePage({navigation}) {
   );
 }
 
+const USERDATA = {
+  token: null,
+  username: '',
+  email: '',
+  password: '',
+  userImg: null,
+  mySubscribeList: [],
+  myChatroomList: [],
+  myDiaryList: [],
+};
+
 // 메인 앱
 export default function App() {
   const [state, dispatch] = React.useReducer(
     (prevState, action) => {
       switch (action.type) {
-        case 'RESTORE_TOKEN':
+        case 'END_LOADING_FIRST_LOGIN':
           return {
             ...prevState,
-            userToken: action.token,
-            isLoading: false,
-            login: action.autoConfig,
+            nowLoading: false,
           };
-        case 'FIRST_LOGIN':
+        case 'END_LOADING_LOGIN_PAGE':
           return {
             ...prevState,
-            userToken: null,
-            isLoading: false,
+            nowLoading: false,
+            intro: false,
+          };
+        case 'END_LOADING_RESTORE_DATA':
+          return {
+            ...prevState,
+            nowLoading: false,
+            intro: action.intro,
+            login: action.login,
+            userData: action.userData,
           };
         case 'SIGN_IN':
           return {
             ...prevState,
-            isSignout: false,
-            userToken: action.token,
-            login: action.login,
+            login: true,
+            userData: action.userData,
           };
         case 'SIGN_OUT':
           return {
             ...prevState,
-            isSignout: true,
-            isLoading: false,
             login: false,
+            userData: USERDATA,
           };
         case 'INTRO_SKIP':
           return {
             ...prevState,
-            userToken: 'dummy-auth-token',
-            login: false,
+            intro: false,
           };
-        case 'SET_USERNAME':
+        case 'UPDATE_USERDATA':
           return {
             ...prevState,
-            username: action.username,
-            login: true,
+            userData: action.userData,
           };
       }
     },
     {
-      isLoading: true,
-      isSignout: false,
-      userToken: null,
+      nowLoading: true,
+      intro: true,
       login: false,
-      username: null,
-      diaryMode: false,
+      userData: USERDATA,
     }
   );  // 유저 인증 정보
 
@@ -3047,10 +3012,37 @@ export default function App() {
       signIn: async data => {
         console.log(`SignIn email:${data.email}, password:${data.password}`);
         // 인증
-        let result;
+        let result = await Connection.login(data.email, data.password);
+        //console.log('result: ', result);
 
-        registerForPushNotificationsAsync();
-        dispatch({ type: 'SIGN_IN', token: data.token, login: true });
+        if(result.status){
+          // load
+          let loadUserData = {
+            token: result.data.token,
+            username: result.data.username,
+            email: data.email,
+            password: data.password,
+            userImg: null,
+            mySubscribeList: [],
+            myChatroomList: [],
+            myDiaryList: [],
+          };
+          let responseProductData = await Connection.loadProductData(loadUserData.token);
+          let responseDiaryData = await Connection.loadDiaryData(loadUserData.token);
+
+          if(responseProductData.status && responseDiaryData.status){
+            // load success
+            console.log('load data successely');
+            dataList = await Storage.saveProductData(responseProductData.data);
+            let diaryData = await Storage.saveDiaryData(responseDiaryData.data);
+            registerForPushNotificationsAsync();
+            //console.log('responseProductData: ', responseProductData);
+            dispatch({ type: 'SIGN_IN', login: true, userData: loadUserData});
+          }else{
+            console.log('load data failed');
+            Alert.alert('데이토 로딩에 실패하였습니다.');
+          }
+        }
       },
       signOut: () => dispatch({ type: 'SIGN_OUT' }),
       signUp: async data => {
@@ -3111,7 +3103,7 @@ export default function App() {
     let token = await Notifications.getExpoPushTokenAsync();
     // Defined in following steps
     Notifications.addListener(handleNotification);
-    console.log(`registerForPushNotificationsAsync\nstatus: ${status}\ntoken: ${token}\nemail: ${userData.email}, username: ${userData.username}`);
+    console.log(`registerForPushNotificationsAsync\nstatus: ${status}\ntoken: ${token}\nemail: ${state.userData.email}, username: ${state.userData.username}`);
 
     return fetch(PUSH_REGISTRATION_ENDPOINT, {
       method: 'POST',
@@ -3142,21 +3134,21 @@ export default function App() {
   return (
     <ThemeContext.Provider value={theme}>
     <AuthContext.Provider value={authContext}>
-      {state.isLoading === true ? (
+      {state.nowLoading === true ? (
         <View style={{flex:1, marginTop:30, alignItems: 'center', justifyContent: 'center'}}>
           <Text>스플래쉬 화면</Text>
           <Text> 유저 정보 여부에 따라 다음으로 분기 </Text>
-          <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'RESTORE_TOKEN', token: 'dummy-auth-token', autoConfig: true });}}>
+          <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'END_LOADING_RESTORE_DATA', intro:false, login: true, userData: USERDATA})}}>
             <Text> - 저장된 계정 있음(자동 로그인)</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'RESTORE_TOKEN', token: 'dummy-auth-token', autoConfig: false });}}>
+          <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'END_LOADING_FIRST_LOGIN'})}}>
             <Text> - 저장된 계정 있음(자동 X)</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'RESTORE_TOKEN', token: null, autoConfig: false });}}>
+          <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'END_LOADING_LOGIN_PAGE'})}}>
             <Text> - 저장된 계정 없음</Text>
           </TouchableOpacity>
         </View>
-      ) : state.userToken === null ? (
+      ) : state.intro === true ? (
         <IntroNavigation/>
       ) : state.login === false ? (
         <LoginNavigation/>

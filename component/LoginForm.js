@@ -1,6 +1,6 @@
 import InlineTextInput from './InlineTextInput';
 import React, {useState, useEffect, useContext} from 'react';
-import {View, ScrollView, Image, Text, TouchableOpacity, KeyboardAvoidingView} from 'react-native';
+import {View, ScrollView, Image, Text, TouchableOpacity, KeyboardAvoidingView, Alert} from 'react-native';
 import {ThemeContext} from './context/ThemeContext';
 import {AuthContext} from './context/AuthContext';
 import {isEmailValid, isPasswordValid} from '../utils/utils';
@@ -76,7 +76,9 @@ function SignIn({navigation}){
     else setNowPressingButton(true);
 
     if(isEmailValid(email) && isPasswordValid(password)){
-      await signIn({email: email, password:password});
+      let reasponse = await signIn({email: email, password:password});
+    }else{
+      Alert.alert('이메일 또는 비밀번호 형식이 맞지 않습니다.');
     }
     setNowPressingButton(false);
   }
