@@ -8,6 +8,26 @@ import Moment from 'moment';
 Moment.locale("ko");
 import _ from 'lodash'; // https://lodash.com/docs
 
+export let dataList = [];
+
+export let userData = {
+  token: null,
+  username: null,
+  email: null,
+  password: null,
+  userImg: null,
+  mySubscribeList: [],
+  myChatroomList: [],
+  myDiaryList: [],
+};
+
+export let informData = {
+  introduction: [],
+  help: [],
+  notice: [],
+};
+export let pushList = [];
+
 
 export async function saveProductData(data){
   let dataList = [];
