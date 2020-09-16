@@ -2,8 +2,7 @@ import React, {useContext} from 'react';
 import {ImageBackground, TouchableOpacity, Text, StyleSheet, View} from 'react-native';
 import {NavigationContainer, useFocusEffect} from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import {ThemeContext} from './context/ThemeContext';
-import {AuthContext} from './context/AuthContext';
+import {ThemeContext, AuthContext} from './Context';
 
 const introImage1 = {uri: "https://cdn.crowdpic.net/detail-thumb/thumb_d_F78FC0AA8923C441588C382B19DF0BF8.jpg"};
 const introImage2 = {uri: "https://previews.123rf.com/images/romeolu/romeolu1601/romeolu160100122/50594417-%EB%88%88-%EB%B0%B0%EA%B2%BD.jpg"};

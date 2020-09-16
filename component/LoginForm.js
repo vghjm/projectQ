@@ -1,8 +1,7 @@
 import InlineTextInput from './InlineTextInput';
 import React, {useState, useEffect, useContext} from 'react';
 import {View, ScrollView, Image, Text, TouchableOpacity, KeyboardAvoidingView, Alert} from 'react-native';
-import {ThemeContext} from './context/ThemeContext';
-import {AuthContext} from './context/AuthContext';
+import {ThemeContext, AuthContext} from './Context';
 import {isEmailValid, isPasswordValid} from '../utils/utils';
 import {HEIGHT} from '../utils/constants';
 import {Ionicons } from '@expo/vector-icons';
@@ -55,7 +54,7 @@ function SignIn({navigation}){
   const [autoLoginChecked, setAutoLoginChecked] = useState(true);
   const [isTouchable, setIsTouchable] = useState(false);
   const theme = useContext(ThemeContext);
-  const {signIn, ogin} = useContext(AuthContext);
+  const {signIn, login} = useContext(AuthContext);
   let nowPressingButton = false;
 
   const emailUpdateHandler = (text) => {
@@ -77,12 +76,13 @@ function SignIn({navigation}){
 
     if(isEmailValid(email) && isPasswordValid(password)){
       let response = await signIn({email: email, password:password});
-      nowPressingButton = false;
 
       if(response.ok){
+        nowPressingButton = false;
         login({token: response.data.token, username: response.data.username, email: email, password: password});
       }else{
         Alert.alert('로그인 중 에러발생', response.message);
+        nowPressingButton = false;
       }
     }else{
       Alert.alert('이메일 또는 비밀번호 형식이 맞지 않습니다.');
@@ -128,20 +128,25 @@ function FindPassword({navigation}){
     if(nowPressingButton) return;
     else nowPressingButton = true;
 
-    if(isEmailValid(email)){
+    let errorCount = 0;
+
+    if(!isEmailValid(email)){
+      errorCount++;
+      if(!emailError) setEmailError(true);
+    }else if(emailError) setEmailError(false);
+
+    if(errorCount === 0){
       let response = await findpw(email);
 
       if(response.ok){
-        Alert.alert('등록된 이메일로 임시 패스워드를 보냈습니다.');
+        Alert.alert('등록된 이메일로 임시 패스워드를 보냈습니다.', '', [{text: '확인', onPress: () => navigation.goBack()}]);
       }else{
-        Alert.alert('등록되지 않은 이메일 입니다.');
+        Alert.alert('로그인 중 에러발생', response.message);
       }
-      nowPressingButton = false;
-    }else{
-      Alert.alert('이메일 형식이 맞지 않습니다.');
-      nowPressingButton = false;
+
     }
 
+    nowPressingButton = false;
   }
 
   return (
@@ -165,8 +170,9 @@ function SignUp({navigation}){
   const [nextPasswordError, setNextPasswordError] = useState(false);
   // 버튼 화면표시제어
   const [isTouchable, setIsTouchable] = useState(false);
-  const [nowPressingButton, setNowPressingButton] = useState(false);
   const theme = useContext(ThemeContext);
+  const {signUp, checkEmail} = useContext(AuthContext);
+  let nowPressingButton = false;
 
   useEffect(() => { // 누름가능여부 체크
     if(email !== '' && password !== '' && nextPassword !== ''){
@@ -186,12 +192,37 @@ function SignUp({navigation}){
 
   const onPressHandler = async () => {
     if(nowPressingButton) return;
-    else setNowPressingButton(true);
+    else nowPressingButton = true;
 
-    if(isEmailValid(email)){
-      let a;
+    let errorCount = 0;
+
+    if(!isEmailValid(email)){
+      errorCount++;
+      if(!emailError) setEmailError(true);
+    }else if(emailError) setEmailError(false);
+
+    if(!isPasswordValid(password)){
+      errorCount++;
+      if(!passwordError) setPasswordError(true);
+    }else if(passwordError) setPasswordError(false);
+
+    if(nextPassword !== password){
+      errorCount++;
+      if(!nextPasswordError) setNextPasswordError(true);
+    }else if(nextPasswordError) setNextPasswordError(false);
+
+    if(errorCount === 0){
+      let response = await checkEmail(email);
+
+      if(response.ok){
+        nowPressingButton = false;
+        navigation.navigate('SetUsername', {email: email, password: password});
+      }else{
+        Alert.alert('이메일 오류', response.message);
+      }
     }
-    setNowPressingButton(false);
+
+    nowPressingButton = false;
   }
 
   const informTermsOfUse = () => {
@@ -214,7 +245,7 @@ function SignUp({navigation}){
       <WarningMessage visible={passwordError} message={'올바른 비밀번호 형식이 아닙니다.'}/>
       <InlineTextInput text={nextPassword} title="비밀번호 확인" theme={theme} style={{marginTop:8}} onChangeText={nextPasswordUpdateHandler} textType={'password'}/>
       <WarningMessage visible={nextPasswordError} message={'비밀번호가 일치하지 않습니다.'}/>
-      <View style={{height: HEIGHT-620}}/>
+      <View style={{height: HEIGHT-620, borderWidth: 0, borderColor: 'red'}}/>
       <View style={{flex:1, flexDirection: 'column-reverse'}}>
         <InlineTouchable onPress={onPressHandler} focus={isTouchable} style={{margin:20}} theme={theme} text={'가입하기'}/>
         <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
@@ -231,11 +262,13 @@ function SignUp({navigation}){
     </View>
   );
 }
-function SetUsername({navigation}){
+function SetUsername({navigation, route}){
   const [username, setUsername] = useState('');
   const [isTouchable, setIsTouchable] = useState(false);
-  const [nowPressingButton, setNowPressingButton] = useState(false);
   const theme = useContext(ThemeContext);
+  const {signUp, signIn, login} = useContext(AuthContext);
+  const { email, password } = route.params;
+  let nowPressingButton = false;
 
   useEffect(() => { // 누름가능여부 체크
     if(username !== ''){
@@ -249,11 +282,35 @@ function SetUsername({navigation}){
 
   const onPressHandler = async () => {
     if(nowPressingButton) return;
-    else setNowPressingButton(true);
+    else nowPressingButton = true;
 
-    // do something
+    let errorCount = 0;
 
-    setNowPressingButton(false);
+    if(username === ''){
+      errorCount++;
+    }
+
+    if(errorCount === 0){
+      let response = await signUp({email: email, password:password, username:username});
+
+      if(response.ok){
+        let checkSignIn = await signIn({email: email, password:password});
+
+        if(checkSignIn.ok){
+          nowPressingButton = false;
+          login({token: checkSignIn.data.token, username: checkSignIn.data.username, email: email, password: password});
+        }else{
+          nowPressingButton = false;
+          Alert.alert('로그인 중 에러발생', '다시 시도해주세요.', [{text:'확인', onPress:()=>navigation.navigate('SignIn')}]);
+        }
+      }else{
+        Alert.alert('회원등록 오류', response.message);
+      }
+    }else{
+      Alert.alert('사용자 이름을 입력해 주세요.');
+    }
+
+    nowPressingButton = false;
   }
 
   return (
