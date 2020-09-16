@@ -91,3 +91,24 @@ export async function saveDiaryData(data){
 
   return diaryData;
 }
+
+export async function updateProductData(){
+  let reply = {ok: false, data: null, message: ''};
+  let dataVersion = await AsyncStorage.getItem('productDataVersion')??0;
+  let response = await httpConnection(Constants.PRODUCT_LOOKUP, {version: dataVersion}, POST);
+
+  if(response.ok){ // HTTP 상태 코드가 200~299일 경우
+    let json = await response.json();
+
+    if(json.res === 'fail') reply.message = ERROR_MESSAGE_FAIL;
+    else if(json.res === 'success'){
+      reply.ok = true;
+      //console.log('json\n', json);
+    }
+    else reply.message = ERROR_MESSAGE_UNKNOWN;
+  }else{
+    reply.message = ERROR_MESSAGE_NO_CONNECT;
+  }
+
+  return reply;
+}
