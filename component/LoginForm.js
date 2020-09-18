@@ -2,8 +2,8 @@ import InlineTextInput from './InlineTextInput';
 import React, {useState, useEffect, useContext} from 'react';
 import {View, ScrollView, Image, Text, TouchableOpacity, KeyboardAvoidingView, Alert} from 'react-native';
 import {ThemeContext, AuthContext} from './Context';
-import {isEmailValid, isPasswordValid} from '../utils/utils';
-import {HEIGHT} from '../utils/constants';
+import {isEmailValid, isPasswordValid} from './utils/utils';
+import {HEIGHT} from './utils/constants';
 import {Ionicons } from '@expo/vector-icons';
 import CheckBox from 'react-native-check-box';  // https://www.npmjs.com/package/react-native-check-box#installation
 import * as WebBrowser from 'expo-web-browser';

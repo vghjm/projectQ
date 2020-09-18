@@ -11,7 +11,6 @@ import { Ionicons, MaterialCommunityIcons, Feather, FontAwesome, EvilIcons, AntD
 from '@expo/vector-icons'; // https://icons.expo.fyi/
 import * as ImagePicker from 'expo-image-picker';      // https://docs.expo.io/versions/latest/sdk/imagepicker/
 // import Constants from 'expo-constants';
-import DateTimePicker from '@react-native-community/datetimepicker'; // https://github.com/react-native-community/datetimepicker
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
 import Moment from 'moment';
@@ -31,7 +30,7 @@ import Draggable from 'react-native-draggable'; // https://github.com/tongyy/rea
 import * as Animatable from 'react-native-animatable'; // https://github.com/oblador/react-native-animatable
 import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npmjs.com/package/react-native-swipe-list-view
 
-//jj
+
 // my component
 import InlineTextInput from './component/InlineTextInput';
 import LoginNavigation from './component/LoginForm';
@@ -108,133 +107,6 @@ function isEmail(email){
 }
 
 
-// 인증 페이지
-async function loadingProductData() {
-  let loadDataFailure = true;
-
-  const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
-  if (status !== "granted") {
-      Alert.alert('파일 획득 권한을 얻을 수 없습니다.');
-      return loadDataFailure;
-  }
-
-  const downloadFile = async (url) =>{
-    let path = url.split('/');
-    let returnUri;
-    const file_name = path[path.length-1];
-
-    await FileSystem.downloadAsync(
-      url,
-      FileSystem.documentDirectory + file_name
-    )
-    .then(({ uri }) => {
-      console.log('Finished downloading to ', uri);
-      returnUri = uri;
-
-    })
-    .catch(error => {
-      console.error(error);
-    });
-
-    return returnUri;
-  }
-
-
-  let response = await fetch(HTTP+'/product/lookup', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json;charset=utf-8',
-    },
-    body: JSON.stringify({
-      jwt: userData.token,
-    }),
-  });
-
-  if (response.ok) { // HTTP 상태 코드가 200~299일 경우
-    // 응답 몬문을 받습니다(관련 메서드는 아래에서 설명).
-    let json = await response.json();
-    //console.log('response\n', json);
-    loadDataFailure = false; // 성공
-
-    dataList = [];
-    await json.products.reduce( async (last, product, i) =>{
-      let myQuestList = [];
-      let myAnsList = [];
-      // 질문 분류기
-      product.question.forEach((questObj, i) => {
-        if(i%2 === 0){
-          myQuestList.push(questObj.content);
-        }else{
-          myAnsList.push(questObj.content);
-        }
-      })
-
-      // 이미지 로딩
-      let thumbnailImg = await downloadFile(HTTP + '/files/' + product.img_logo);
-      let logoImg = await downloadFile(HTTP + '/files/' + product.img_background);
-      let mainImg = await downloadFile(HTTP + '/files/' + product.img_explain);
-
-      let productData = {
-        id: product.p_ID, isAvailable: true, hasDiary:false, hasChatroom: false, isSubscribe:false,
-        product: {
-          title: product.p_name,
-          text: product.p_intro,
-          imageSet: {thumbnailImg: {uri: thumbnailImg}, logoImg: {uri: logoImg}, mainImg: {uri: mainImg}, avatarImg: {uri: thumbnailImg}},
-          questionList: myQuestList,
-          ansList: myAnsList,
-        },
-        chatroom: {
-          lastMessageTime: null, newItemCount: 0, chatmessageList: [],
-        },
-        diary: {
-          makeTime: null, totalUpdateCount: 0, diarymessageList: []
-        },
-        push: {
-          isRandomPushType: product.pushType===1, pushStartTime: Moment('20200812 ' + product.start_time), pushEndTime: Moment('20200812 ' + product.end_time),
-        },
-      };
-      console.log('load product\n', productData);
-      dataList.push(_.cloneDeep(productData));
-      return 1;
-    }, 0);
-
-    //console.log('update UserData: ', dataList[0]);
-
-    return loadDataFailure;
-  } else {
-    // 서버와 연결이 안됨
-    Alert.alert('서버와 연결이되지 않습니다.');
-  }
-
-  return loadDataFailure;
-}
-async function loadingDiaryData() {
-  let loadDataFailure = true;
-  console.log("loadingDiaryData\n");
-
-  let response = await fetch(HTTP+'/diary/lookup', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json;charset=utf-8',
-    },
-    body: JSON.stringify({
-      jwt: userData.token,
-    }),
-  });
-
-  if (response.ok) { // HTTP 상태 코드가 200~299일 경우
-    // 응답 몬문을 받습니다(관련 메서드는 아래에서 설명).
-    let json = await response.json();
-    console.log('response\n', json);
-    loadDataFailure = false; // 성공
-    return loadDataFailure;
-  } else {
-    // 서버와 연결이 안됨
-    Alert.alert('서버와 연결이되지 않습니다.');
-  }
-
-  return loadDataFailure;
-}
 
 
 // 푸시 테스트
@@ -251,7 +123,6 @@ function pushMessage(id){
   chatroom.newItemCount += 1;
   chatroom.chatmessageList.unshift(_.cloneDeep(newMessage));
   chatroom.lastMessageTime = Moment();
-  chatroom.lastMessage = newMessage.text;
   chatroom.lastPushed = {pushTime: Moment(), questIndex: randomIndex, solved:false};
 }
 function pushTestHandler(updateScreenHandler){  // 간단한 푸시 테스트함수
@@ -1187,20 +1058,20 @@ function ChatroomContentLayout(props){
   const [lastMessageTime, setLastMessageTime] = useState(data.chatroom.lastMessageTime);  // 최신 메세지 업데이트 시간
   const [newItemCount, setNewItemCount] = useState(data.chatroom.newItemCount);   // 최신 알림 수
   const [fromNowTime, setFromNowTime] = useState(lastMessageTime.fromNow());  // 최신 메세지 업데이트 시간, 자연적인 설명버전
-  const [topMessage, setTopMessage] = useState(data.chatroom.lastMessage);
+  const [topMessage, setTopMessage] = useState(data.chatroom.chatmessageList[0].text);
 
   useFocusEffect(()=>{
-    if(newItemCount !== data.chatroom.newItemCount){
+    if(newItemCount != data.chatroom.newItemCount){
       setNewItemCount(data.chatroom.newItemCount);
     }
-    if(lastMessageTime !== data.chatroom.lastMessageTime){
+    if(lastMessageTime != data.chatroom.lastMessageTime){
       setLastMessageTime(data.chatroom.lastMessageTime);
     }
-    if(fromNowTime !== lastMessageTime.fromNow()){
+    if(fromNowTime != lastMessageTime.fromNow()){
       setFromNowTime(lastMessageTime.fromNow());
     }
-    if(topMessage !== data.chatroom.lastMessage){
-      setTopMessage(data.chatroom.lastMessage);
+    if(topMessage != data.chatroom.chatmessageList[0].text){
+      setTopMessage(data.chatroom.chatmessageList[0].text);
     }
   });
 
@@ -1777,7 +1648,6 @@ function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
     // 채팅방에 저장
     data.chatroom.lastMessageTime = Moment();
     data.chatroom.chatmessageList.unshift(_.cloneDeep(message));
-    data.chatroom.lastMessage = message.text;
 
     // 다이어리에 저장
     if(data.diary.diarymessageList.length === 0) {
@@ -2305,7 +2175,6 @@ async function getPermission(){
   const push = await Permissions.askAsync(Permissions.NOTIFICATIONS);
   const camera = await Permissions.askAsync(Permissions.CAMERA_ROLL);
 
-
   if (push.status === 'granted' && camera.status === 'granted') {
     reply.ok = true;
   }else{
@@ -2346,8 +2215,6 @@ export default function App() {
           // 유저정보 받아 사용자 화면으로 이동
           return {
             ...prevState,
-            nowLoading: false,
-            intro: false,
             login: true,
             token: action.token,
           };
@@ -2414,8 +2281,7 @@ export default function App() {
         console.log('token:', data.token);
         console.log('login start');
         userData = await Storage.updateDataSet(dataList, data);
-        console.log('\nlogin: ', userData);
-        //console.log('\ndataList: \n', dataList);
+        console.log('login: ', userData);
         console.log('login end');
         dispatch({ type: 'LOGIN', token:data.token });
       },
@@ -2522,6 +2388,7 @@ export default function App() {
   React.useEffect(() => {
     // Fetch the token from storage then navigate to our appropriate place
 
+
     bootstrapAsync();
   }, []); // 초기화시 데이터 로딩 여기서
 
@@ -2530,14 +2397,12 @@ export default function App() {
     bootstrapAsync();
     console.log('update End');
   };
-  const defaultLogin = async () => {
-    console.log('자동 로그인 ~');
-    const {signIn, login} = authContext;
-    let email = 'abc123@naver.com';
-    let password = 'abc123';
-
-    let response = await signIn({email: email, password:password});
-    login({token: response.data.token, username: response.data.username, email: email, password: password});
+  const defaultLogin = () => {
+    dataList = TestData.productTestData;
+    userData = TestData.userTestData;
+    informData = TestData.informTestData;
+    pushList = TestData.pushTestData;
+    dispatch({ type: 'END_LOADING_RESTORE_DATA', token: 'temp_token'});
   };
 
   const [productdataContext, setProductdataContext] = useState();
