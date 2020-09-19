@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {View, Text, Image, TouchableOpacity, TextInput, Alert, ScrollView} from 'react-native';
+import {View, Text, Image, TouchableOpacity, TextInput, Alert, ScrollView, StyleSheet} from 'react-native';
 import * as Permissions from 'expo-permissions';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
@@ -331,3 +331,20 @@ export function NoticePage({navigation}) {
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  myShadow: {
+    borderWidth: 0,
+    shadowColor: "#000",
+    shadowOffset: {
+    	width: 0,
+    	height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+
+    elevation: 3,
+    marginHorizontal: 20,
+    marginVertical: 7,
+  },
+});

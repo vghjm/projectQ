@@ -1,7 +1,7 @@
 import React from 'react';
 import {Dimensions} from 'react-native';
 
-export const HTTP = 'http://b1f1b764b431.ngrok.io';
+export const HTTP = 'http://f7243ae20804.ngrok.io';
 export const PUSH_REGISTRATION_ENDPOINT = HTTP + '/pushalarm/token';
 export const MESSAGE_ENPOINT = HTTP + 'pushalarm/message';
 export const LOGIN = HTTP + '/user/login';

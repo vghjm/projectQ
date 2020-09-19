@@ -10,6 +10,20 @@ import * as Context from './component/Context';
 const bookOn = require('../assets/icon/book_on.png');
 const bookOff = require('../assets/icon/book_off.png');
 
+import * as Context from './Context';
+
+const userTestData = {
+  token: 'asfnjk436k3b46jh346bk',
+  username: '테스트 계정',
+  email: 'test@naver.com',
+  password: '1234567!!',
+  userImg: null,
+  mySubscribeList: [],
+  myChatroomList: [],
+  myDiaryList: [],
+};
+const dataList = [];
+
 // 취소 및 삭제함수
 function unSubscribe(id){
   userData.mySubscribeList.splice(userData.mySubscribeList.findIndex(obj => obj.id===id), 1);
@@ -25,50 +39,6 @@ function deleteChatroom(id){
   data.hasChatroom = false;
 }
 
-
-export function ChatroomContentLayout(props){
-  const id = props.id;
-  const data = dataList[dataList.findIndex(obj => obj.id===id)];
-
-  console.log('ChatroomContentLayout\n', data);
-  //const data = dataList[id-1];
-  const productInfo  = data.product;
-  const [lastMessageTime, setLastMessageTime] = useState(data.chatroom.lastMessageTime);  // 최신 메세지 업데이트 시간
-  const [newItemCount, setNewItemCount] = useState(data.chatroom.newItemCount);   // 최신 알림 수
-  const [fromNowTime, setFromNowTime] = useState(lastMessageTime.fromNow());  // 최신 메세지 업데이트 시간, 자연적인 설명버전
-  const [topMessage, setTopMessage] = useState(data.chatroom.chatmessageList[0].text);
-
-  useFocusEffect(()=>{
-    if(newItemCount != data.chatroom.newItemCount){
-      setNewItemCount(data.chatroom.newItemCount);
-    }
-    if(lastMessageTime != data.chatroom.lastMessageTime){
-      setLastMessageTime(data.chatroom.lastMessageTime);
-    }
-    if(fromNowTime != lastMessageTime.fromNow()){
-      setFromNowTime(lastMessageTime.fromNow());
-    }
-    if(topMessage != data.chatroom.chatmessageList[0].text){
-      setTopMessage(data.chatroom.chatmessageList[0].text);
-    }
-  });
-
-  return (
-    <TouchableHighlight style={{marginBottom: 10}} onPress={()=>props.nav.navigate('chatroom', {id: id})}>
-    <View style={{flexDirection: 'row', height: 60, backgroundColor: 'white'}}>
-      <Image source={productInfo.imageSet.thumbnailImg} style={{height: 46, width: 46, margin: 5,borderWidth: 1, borderColor: '#f7f7f7', marginLeft: 10, borderRadius: 23, backgroundColor: '#DDD'}}/>
-      <View style={{flexDirection: 'column'}}>
-        <Text style={{marginLeft: 10, marginTop: 6, fontSize: 17,fontWeight: '400', width: 220}}>{productInfo.title}</Text>
-        <Text numberOfLines={1} style={{color: '#AAA', fontSize: 12, marginLeft: 13, marginTop:3, width: 230}}>{topMessage}</Text>
-      </View>
-      <View style={{flex:1, flexDirection: 'column', alignItems: 'flex-end'}}>
-        <Text style={{fontSize: 10, marginRight: 10, marginTop: 0}}>{fromNowTime}</Text>
-        {newItemCount > 0 && <View style={{height: 20, width: 20, borderRadius: 10, backgroundColor: '#F66', margin: 6, marginRight: 10, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 11}}>{newItemCount}</Text></View> }
-      </View>
-    </View>
-    </TouchableHighlight>
-  );
-}
 
 // 채팅 구성품
 export function CustomDrawerContent({navigation}) {
