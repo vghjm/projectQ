@@ -258,7 +258,7 @@ export const userTestData = {
   myDiaryList: [{id:1, pos:1, color:1}, {id:2, pos:2, color:2}, {id:3, pos:3, color:3}],
 };
 export const informTestData = {
-  introduction: [],
+  introduction: [], 
   help: [],
   notice: [],
 };

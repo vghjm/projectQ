@@ -112,6 +112,7 @@ export async function updateProductData(){
 
   if(response.ok){
     // 데이터 파싱
+    //await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory);
     await response.data.reduce( async (last, product, i) =>{
       let myQuestList = [];
       let myAnsList = [];
