@@ -1,31 +1,20 @@
 import React, {useContext, useState, useEffect} from 'react';
-import {View, TouchableOpacity, Text, Image, ScrollView, SafeAreaView, Alert} from 'react-native';
+import {View, TouchableOpacity, Text, Image, ScrollView, SafeAreaView, Alert, Dimensions} from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker'; // https://github.com/react-native-community/datetimepicker
 import {ProductContext} from './Context';
 import Moment from 'moment';
 
-// 다이어리와 채팅방 초기화 함수
-function diaryInitializeFunction(id){ // 다이어리 초기로 생성 함수
-  // 기존의 다이어리 있는지 확인
-  //const data = dataList[id-1];
-  const data = dataList[dataList.findIndex(obj => obj.id===id)];
-  if(data.hasDiary) {
-    // 아무것도 하지 않음
-    return ;
-  } else {
-    // 초기버전 다이어리 만듦
-    data.hasDiary = true; // 다이어리를 보이게 함
-    userData.myDiaryList.push({id:id, pos: userData.myDiaryList.length+1, color: Math.floor(Math.random() * 10)});
 
-    // 다이어리 초기 데이터 구성
-    let makeDiaryData = {
-      makeTime: Moment(), totalUpdateCount: 0, diarymessageList: [],
-    };
+const screenHeight = Dimensions.get('window').height;
+const screenWidth = Dimensions.get('window').width;
+const subOn = require('../assets/icon/subOn.png');
+const subOff = require('../assets/icon/subOff.png');
 
-    data.diary = _.cloneDeep(makeDiaryData); // 다이어리 데이터 연결
-    return ;
-  }
-}
+import * as TestData from '../testData';
+let userData = TestData.userTestData;
+let dataList = TestData.productTestData;
+
+// 구독 상품 화면
 function chatroomInitializeFunction(id){ // 채팅방 초기로 생성 함수
   // 기존의 채팅창이 있는지 확인함
   //const data = dataList[id-1];
@@ -55,28 +44,7 @@ function chatroomInitializeFunction(id){ // 채팅방 초기로 생성 함수
     return ;
   }
 }
-
-export function SubscribeContentLayout(props){
-  //const product = useContext(ProductContext);
-  let data = props.data;
-  let productInfo = data.product;
-
-  return (
-    <TouchableOpacity onPress={()=>props.nav.navigate('contentScreen', {data: data})}>
-    <View style={{flexDirection: 'row', height: 56, margin: 3, marginBottom: 10}}>
-      <Image resizeMode='cover' source={productInfo.imageSet.thumbnailImg} style={{height: 46, borderWidth: 1, borderColor: '#f7f7f7', width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
-      <View style={{flexDirection: 'column'}}>
-        <Text style={{marginLeft: 10, marginTop: 6, fontSize: 17,fontWeight: '400', width: 220}}>{productInfo.title}</Text>
-        <Text numberOfLines={1} style={{color: '#AAA', fontSize: 12, marginLeft: 13, marginTop:3, width: 230}}>{productInfo.text}</Text>
-      </View>
-    </View>
-    </TouchableOpacity>
-  );
-}
-
-
-// 구독 상품 화면
-export function SubscribeContentScreen({route, navigation}){
+export default function SubscribeContentScreen({route, navigation}){
   const data = route.params.data;
   //const data = dataList[id-1];
   //const data = dataList.some(data => data.id===id?data:false);
@@ -95,6 +63,28 @@ export function SubscribeContentScreen({route, navigation}){
   const [show2, setShow2] = useState(false);
   const [show3, setShow3] = useState(false);
   const [show4, setShow4] = useState(false);
+
+  const diaryInitializeFunction = (id) => { // 다이어리 초기로 생성 함수
+    // 기존의 다이어리 있는지 확인
+    //const data = dataList[id-1];
+    const data = dataList[dataList.findIndex(obj => obj.id===id)];
+    if(data.hasDiary) {
+      // 아무것도 하지 않음
+      return ;
+    } else {
+      // 초기버전 다이어리 만듦
+      data.hasDiary = true; // 다이어리를 보이게 함
+      userData.myDiaryList.push({id:id, pos: userData.myDiaryList.length+1, color: Math.floor(Math.random() * 10)});
+
+      // 다이어리 초기 데이터 구성
+      let makeDiaryData = {
+        makeTime: Moment(), totalUpdateCount: 0, diarymessageList: [],
+      };
+
+      data.diary = _.cloneDeep(makeDiaryData); // 다이어리 데이터 연결
+      return ;
+    }
+  }
 
   useEffect(() => {
     if(isSubscribeButton){
@@ -255,7 +245,7 @@ export function SubscribeContentScreen({route, navigation}){
           <Text style={{fontSize: 21, fontWeight:'bold', marginTop: 35, marginBottom: 10}}>{data.product.title}</Text>
           <Text style={{margin: 20, marginTop:0}}>{data.product.text}</Text>
         </View>
-        <Image source={data.product.imageSet.mainImg} style={{ width:screenWidth, height:screenWidth, borderWidth: 0, resizeMode: 'contain'}}/>
+        <Image source={data.product.imageSet.mainImg} style={{ width:screenWidth, height:screenWidth*3, borderWidth: 0, resizeMode: 'contain'}}/>
         <View style={{flexDirection:'column', paddingVertical: 10, paddingHorizontal: 15, borderTopWidth:0, borderBottomWidth:1, borderColor: '#f0f0f0'}}>
           <Text style={{fontSize: 21}}>구독 상품 설정</Text>
         </View>

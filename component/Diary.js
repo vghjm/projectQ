@@ -4,16 +4,16 @@ import Draggable from 'react-native-draggable'; // https://github.com/tongyy/rea
 import * as Animatable from 'react-native-animatable'; // https://github.com/oblador/react-native-animatable
 import Moment from 'moment';
 
+import * as TestData from '../testData';
+let userData = TestData.userTestData;
+let dataList = TestData.productTestData;
 
-// 유용
+// 드래그기능 있는 다이어리
 function diarySortByDate(myDiaryMessageList){
   myDiaryMessageList.sort((a, b) => {
     return a.createdAt > b.createdAt;
   });
 }
-
-
-// 드래그 기능 추가
 function diaryPosToRealPos(diaryPos){
   let realPos ={x:0, y:0};
 
@@ -46,10 +46,40 @@ function realPosToDiaryPos(realPos){
 
   return diaryPos;
 }
+export function DraggableDiary({id, changePosHandler, nav, updateDiary, cancelDrag}){ // 애니메이션 다이어리에 드래그 기능 추가
+  const [z, setZ] = useState(1);
+  let diaryIndex = userData.myDiaryList.findIndex(obj => obj.id === id);
+  let pos = diaryPosToRealPos(userData.myDiaryList[diaryIndex].pos);
 
+  const zUp = () =>{
+    if(z!=10) setZ(10);
+  }
+  const zDown = () =>{
+    if(z!=1) setZ(1);
+  }
+  return (
+    <Draggable x={pos.x} y={pos.y} z={z}  shouldReverse onDragRelease={(event, gestureState) => {zDown();  changePosHandler(userData.myDiaryList[diaryIndex].pos, realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY})); cancelDrag(true)}} onDrag={(event)=>{zUp(); cancelDrag(false);}} >
+      <AnimatableDiaryComponent id={id} nav={nav} updateDiary={updateDiary} />
+    </Draggable>
+  );
+}
+export function BasiceDiary({id, changePosHandler, nav}){  // 기본 다이어리에 위치를 잡아줌, 드래그 기능은 없음
+  const [z, setZ] = useState(1);
+  let diaryIndex = userData.myDiaryList.findIndex(obj => obj.id === id);
+  let pos = diaryPosToRealPos(userData.myDiaryList[diaryIndex].pos);
 
-
-// 다이어리 구성품
+  const zUp = () =>{
+    if(z!=2) setZ(2);
+  }
+  const zDown = () =>{
+    if(z!=1) setZ(1);
+  }
+  return (
+    <Draggable x={pos.x} y={pos.y} z={z} disabled={true} shouldReverse onDragRelease={(event, gestureState) => {zDown();  changePosHandler(userData.myDiaryList[diaryIndex].pos, realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY}));}} onDrag={(event, gestureState)=>{zUp(); console.log('x, y ~~ : ', gestureState.moveX, global_y+gestureState.moveY); console.log('pos: ', realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY}))}} >
+      <DiaryComponent id={id} nav={nav}/>
+    </Draggable>
+  );
+}
 function AnimatableDiaryComponent(props){
   const id = props.id;
   //const data = dataList[id-1];
@@ -533,40 +563,5 @@ export function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 
       {showDropbox && <MyDropList handler={diaryOptionBlurHandler}/>}
       {showTime && <DateTimePicker />}
     </View>
-  );
-}
-
-export function DraggableDiary({id, changePosHandler, nav, updateDiary, cancelDrag}){ // 애니메이션 다이어리에 드래그 기능 추가
-  const [z, setZ] = useState(1);
-  let diaryIndex = userData.myDiaryList.findIndex(obj => obj.id === id);
-  let pos = diaryPosToRealPos(userData.myDiaryList[diaryIndex].pos);
-
-  const zUp = () =>{
-    if(z!=10) setZ(10);
-  }
-  const zDown = () =>{
-    if(z!=1) setZ(1);
-  }
-  return (
-    <Draggable x={pos.x} y={pos.y} z={z}  shouldReverse onDragRelease={(event, gestureState) => {zDown();  changePosHandler(userData.myDiaryList[diaryIndex].pos, realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY})); cancelDrag(true)}} onDrag={(event)=>{zUp(); cancelDrag(false);}} >
-      <AnimatableDiaryComponent id={id} nav={nav} updateDiary={updateDiary}/>
-    </Draggable>
-  );
-}
-export function BasiceDiary({id, changePosHandler, nav}){  // 기본 다이어리에 위치를 잡아줌, 드래그 기능은 없음
-  const [z, setZ] = useState(1);
-  let diaryIndex = userData.myDiaryList.findIndex(obj => obj.id === id);
-  let pos = diaryPosToRealPos(userData.myDiaryList[diaryIndex].pos);
-
-  const zUp = () =>{
-    if(z!=2) setZ(2);
-  }
-  const zDown = () =>{
-    if(z!=1) setZ(1);
-  }
-  return (
-    <Draggable x={pos.x} y={pos.y} z={z} disabled={true} shouldReverse onDragRelease={(event, gestureState) => {zDown();  changePosHandler(userData.myDiaryList[diaryIndex].pos, realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY}));}} onDrag={(event, gestureState)=>{zUp(); console.log('x, y ~~ : ', gestureState.moveX, global_y+gestureState.moveY); console.log('pos: ', realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY}))}} >
-      <DiaryComponent id={id} nav={nav}/>
-    </Draggable>
   );
 }

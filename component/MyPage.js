@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useContext} from 'react';
 import {View, Text, Image, TouchableOpacity, TextInput, Alert, ScrollView, StyleSheet} from 'react-native';
 import * as Permissions from 'expo-permissions';
 import * as FileSystem from 'expo-file-system';

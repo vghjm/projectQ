@@ -18,7 +18,7 @@ const downloadFile = async (url) => {
 
   await FileSystem.downloadAsync(
     url,
-    FileSystem.documentDirectory + file_name
+    FileSystem.documentDirectory +'image/' + file_name
   )
   .then(({ uri }) => {
     console.log('Finished downloading to ', uri);
@@ -126,9 +126,12 @@ export async function updateProductData(){
       })
 
       // 이미지 로딩
-      let thumbnailImg = await downloadFile(FILE + product.img_logo);
-      let logoImg = await downloadFile(FILE + product.img_background);
-      let mainImg = await downloadFile(FILE + product.img_explain);
+      //let thumbnailImg = await downloadFile(FILE + product.img_logo);
+      //let logoImg = await downloadFile(FILE + product.img_background);
+      //let mainImg = await downloadFile(FILE + product.img_explain);
+      let thumbnailImg = FILE + product.img_logo;
+      let logoImg = FILE + product.img_background;
+      let mainImg = FILE + product.img_explain;
 
       let productData = {
         id: product.p_ID, isAvailable: true, hasDiary:false, hasChatroom: false, isSubscribe:false,

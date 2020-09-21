@@ -1,90 +1,27 @@
-import React, {useContext} from 'react';
+import React, {useContext, useState, useEffect, useCallback} from 'react';
 import {View, Text, Image, ActivityIndicator, TouchableOpacity, Alert, TouchableHighlight} from 'react-native';
-import { GiftedChat, Bubble , Send, InputToolbar, Time, Day, Composer } from 'react-native-gifted-chat' // https://github.com/FaridSafi/react-native-gifted-chat
+import { GiftedChat, Bubble , Send, InputToolbar, Time, Day, Composer, Avatar  } from 'react-native-gifted-chat' // https://github.com/FaridSafi/react-native-gifted-chat
 import Moment from 'moment';
 import DateTimePicker from '@react-native-community/datetimepicker'; // https://github.com/react-native-community/datetimepicker
 import { Octicons, Ionicons, MaterialIcons }
 from '@expo/vector-icons'; // https://icons.expo.fyi/
 import { createNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem, } from '@react-navigation/drawer';  //  https://reactnavigation.org/docs/drawer-based-navigation/
-import * as Context from './component/Context';
+import _ from 'lodash'; // https://lodash.com/docs
+import uuid from 'react-native-uuid';       // https://www.npmjs.com/package/react-native-uuid
+
+import * as TestData from '../testData';
+import {ThemeContext} from './Context';
 const bookOn = require('../assets/icon/book_on.png');
 const bookOff = require('../assets/icon/book_off.png');
+const upArrow = require('../assets/icon/up_arrow.png');
+const downArrow = require('../assets/icon/down_arrow.png');
 
-import * as Context from './Context';
 
-const userTestData = {
-  token: 'asfnjk436k3b46jh346bk',
-  username: '테스트 계정',
-  email: 'test@naver.com',
-  password: '1234567!!',
-  userImg: null,
-  mySubscribeList: [],
-  myChatroomList: [],
-  myDiaryList: [],
-};
-const dataList = [];
+let dataList = TestData.productTestData;
 
+let global_p_id = 0;               // 채팅창 사이드 메뉴에서 다른 상품정보로 보내기 위한 상품 id 값
 // 취소 및 삭제함수
-function unSubscribe(id){
-  userData.mySubscribeList.splice(userData.mySubscribeList.findIndex(obj => obj.id===id), 1);
-  //dataList[id-1].isSubscribe = false;
-  const data = dataList[dataList.findIndex(obj => obj.id===id)];
-  data.isSubscribe = false;
-
-}
-function deleteChatroom(id){
-  userData.myChatroomList.splice(userData.myChatroomList.findIndex(obj => obj.id===id), 1);
-  //dataList[id-1].hasChatroom = false;
-  const data = dataList[dataList.findIndex(obj => obj.id===id)];
-  data.hasChatroom = false;
-}
-
-
-// 채팅 구성품
-export function CustomDrawerContent({navigation}) {
-
-  const getOutChatroom = () => {
-    unSubscribe(global_p_id);
-    deleteChatroom(global_p_id);
-    navigation.navigate('MainPage');
-  }
-
-  return (
-    <DrawerContentScrollView style={{backgroundColor: '#FFF'}}>
-      <TouchableOpacity onPress={()=>navigation.closeDrawer()}>
-        <Octicons name="three-bars" style={{marginLeft:20, marginTop:10, marginBottom: 20}} size={20} color="black" />
-      </TouchableOpacity>
-      <DrawerItem label="다이어리 보기"  icon={()=><Image source={bookOn} resizeMode={'cover'} style={{width:20, height:20}}/>} onPress={() => {navigation.navigate('MyDiaryScreen'); navigation.navigate('Diary', {id:global_p_id, goToEnd: true})}} />
-      <DrawerItem label="푸시 메세지 설정" icon={()=><Ionicons name="md-time" style={{marginLeft: 3}} size={20} color="black" />} onPress={() => {navigation.navigate('SubscribeListScreen'); navigation.navigate('contentScreen', {id:global_p_id, goToEnd: true})}} />
-      <DrawerItem label="채팅방 나가기" icon={()=><MaterialIcons name="exit-to-app" style={{marginLeft: 1}} size={20} color="black" />}
-        onPress={() => {
-          Alert.alert('정말 채팅방을 나가시겠습니까?', '채팅방을 나가면 채팅 내용과 채팅 목록은 사라지고 다이어리에서만 기록을 확인할 수 있습니다.', [{text: '나가기', onPress: getOutChatroom}, {text:'취소'}]);}} />
-    </DrawerContentScrollView>
-  );
-}
-function makeDiaryMessage(id, message){ // 다이어리 메세지 생성기능
-  //let data = dataList[id-1];
-  let data = dataList[dataList.findIndex(obj => obj.id===id)];
-  let diaryForm = { _id: uuid.v4(), text: '', createdAt: message.createdAt, islagacy: false, linkedMessageList: [{id: message._id, text:message.text}]};
-  data.diary.diarymessageList.push(_.cloneDeep(diaryForm));
-  data.diary.totalUpdateCount += 1;
-}
-function deleteMessage(id, messageId){ // 다이어리와 연동중이면 해당하는 메시지를 지운다.
-  //let data = dataList[id-1];
-  let data = dataList[dataList.findIndex(obj => obj.id===id)];
-  //let deleteIndex = null;
-
-  data.diary.diarymessageList.some(message => {
-    if(!message.islagacy){
-      // 연동중이면
-      let deleteIndex = message.linkedMessageList.findIndex(obj => obj.id === messageId);
-      if(deleteIndex !== -1){
-        message.linkedMessageList.splice(deleteIndex, 1);
-        return true;
-      }
-    }
-  });
-}
+// 채팅창
 function renderLoading() {
   return (
     <View style={{flex:1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
@@ -93,12 +30,13 @@ function renderLoading() {
   );
 }
 function renderSend(props) {
+  const theme = props.theme;
   return (
     <Send
       {...props}
     >
-      <View style={{marginBottom:3.5, marginRight:2.5}}>
-        <Image source={upArrow} style={{width: 38, height: 38}}/>
+      <View style={{backgroundColor: theme.light[1],width:50, height:35, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight:5}}>
+        <Text style={{margin:3, fontSize:18}}>전송</Text>
       </View>
     </Send>
   );
@@ -107,11 +45,12 @@ function renderComposer(props){ // textInput style
   return (
     <Composer
       {...props}
-      textInputStyle={{borderWidth: 0,marginTop:7, alignSelf: 'center', alignContent: 'center', justifyContent: 'center', paddingTop: 10, borderColor: 'green'}}
+      textInputStyle={{borderWidth: 0, marginTop:7, alignSelf: 'center', alignContent: 'center', justifyContent: 'center', paddingTop: 10, borderColor: 'green'}}
     />
   );
 }
 function renderBubble(props) {
+  let theme = props.theme;
   return (
     // Step 3: return the component
     <Bubble
@@ -119,11 +58,12 @@ function renderBubble(props) {
       wrapperStyle={{
         right: {
           // Here is the color change
-          backgroundColor: '#FFD400',
+          backgroundColor: theme.light[0],
           marginVertical: 3,
           borderRadius: 20,
         },
         left: {
+          backgroundColor: theme.default,
           marginVertical: 9,
           borderRadius: 20,
         }
@@ -184,8 +124,10 @@ function renderInputToolbar(props) {
   return (
     <InputToolbar
       {...props}
-      primaryStyle={{borderWidth: 1, borderColor: '#CCC',marginVertical: 6,marginHorizontal:9, borderRadius: 30, backgroundColor: '#f0f0f0'}}
-      textInputProps={{autoFocus: true}}
+      style={{borderWidth:1}}
+      primaryStyle={{borderWidth: 1, borderColor: '#CCC', marginVertical: 3, marginHorizontal:9, borderRadius: 10, backgroundColor: 'white'}}
+      containerStyle={{borderWidth:0, borderColor: 'red', justifyContent: 'center'}}
+      textInputProps={{autoFocus: false, placeholder:'    메시지를 입력하세요'}}
     />
   );
 }
@@ -198,13 +140,52 @@ function renderDay (props) {
     />
   );
 }
-export function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
+function renderAvatar (props) {
+  let theme = props.theme;
+  return (
+    <Avatar {...props}
+      containerStyle={{
+        left: {
+          borderWidth:1,
+          borderColor: theme.light[4],
+          borderRadius:40
+        },
+      }}
+    />
+  )
+}
+export default function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
   const [messages, setMessages] = useState([]);
-  const { getUserData } = useContext(Context.UserContext);
   const id = route.params.id;
-  const userData = getUserData();
-  let data = dataList[dataList.findIndex(obj => obj.id===id)];
+  //let data = dataList[id-1];
+  //let data = dataList[dataList.findIndex(obj => obj.id===id)];
+  let data = route.params.data;
   const [update, setUpdate] = useState(0);
+  const theme = useContext(ThemeContext);
+
+  const makeDiaryMessage = (id, message) => { // 다이어리 메세지 생성기능
+    //let data = dataList[id-1];
+    //let _data = dataList[dataList.findIndex(obj => obj.id===id)];
+    let diaryForm = { _id: uuid.v4(), text: '', createdAt: message.createdAt, islagacy: false, linkedMessageList: [{id: message._id, text:message.text}]};
+    data.diary.diarymessageList.push(_.cloneDeep(diaryForm));
+    data.diary.totalUpdateCount += 1;
+  }
+  const deleteMessage = (id, messageId) => { // 다이어리와 연동중이면 해당하는 메시지를 지운다.
+    //let data = dataList[id-1];
+    //let _data = dataList[dataList.findIndex(obj => obj.id===id)];
+    //let deleteIndex = null;
+
+    data.diary.diarymessageList.some(message => {
+      if(!message.islagacy){
+        // 연동중이면
+        let deleteIndex = message.linkedMessageList.findIndex(obj => obj.id === messageId);
+        if(deleteIndex !== -1){
+          message.linkedMessageList.splice(deleteIndex, 1);
+          return true;
+        }
+      }
+    });
+  }
 
   useEffect(() => {
     setMessages(data.chatroom.chatmessageList);                 // 메세지 로드
@@ -238,6 +219,7 @@ export function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
     // 채팅방에 저장
     data.chatroom.lastMessageTime = Moment();
     data.chatroom.chatmessageList.unshift(_.cloneDeep(message));
+    data.chatroom.lastMessage = message.text;
 
     // 다이어리에 저장
     if(data.diary.diarymessageList.length === 0) {
@@ -290,15 +272,16 @@ export function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
         messages={messages}
         onSend={messages => onSend(messages)}
         user={{ _id: 1}}
-        placeholder ={''}
         alwaysShowSend ={true}
         locale={'ko'}
+        theme={theme}
         showAvatarForEveryMessage={true}
         renderBubble={renderBubble}
         renderSend={renderSend}
         renderLoading={renderLoading}
         renderTime ={renderTime}
         renderDay={renderDay}
+        renderAvatar={renderAvatar}
         bottomOffset ={-15}
         renderInputToolbar={renderInputToolbar}
         renderComposer={renderComposer}
@@ -306,7 +289,7 @@ export function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
         alignTop={true}
         maxInputLength={10}
         onLongPress={onLongPress}
+        renderAvatarOnTop ={true}
       />
-
-  )
+    )
 }

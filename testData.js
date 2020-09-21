@@ -2,6 +2,9 @@ import React from 'react';
 import Moment from 'moment';
 
 
+
+
+
 let thankQChatmessageListData = [
   {
     _id: 10, text: '그랬구나~!~! 정말 감사한 기억이겠다😌', createdAt: Moment('20200705 0810'),
@@ -134,7 +137,7 @@ let qTalkDiaryMessageListData = [
 ];
 
 let realTestData1 = {
-  id: 1, isAvailable: true, hasDiary:true, hasChatroom: true, isSubscribe:true,
+  id: 4, isAvailable: true, hasDiary:true, hasChatroom: true, isSubscribe:true,
   product: {
     title: 'THANK Q 감사노트',
     text: '매일 당신에게 질문하는 감사 일기장',
@@ -159,17 +162,17 @@ let realTestData1 = {
   },
   chatroom: {
     lastMessageTime: Moment('20200705 0811'), newItemCount: 0, chatmessageList: thankQChatmessageListData, lastPushed: {pushTime: Moment(), questIndex: 1, solved:true},
-    noMessage: true,
+    lastMessage: '',
   },
   diary: {
-    makeTime: Moment('20200702 211034'), totalUpdateCount: 0, diarymessageList: []
+    makeTime: Moment('20200702 211034'), totalUpdateCount: 0, diarymessageList: [],
   },
   push: {
     isRandomPushType: false, pushStartTime: Moment('20200812 0830'), pushEndTime: Moment('20200812 0830'),
   },
 };
 let realTestData2 = {
-  id: 2, isAvailable: true, hasDiary:true, hasChatroom: true, isSubscribe:true,
+  id: 5, isAvailable: true, hasDiary:true, hasChatroom: true, isSubscribe:true,
   product: {
     title: 'Q 하이라이트',
     text: '오늘을 의미있게 만들 순간을, 미리 적는 일기장',
@@ -200,6 +203,7 @@ let realTestData2 = {
   },
   chatroom: {
     lastMessageTime:  Moment('20200712 0842'), newItemCount: 0,  chatmessageList: highlightChatmessageListData, lastPushed: {pushTime: Moment(), questIndex: 1, solved:true},
+    lastMessage: '',
   },
   diary: {
     makeTime:  Moment('20200709 221034'),  totalUpdateCount: 0, diarymessageList: [],
@@ -209,7 +213,7 @@ let realTestData2 = {
   },
 };
 let realTestData3 = {
-  id: 3, isAvailable: true, hasDiary:true, hasChatroom: true, isSubscribe:true,
+  id: 6, isAvailable: true, hasDiary:true, hasChatroom: true, isSubscribe:true,
   product: {
     title: 'Q TALK 일기',
     text: '오늘 당신의 감정과 생각을 물어오는 일기장',
@@ -246,6 +250,7 @@ let realTestData3 = {
     isRandomPushType: true, pushStartTime: Moment('20200812 0830'), pushEndTime: Moment('20200812 1130'),
   },
 };
+
 export const productTestData = [realTestData1, realTestData2, realTestData3];
 export const userTestData = {
   token: 'asfnjk436k3b46jh346bk',
@@ -253,12 +258,12 @@ export const userTestData = {
   email: 'test@naver.com',
   password: '1234567!!',
   userImg: null,
-  mySubscribeList: [{id:1, pushStartTime:Moment('20200916 0830'), pushEndTime:Moment('20200916 1030')}, {id:2, pushStartTime:Moment('20200916 0830'), pushEndTime:Moment('20200916 1030')}, {id:3, pushStartTime:Moment('20200916 0830'), pushEndTime:Moment('20200916 1030')}],
-  myChatroomList: [{id:1, getPushAlarm:false, key:'1'}, {id:2, getPushAlarm:true, key:'2'}, {id:3, getPushAlarm:false, key:'3'}],
-  myDiaryList: [{id:1, pos:1, color:1}, {id:2, pos:2, color:2}, {id:3, pos:3, color:3}],
+  mySubscribeList: [{id:4, pushStartTime:Moment('20200916 0830'), pushEndTime:Moment('20200916 1030')}, {id:5, pushStartTime:Moment('20200916 0830'), pushEndTime:Moment('20200916 1030')}, {id:6, pushStartTime:Moment('20200916 0830'), pushEndTime:Moment('20200916 1030')}],
+  myChatroomList: [{id:4, getPushAlarm:false, key:'1'}, {id:5, getPushAlarm:true, key:'2'}, {id:6, getPushAlarm:false, key:'3'}],
+  myDiaryList: [{id:4, pos:1, color:1}, {id:5, pos:2, color:2}, {id:6, pos:3, color:3}],
 };
 export const informTestData = {
-  introduction: [], 
+  introduction: [],
   help: [],
   notice: [],
 };
