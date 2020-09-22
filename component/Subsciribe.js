@@ -4,21 +4,26 @@ import DateTimePicker from '@react-native-community/datetimepicker'; // https://
 import {ProductContext} from './Context';
 import Moment from 'moment';
 
+import {SystemContext} from './Context';
+
 
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
 const subOn = require('../assets/icon/subOn.png');
 const subOff = require('../assets/icon/subOff.png');
 
-import * as TestData from '../testData';
-let userData = TestData.userTestData;
-let dataList = TestData.productTestData;
+//import * as TestData from '../testData';
+//let userData = TestData.userTestData;
+//let dataList = TestData.productTestData;
 
 // 구독 상품 화면
 function chatroomInitializeFunction(id){ // 채팅방 초기로 생성 함수
   // 기존의 채팅창이 있는지 확인함
   //const data = dataList[id-1];
-  const data = dataList[dataList.findIndex(obj => obj.id===id)];
+  //const data = dataList[dataList.findIndex(obj => obj.id===id)];
+  const {getProductData, getUserData} = useContext(SystemContext);
+  const data = getProductData(id);
+  const userData = getUserData();
   if(data.hasChatroom) {
     // 아무것도 하지 않음
     return ;
@@ -45,6 +50,8 @@ function chatroomInitializeFunction(id){ // 채팅방 초기로 생성 함수
   }
 }
 export default function SubscribeContentScreen({route, navigation}){
+  const {popupPushMessage, getUserData} = useContext(SystemContext);
+  const userData = getUserData();
   const data = route.params.data;
   //const data = dataList[id-1];
   //const data = dataList.some(data => data.id===id?data:false);
@@ -55,7 +62,6 @@ export default function SubscribeContentScreen({route, navigation}){
   let tempTime;
   let thisScrollView = null;
   let goToEnd = route.params.goToEnd??null;
-
 
   const [dataTimePickerOption, setDataTimePickerOption] = useState(1);  // 바꿀것
   const [show0, setShow0] = useState(false);
@@ -96,6 +102,14 @@ export default function SubscribeContentScreen({route, navigation}){
         }
       })
     }
+    popupPushMessage({
+      image: data.product.imageSet.thumbnailImg,
+      title: data.product.title,
+      text: data.product.text,
+      onPress: ()=>navigation.navigate('chatroom', {id: data.id, data:data}),
+      lastPushed: Moment(),
+      isPushShowed: true,
+    });
   }, []);
 
   const subscribeOffHandler = () => {

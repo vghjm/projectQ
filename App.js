@@ -1,5 +1,5 @@
-import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { AppState, Clipboard, Dimensions , ActivityIndicator, Platform,TouchableHighlight, TouchableWithoutFeedback, AsyncStorage, ImageBackground, Text, View, StyleSheet, TouchableOpacity, TextInput, CheckBox, KeyboardAvoidingView, Alert, Button, ScrollView, SafeAreaView, Image }
+import React, { useRef, useState, useCallback, useEffect, useContext} from 'react';
+import { AppState, Vibration, Clipboard, Dimensions , ActivityIndicator, Platform,TouchableHighlight, TouchableWithoutFeedback, AsyncStorage, ImageBackground, Text, View, StyleSheet, TouchableOpacity, TextInput, CheckBox, KeyboardAvoidingView, Alert, Button, ScrollView, SafeAreaView, Image }
 from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, getFocusedRouteNameFromRoute, useFocusEffect } from '@react-navigation/native';
@@ -30,6 +30,7 @@ import * as MediaLibrary from 'expo-media-library';
 import Draggable from 'react-native-draggable'; // https://github.com/tongyy/react-native-draggable
 import * as Animatable from 'react-native-animatable'; // https://github.com/oblador/react-native-animatable
 import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npmjs.com/package/react-native-swipe-list-view
+//import * as Haptics from 'expo-haptics';
 
 //jj
 // my component
@@ -360,6 +361,7 @@ function HiddenLayer({alarmData}){
 function ChatroomContentLayout(props){
   const id = props.id;
   const data = dataList[dataList.findIndex(obj => obj.id===id)];
+  const theme = useContext(ThemeContext);
   //const data = props.data;
 
   //console.log('ChatroomContentLayout\n', data);
@@ -395,7 +397,7 @@ function ChatroomContentLayout(props){
       </View>
       <View style={{flex:1, flexDirection: 'column', alignItems: 'flex-end'}}>
         <Text style={{fontSize: 10, marginRight: 10, marginTop: 0}}>{fromNowTime}</Text>
-        {newItemCount > 0 && <View style={{height: 20, width: 20, borderRadius: 10, backgroundColor: '#F66', margin: 6, marginRight: 10, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 11}}>{newItemCount}</Text></View> }
+        {newItemCount > 0 && <View style={{height: 14, width: 14, borderRadius: 7, backgroundColor: theme.light[2], margin: 6, marginRight: 10, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 6}}>{newItemCount}</Text></View> }
       </View>
     </View>
     </TouchableHighlight>
@@ -544,6 +546,8 @@ function getHeaderTitle(route, initialName) {
 // 우측상단 메뉴
 //let pressDiaryEditButton = false;  // diary 편집버튼 누름 상태값
 
+let pushCount = 0;
+
 function mainHeaderRightHandler(route, navigation){
   var handler = ()=>myButtonHandler();
   var title = getHeaderTitle(route, '채팅');
@@ -627,6 +631,7 @@ function MainStackHomePage({navigation}) {
           headerTintColor: 'black',
           headerTransparent: true,
         }}
+        temp={'aaa'}
         component={Subscribe}
       />
       <Stack.Screen
@@ -1064,12 +1069,16 @@ export default function App() {
     pushList = TestData.pushTestData;
   };
 
-  const [productdataContext, setProductdataContext] = useState();
-  const [userdataContext, setUserdataContext] = useState();
-  const [noticedataContext, setNoticedataContext] = useState();
+  const [productdataContext, setProductdataContext] = useState(TestData.productTestData);
+  const [userdataContext, setUserdataContext] = useState(TestData.userTestData);
+  const [noticedataContext, setNoticedataContext] = useState(TestData.informTestData);
+  const [pushdataContext, setPushdataContext] = useState(TestData.pushTestData);
   const systemContext = React.useMemo(
     () => ({
       function: () => {},
+      popupPushMessage: data => popupPushMessage(data),
+      getUserData: () => {return userdataContext},
+      getProductData: (id) => {return productdataContext[productdataContext.findIndex(obj => obj.id===id)]},
     }),
     []
   );
@@ -1079,29 +1088,41 @@ export default function App() {
     isFirstLogin: true,
   });
 
-  const [showPushNotification, setShowPushNotification] = useState(true);
+  const [pushContext, setPushContext] = useState({
+    image: null,
+    title: null,
+    text: null,
+    onPress: null,
+    lastPushed: Moment(),
+    isPushShowed: false,
+  });
+  const popupPushMessage = async (data) => {
+    setPushContext(data??{
+      image: null,
+      title: null,
+      text: null,
+      onPress: null,
+      lastPushed: Moment(),
+      isPushShowed: true,
+    });
+    Vibration.vibrate();
+    pushCount++;
+    setTimeout(() => {
+      pushCount--;
+      //console.log('push time out : ', pushCount);
+      if(pushCount===0) setPushContext({
+        pushContext,
+        isPushShowed: false,
+      });
+    }, 2200);
+  }
 
   return (
     <ThemeContext.Provider value={theme}>
     <AuthContext.Provider value={authContext}>
       {state.devMode === true ? (
         <View style={{flex:1, marginTop:30, alignItems: 'center', justifyContent: 'center'}}>
-          <Text>스플래쉬 화면</Text>
-          <Text> 유저 정보 여부에 따라 다음으로 분기 </Text>
-          <TouchableOpacity style={{margin: 10}} onPress={defaultLogin}>
-            <Text> - 저장된 계정 있음(자동 로그인)</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'END_LOADING_FIRST_LOGIN'})}}>
-            <Text> - 저장된 계정 있음(자동 X)</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'END_LOADING_LOGIN_PAGE'})}}>
-            <Text> - 저장된 계정 없음</Text>
-          </TouchableOpacity>
-          <Text style={{padding:5, color:loadProductData?'blue':'red'}}>{'상품정보 로딩: ' + loadProductData}</Text>
-          <Text style={{padding:5, color:updateCacheData?'blue':'red'}}>{'캐쉬정보 로딩: ' + updateCacheData}</Text>
-          <TouchableOpacity style={{margin: 10}} onPress={updateFunction}>
-            <Text>업데이트 상품정보</Text>
-          </TouchableOpacity>
+          <Text>테스트용</Text>
         </View>
       ) : state.nowLoading === true ? (
         <View style={{flex:1, marginTop:30, alignItems: 'center', justifyContent: 'center'}}>
@@ -1120,6 +1141,9 @@ export default function App() {
           <Text style={{padding:5, color:updateCacheData?'blue':'red'}}>{'캐쉬정보 로딩: ' + updateCacheData}</Text>
           <TouchableOpacity style={{margin: 10}} onPress={updateFunction}>
             <Text>업데이트 상품정보</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{margin: 10}} onPress={() => popupPushMessage(null)}>
+            <Text>푸시 뛰우기</Text>
           </TouchableOpacity>
         </View>
       ) : state.noAuth === true ? (
@@ -1140,7 +1164,7 @@ export default function App() {
         </NavigationContainer>
         </SystemContext.Provider>
       )}
-      {showPushNotification && <PushNotification.PushMessage />}
+      {pushContext.isPushShowed && <PushNotification.PushMessage pushData={pushContext}/>}
     </AuthContext.Provider>
     </ThemeContext.Provider>
   );
