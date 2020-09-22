@@ -49,6 +49,8 @@ const defaultImg = {uri: "https://www.daelim.ac.kr/coming_soon.jpg"};
 const logo = require('./assets/img/icon.png');
 const bookOn = require('./assets/icon/book_on.png');
 const bookOff = require('./assets/icon/book_off.png');
+const priceTag = require('./assets/icon/price-tag.png');
+const priceTagB = require('./assets/icon/price-tag_b.png');
 const subOn = require('./assets/icon/subOn.png');
 const subOff = require('./assets/icon/subOff.png');
 const upArrow = require('./assets/icon/up_arrow.png');
@@ -228,6 +230,7 @@ function miniBuble(count){
 }
 function MainPageScreen({navigation, route}){
   const [newChatMessageCount, setNewChatMessageCount] = useState(0);
+  const theme = useContext(ThemeContext);
 
   useFocusEffect(() => {
     let newCount = getAllNewMessageCount();
@@ -245,16 +248,16 @@ function MainPageScreen({navigation, route}){
           let iconName;
           let size = 24;
           if (route.name === 'SubscribeListScreen') {
-            iconName = focused ? 'help-circle' : 'help-circle-outline';
-            return <MaterialCommunityIcons name={iconName} size={size} color={tintcolor} />;
+            iconName = focused ? 'clockcircle' : 'clockcircleo';
+            return <AntDesign name={iconName} size={size} color={tintcolor} />;
           } else if (route.name === 'MyChatListScreen') {
             iconName = focused ? 'chat' : 'chat-outline';
 
             return (
               <View>
-                <MaterialCommunityIcons name={iconName} size={size} color={tintcolor} />
+                <MaterialCommunityIcons name={iconName} size={size+2} color={tintcolor} />
                 {newChatMessageCount > 0
-                  ? <View style={{height:12, width:16, borderRadius:8, backgroundColor: 'red', position:'absolute', right:-7, top:-2, alignItems: 'center', justifyContent: 'center'}}>
+                  ? <View style={{height:16, width:16, borderRadius:8, backgroundColor: theme.light[2], position:'absolute', right:-7, top:-2, alignItems: 'center', justifyContent: 'center'}}>
                       <Text style={{fontSize: 9, color:'white'}}>{newChatMessageCount}</Text>
                     </View>
                   : null
@@ -263,10 +266,10 @@ function MainPageScreen({navigation, route}){
           } else if (route.name === 'MyDiaryScreen') {
             if (focused) {
               //return <FontAwesome name="bookmark" size={size} color={tintcolor } />;
-              return <Image source={bookOff} style={{width: 23, height: 23}}/>
+              return <Image source={priceTagB} style={{width: 23, height: 23}}/>
             }else {
               //return <Feather name="bookmark" size={size} color={tintcolor } />;
-              return <Image source={bookOn} style={{width: 22, height: 22}}/>
+              return <Image source={priceTag} style={{width: 22, height: 22}}/>
             }
           }
           // You can return any component that you like here!
@@ -278,7 +281,9 @@ function MainPageScreen({navigation, route}){
         showIcon: true,
         showLabel: false,
         style: {
-          backgroundColor: '#fafafa',
+          borderTopWidth:1,
+          borderColor: '#eee',
+          backgroundColor: 'white',
           height: 45,
         },
       }}
@@ -397,7 +402,7 @@ function ChatroomContentLayout(props){
       </View>
       <View style={{flex:1, flexDirection: 'column', alignItems: 'flex-end'}}>
         <Text style={{fontSize: 10, marginRight: 10, marginTop: 0}}>{fromNowTime}</Text>
-        {newItemCount > 0 && <View style={{height: 14, width: 14, borderRadius: 7, backgroundColor: theme.light[2], margin: 6, marginRight: 10, marginBottom: 8, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: 'white', fontSize: 6}}>{newItemCount}</Text></View> }
+        {newItemCount > 0 && <View style={{height: 10, width: 10, borderRadius: 5, backgroundColor: theme.light[2], margin: 6, marginRight: 10, marginTop: 12, alignItems: 'center', justifyContent: 'center'}}/>}
       </View>
     </View>
     </TouchableHighlight>
@@ -1368,7 +1373,7 @@ function DiaryYear(props){
   return (
     <View style={{paddingVertical: 5, marginBottom: 20}}>
       <View style={{backgroundColor: '#999', borderRadius: 12, marginLeft: 20, width: 70}}>
-        <Text style={{color: 'white', fontSize: 20, marginVertical: 2, alignSelf: 'center'}}>{year}</Text>
+        <Text style={{fontFamily: 'UhBeeSeulvely', color: 'white', fontSize: 20, marginVertical: 2, alignSelf: 'center'}}>{year}</Text>
       </View>
     </View>
   );
@@ -1380,7 +1385,7 @@ function DiaryDate(props){
       <View style={{flexDirection: 'row', height: 40, alignItems: 'center'}}>
         <View style={{width: 10, height: 10, borderRadius: 5, backgroundColor: '#CCC', marginLeft: 50, marginBottom:3}}/>
         <TouchableOpacity onPress={props.onPressHandler}>
-          <Text style={{marginLeft: 20, fontSize: 20, color: 'black', marginBottom:5}}>{date}</Text>
+          <Text style={{fontFamily: 'UhBeeSeulvely', marginLeft: 20, fontSize: 20, color: 'black', marginBottom:5}}>{date}</Text>
         </TouchableOpacity>
       </View>
   );
@@ -1490,7 +1495,7 @@ function DiaryTextWithDate(props){
       {showDateChanger && <DateTimePicker testID="DiaryDatePicker" value={props.message.createdAt.toDate()} mode={'date'}  display="default" onChange={dateChangerHandler}/>}
       <View style={{paddingLeft: 90, flexWrap:'wrap'}}>
         <TouchableOpacity onPress={()=>setEditMode(true)}>
-          <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{fontFamily: 'UhBeeSeulvely', textAlign: 'center', marginLeft: -15, fontSize: 14, padding:3, borderRadius: 5,width:screenWidth *0.76}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
+          <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{fontFamily: 'UhBeeSeulvely', textAlign: 'left', marginLeft: -15, fontSize: 14, padding:3, borderRadius: 5,width:screenWidth *0.76}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
         </TouchableOpacity>
       </View>
       <View style={{marginBottom: 30, marginRight: 20, alignItems: 'flex-end'}}>
@@ -1607,7 +1612,7 @@ function LastDiaryTextWithDate(props){// 마지막 다이어리만위 위해 만
       {showDateChanger && <DateTimePicker testID="DiaryDatePicker" value={props.message.createdAt.toDate()} mode={'date'}  display="default" onChange={dateChangerHandler}/>}
       <View style={{paddingLeft: 90, flexWrap:'wrap'}}>
         <TouchableOpacity onPress={()=>setEditMode(true)}>
-          <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{fontFamily: 'UhBeeSeulvely', textAlign: 'center', marginLeft: -15, fontSize: 14, padding:3, borderRadius: 5,width:screenWidth *0.76}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
+          <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{fontFamily: 'UhBeeSeulvely', textAlign: 'left', marginLeft: -15, fontSize: 14, padding:3, borderRadius: 5,width:screenWidth *0.76}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
         </TouchableOpacity>
       </View>
       <View style={{marginBottom: 30, marginRight: 20, alignItems: 'flex-end'}}>
