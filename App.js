@@ -103,30 +103,7 @@ function chooseRandomly(a){
 }
 
 
-// 푸시
-function pushMessage(id){
-  // 랜덤한 질문 메시지를 만들어 채팅방에 추가함
-  let data = dataList[dataList.findIndex(obj => obj.id===id)];
-  let product = data.product;
-  let chatroom = data.chatroom;
-  let avatar = product.imageSet.avatarImg.uri?? product.imageSet.avatarImg;
-  let randomIndex = chooseRandomIndex(product.questionList);
-  let newMessage = { _id: uuid.v4(), text: product.questionList[randomIndex], createdAt: Moment(),
-    user: { _id:2, avatar: avatar}
-  };
-  chatroom.newItemCount += 1;
-  chatroom.chatmessageList.unshift(_.cloneDeep(newMessage));
-  chatroom.lastMessageTime = Moment();
-  chatroom.lastMessage = newMessage.text;
-  chatroom.lastPushed = {pushTime: Moment(), questIndex: randomIndex, solved:false};
-}
-function pushTestHandler(updateScreenHandler){  // 간단한 푸시 테스트함수
-  let pushTestId = chooseRandomly(userData.mySubscribeList).id;
-  if(pushTestId != null){
-    pushMessage(pushTestId);
-    updateScreenHandler();  // 화면 강제 업데이트
-  }
-}
+
 // 다이어리 html
 function buildHtml(id) {
     let name = userData.username;
@@ -161,6 +138,34 @@ function buildHtml(id) {
         '</body></html>';
 
     return fullHTML;
+}
+
+function getReply(data, popupPushMessage, navigation, updateF){
+  console.log('getReply', data);
+  setTimeout(() => {
+    let ansMessage = {
+      _id: uuid.v4(), text: data.product.ansList[data.chatroom.lastPushed.questIndex], createdAt: Moment(),
+      user: { _id:2, avatar: data.product.imageSet.avatarImg.uri?? data.product.imageSet.avatarImg},
+    };
+    data.chatroom.newItemCount += 1;
+    data.chatroom.lastMessageTime = Moment();
+    data.chatroom.chatmessageList.unshift(_.cloneDeep(ansMessage));
+    data.chatroom.lastMessage = ansMessage.text;
+    data.chatroom.lastPushed.ansMessage = _.cloneDeep(ansMessage);
+    popupPushMessage({
+      image: data.product.imageSet.thumbnailImg,
+      title: data.product.title,
+      text: ansMessage.text,
+      onPress: ()=>navigation.navigate('chatroom', {id: data.id, data:data}),
+      lastPushed: Moment(),
+      isPushShowed: true,
+    });
+    console.log('getReply ansMessage', ansMessage);
+    updateF();
+    return ansMessage;
+    //setMessages(previousMessages => GiftedChat.append(previousMessages, ansMessage));
+  }, 5 * 1000);
+  return 'aa';
 }
 
 // 테스트
@@ -198,14 +203,14 @@ function TestScreen({navigation}){
   return (
     <ScrollView>
     <View style={{flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: screenHeight}}>
-      <Text>기능 테스트 공간</Text>
+      <Text style={{fontFamily: 'NanumMyeongjo'}}>기능 테스트 공간</Text>
       <TouchableOpacity onPress={printToPdf} style={{margin:20, borderWidth: 1, borderRadius: 35, height:70, width: 70, backgroundColor: 'pink', alignItems: 'center', justifyContent: 'center'}}>
-        <Text>PDF 생성</Text>
+        <Text style={{fontFamily: 'NanumMyeongjo'}}>PDF 생성</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={shareWithLink} style={{margin:20, borderWidth: 1, borderRadius: 35, height:70, width: 70, backgroundColor: '#6495ED', alignItems: 'center', justifyContent: 'center'}}>
-        <Text>링크공유</Text>
+        <Text style={{fontFamily: 'NanumMyeongjo'}}>링크공유</Text>
       </TouchableOpacity>
-      <TextInput value={mytext} onChangeText={text => setMytext(text)}/>
+      <TextInput value={mytext}  style={{fontFamily: 'NanumMyeongjo'}} onChangeText={text => setMytext(text)}/>
     </View>
     </ScrollView>
   );
@@ -220,14 +225,6 @@ function getAllNewMessageCount(){
   });
   return newCount;
 }
-function miniBuble(count){
-
-  return (
-    <View style={{height:12, width:16, borderRadius:8, backgroundColor: 'red', position:'absolute', right:-7, top:-2, alignItems: 'center', justifyContent: 'center'}}>
-      <Text style={{fontSize: 9, color:'white'}}>{count}</Text>
-    </View>
-  );
-}
 function MainPageScreen({navigation, route}){
   const [newChatMessageCount, setNewChatMessageCount] = useState(0);
   const theme = useContext(ThemeContext);
@@ -237,7 +234,7 @@ function MainPageScreen({navigation, route}){
     if(newChatMessageCount != newCount){
       setNewChatMessageCount(newCount);
     }
-  }, []);
+  });
 
   return (
     <Tab.Navigator
@@ -257,8 +254,8 @@ function MainPageScreen({navigation, route}){
               <View>
                 <MaterialCommunityIcons name={iconName} size={size+2} color={tintcolor} />
                 {newChatMessageCount > 0
-                  ? <View style={{height:16, width:16, borderRadius:8, backgroundColor: theme.light[2], position:'absolute', right:-7, top:-2, alignItems: 'center', justifyContent: 'center'}}>
-                      <Text style={{fontSize: 9, color:'white'}}>{newChatMessageCount}</Text>
+                  ? <View style={{height:14, width:14, borderRadius:7, backgroundColor: theme.light[2], position:'absolute', right:-6, top:-3, alignItems: 'center', justifyContent: 'center'}}>
+                      <Text style={{fontSize: 10, color:'white'}}>{newChatMessageCount}</Text>
                     </View>
                   : null
                 }
@@ -288,13 +285,13 @@ function MainPageScreen({navigation, route}){
         },
       }}
     >
-      <Tab.Screen name="SubscribeListScreen"  component={SubscribeListScreen} />
+      <Tab.Screen name="SubscribeListScreen"  component={SubscribeListScreen}/>
       <Tab.Screen name="MyChatListScreen"  component={MyChatListScreen} />
       <Tab.Screen name="MyDiaryScreen"  component={MyDiaryScreen} />
-      <Tab.Screen name="testScreen"  component={TestScreen} />
     </Tab.Navigator>
   );
 }
+// <Tab.Screen name="testScreen"  component={TestScreen} />
 function SubscribeContentLayout(props){
   let data = props.data;
   let productInfo = data.product;
@@ -302,12 +299,12 @@ function SubscribeContentLayout(props){
   //const productInfo = dataList[id-1].product;
 
   return (
-    <TouchableOpacity onPress={()=>props.nav.navigate('contentScreen', {data: data})}>
+    <TouchableOpacity onPress={()=>props.nav.navigate('contentScreen', {id: data.id})}>
     <View style={{flexDirection: 'row', height: 56, margin: 3, marginBottom: 10}}>
       <Image resizeMode='cover' source={productInfo.imageSet.thumbnailImg} style={{height: 46, borderWidth: 1, borderColor: '#f7f7f7', width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
       <View style={{flexDirection: 'column'}}>
-        <Text style={{marginLeft: 10, marginTop: 6, fontSize: 17,fontWeight: '400', width: 220}}>{productInfo.title}</Text>
-        <Text numberOfLines={1} style={{color: '#AAA', fontSize: 12, marginLeft: 13, marginTop:3, width: 230}}>{productInfo.text}</Text>
+        <Text style={{fontFamily: 'NanumMyeongjo', marginLeft: 10, marginTop: 6, fontSize: 17,fontWeight: '400', width: 220}}>{productInfo.title}</Text>
+        <Text numberOfLines={1} style={{fontFamily: 'NanumMyeongjo', color: '#AAA', fontSize: 12, marginLeft: 13, marginTop:3, width: 230}}>{productInfo.text}</Text>
       </View>
     </View>
     </TouchableOpacity>
@@ -323,12 +320,12 @@ function SubscribeListScreen({navigation}){
   return (
     <View style={{flex:1, flexDirection: 'column', backgroundColor: 'white', alignItems: 'flex-start'}}>
       <ScrollView styles={{marginHorizontal: 20}} >
-        <Text style={{margin:10, fontSize: 17}}>내 구독 상품</Text>
+        <Text style={{fontFamily: 'NanumMyeongjo', margin:10, fontSize: 17}}>내 구독 상품</Text>
           {dataList.map(data => {
             if(data.isSubscribe) return <SubscribeContentLayout key={uuid()} data={data} nav={navigation}/>
           })}
         <View style={{left:10, right:10, backgroundColor: '#f0f0f0', height:1, marginVertical:7, width: screenWidth*0.98}}/>
-        <Text style={{margin:10, marginTop:5, borderTopWidth: 1, fontSize: 17, borderColor: '#CCC'}}>구독 가능한 상품</Text>
+        <Text style={{fontFamily: 'NanumMyeongjo', margin:10, marginTop:5, borderTopWidth: 1, fontSize: 17, borderColor: '#CCC'}}>구독 가능한 상품</Text>
           {dataList.map(data => {
             if(!data.isSubscribe) return <SubscribeContentLayout key={uuid()} data={data} nav={navigation}/>
           })}
@@ -397,11 +394,11 @@ function ChatroomContentLayout(props){
     <View style={{flexDirection: 'row', height: 60, backgroundColor: 'white'}}>
       <Image source={productInfo.imageSet.thumbnailImg} style={{height: 46, width: 46, margin: 5,borderWidth: 1, borderColor: '#f7f7f7', marginLeft: 10, borderRadius: 23, backgroundColor: '#DDD'}}/>
       <View style={{flexDirection: 'column'}}>
-        <Text style={{marginLeft: 10, marginTop: 6, fontSize: 17,fontWeight: '400', width: 220}}>{productInfo.title}</Text>
-        <Text numberOfLines={1} style={{color: '#AAA', fontSize: 12, marginLeft: 13, marginTop:3, width: 230}}>{topMessage}</Text>
+        <Text style={{fontFamily: 'NanumMyeongjo', marginLeft: 10, marginTop: 6, fontSize: 17,fontWeight: '400', width: 220}}>{productInfo.title}</Text>
+        <Text numberOfLines={1} style={{fontFamily: 'NanumMyeongjo', color: '#AAA', fontSize: 12, marginLeft: 13, marginTop:3, width: 230}}>{topMessage}</Text>
       </View>
       <View style={{flex:1, flexDirection: 'column', alignItems: 'flex-end'}}>
-        <Text style={{fontSize: 10, marginRight: 10, marginTop: 0}}>{fromNowTime}</Text>
+        <Text style={{fontFamily: 'NanumMyeongjo', fontSize: 10, marginRight: 10, marginTop: 0}}>{fromNowTime}</Text>
         {newItemCount > 0 && <View style={{height: 10, width: 10, borderRadius: 5, backgroundColor: theme.light[2], margin: 6, marginRight: 10, marginTop: 12, alignItems: 'center', justifyContent: 'center'}}/>}
       </View>
     </View>
@@ -413,6 +410,7 @@ function MyChatListScreen({navigation, route}){
   const [numberOfChatroom, setNumberOfChatroom] = useState(userData.myChatroomList.length);
   const [listViewData, setListViewData] = useState(userData.myChatroomList);
   const [updateChatListScreen, setUpdateChatListScreen] = useState(0);
+  const {popupPushMessage} = useContext(SystemContext);
 
   const getPushMessage = () => {
     setUpdateChatListScreen(updateChatListScreen + 1);
@@ -423,7 +421,7 @@ function MyChatListScreen({navigation, route}){
       <TouchableOpacity onPress={()=>{ navigation.navigate('SubscribeListScreen'); Alert.alert('상품을 구독해 보세요', '구독한 상품정보를 받을 수 있습니다.', [{text: '확인'}])}}>
         <View style={{flexDirection: 'row', height: 56, margin: 10, borderWidth: 1, borderRadius: 8, borderColor: 'gray', alignItems: 'center'}}>
           <Image source={null} style={{height: 40, width: 40, margin: 16, borderRadius: 8, backgroundColor: '#DDD'}}/>
-          <Text style={{marginLeft: 15, fontSize: 17, width: 220}}>원하는 상품을 구독해보세요!</Text>
+          <Text style={{fontFamily: 'NanumMyeongjo', marginLeft: 15, fontSize: 17, width: 220}}>원하는 상품을 구독해보세요!</Text>
         </View>
       </TouchableOpacity>
     );
@@ -436,6 +434,39 @@ function MyChatListScreen({navigation, route}){
       setListViewData(userData.myChatroomList);
     }
   });
+
+  // 푸시
+  const pushMessage = (id) => {
+    // 랜덤한 질문 메시지를 만들어 채팅방에 추가함
+    let data = dataList[dataList.findIndex(obj => obj.id===id)];
+    let product = data.product;
+    let chatroom = data.chatroom;
+    let avatar = product.imageSet.avatarImg.uri?? product.imageSet.avatarImg;
+    let randomIndex = chooseRandomIndex(product.questionList);
+    let newMessage = { _id: uuid.v4(), text: product.questionList[randomIndex], createdAt: Moment(),
+      user: { _id:2, avatar: avatar}
+    };
+    chatroom.newItemCount += 1;
+    chatroom.chatmessageList.unshift(_.cloneDeep(newMessage));
+    chatroom.lastMessageTime = Moment();
+    chatroom.lastMessage = newMessage.text;
+    chatroom.lastPushed = {pushTime: Moment(), questIndex: randomIndex, solved:false};
+    popupPushMessage({
+      image: product.imageSet.thumbnailImg,
+      title: product.title,
+      text: newMessage.text,
+      onPress: ()=>navigation.navigate('chatroom', {id: id, data:data}),
+      lastPushed: Moment(),
+      isPushShowed: true,
+    });
+  }
+  const pushTestHandler = (updateScreenHandler) => {  // 간단한 푸시 테스트함수
+    let pushTestId = chooseRandomly(userData.mySubscribeList).id;
+    if(pushTestId != null){
+      pushMessage(pushTestId);
+      updateScreenHandler();  // 화면 강제 업데이트
+    }
+  }
 
   return (
     <View style={{flex:1, flexDirection: 'column', backgroundColor: 'white'}}>
@@ -451,12 +482,12 @@ function MyChatListScreen({navigation, route}){
         closeOnRowPress={true}
         closeOnScroll={true}
       />
-      <TouchableHighlight onPress={()=>pushTestHandler(getPushMessage)} style={{position:'absolute', width:60, height: 60, right:15, bottom: 15, borderWidth: 1, borderRadius: 30, backgroundColor: 'gray', alignItems: 'center', justifyContent: 'center'}}>
-        <Text style={{color: 'white', fontSize: 24}}>푸시</Text>
-      </TouchableHighlight>
     </View>
   );
 }
+// <TouchableHighlight onPress={()=>pushTestHandler(getPushMessage)} style={{position:'absolute', width:60, height: 60, right:15, bottom: 15, borderWidth: 1, borderRadius: 30, backgroundColor: 'gray', alignItems: 'center', justifyContent: 'center'}}>
+// <Text style={{color: 'white', fontSize: 24}}>푸시</Text>
+// </TouchableHighlight>
 function MyDiaryScreen({route, navigation}){
   const [editMode, setEditMode] = useState(false);    // 편집모드 중인경우 애니메이션 기능
   const [numberOfDiary, setNumberOfDiary] = useState(-1); // 다이어리의 수
@@ -516,7 +547,7 @@ function MyDiaryScreen({route, navigation}){
   return (
     <ScrollView canCancelContentTouches={cancelScroll} bounces={false} onScroll={(event) => {global_y = event.nativeEvent.contentOffset.y; console.log('scroll: ', global_y)}}>
       <View style={{width: screenWidth, height: backgroundWidth, backgroundColor: 'white'}}>
-        {numberOfDiary < 1 && <View style={{flex:1, flexDirection: 'column',  justifyContent: 'center', alignItems: 'center'}}><Text>생성된 다이어리가 없습니다.</Text></View>}
+        {numberOfDiary < 1 && <View style={{fontFamily: 'NanumMyeongjo', flex:1, flexDirection: 'column',  justifyContent: 'center', alignItems: 'center'}}><Text style={{fontFamily: 'NanumMyeongjo'}}>생성된 다이어리가 없습니다.</Text></View>}
         {userData.myDiaryList.map((obj) => {
           return editMode ?
             <DraggableDiary key={obj.id} dataList={dataList} userData={userData} id={obj.id} nav={navigation} changePosHandler={changePosHandler} updateDiary={updateDiary} cancelDrag={changeCnacelScrollHandler}/> :
@@ -585,7 +616,7 @@ function mainHeaderRightHandler(route, navigation){
 
   return ()=>(
     <TouchableOpacity onPress={handler}>
-      <Text style={{fontWeight: 'bold', marginRight: 20, fontSize: 20, color: 'gray'}}>{text}</Text>
+      <Text style={{fontFamily: 'NanumMyeongjo_bold', marginRight: 20, fontSize: 20, color: 'gray'}}>{text}</Text>
     </TouchableOpacity>
   );
 }
@@ -600,7 +631,7 @@ function MainStackHomePage({navigation}) {
         options={({route, navigation})=>({
           headerTitle: getHeaderTitle(route, '채팅'),
           headerTitleAlign: 'left',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerTitleStyle: {fontSize: 20, fontFamily: 'NanumMyeongjo_bold'},
           headerBackTitleVisible: false,
           headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
@@ -612,7 +643,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "chatroom",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerTitleStyle: {fontSize: 20, fontFamily: 'NanumMyeongjo_bold'},
           cardStyle: {backgroundColor: 'white'},
           headerBackTitleVisible: false,
           headerTintColor: 'black',
@@ -622,7 +653,8 @@ function MainStackHomePage({navigation}) {
             >
               <Octicons name="three-bars" style={{marginRight:11, marginTop:2}} size={27} color="black" />
             </TouchableOpacity>
-          )}}
+          ),
+        }}
         component={ChatroomScreen}
       />
       <Stack.Screen
@@ -630,13 +662,12 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerTitleStyle: {fontSize: 20, fontFamily: 'NanumMyeongjo_bold'},
           cardStyle: {backgroundColor: 'white'},
           headerBackTitleVisible: false,
           headerTintColor: 'black',
           headerTransparent: true,
         }}
-        temp={'aaa'}
         component={Subscribe}
       />
       <Stack.Screen
@@ -644,7 +675,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "내 다이어리",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerTitleStyle: {fontSize: 20, fontFamily: 'NanumMyeongjo_bold'},
           headerBackTitleVisible: false,
           headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
@@ -656,7 +687,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "My",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerTitleStyle: {fontSize: 20, fontFamily: 'NanumMyeongjo_bold'},
           headerBackTitleVisible: false,
           headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
@@ -668,7 +699,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "비밀번호 변경",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerTitleStyle: {fontSize: 20, fontFamily: 'NanumMyeongjo_bold'},
           headerBackTitleVisible: false,
           headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
@@ -680,7 +711,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "이용 내역",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerTitleStyle: {fontSize: 20, fontFamily: 'NanumMyeongjo_bold'},
           headerBackTitleVisible: false,
           headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
@@ -692,7 +723,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "고객센터",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerTitleStyle: {fontSize: 20, fontFamily: 'NanumMyeongjo_bold'},
           headerBackTitleVisible: false,
           headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
@@ -704,7 +735,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "서비스 소개",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerTitleStyle: {fontSize: 20, fontFamily: 'NanumMyeongjo_bold'},
           headerBackTitleVisible: false,
           headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
@@ -716,7 +747,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "도움말",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerTitleStyle: {fontSize: 20, fontFamily: 'NanumMyeongjo_bold'},
           headerBackTitleVisible: false,
           headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
@@ -728,7 +759,7 @@ function MainStackHomePage({navigation}) {
         options={{
           title: "공지사항",
           headerTitleAlign: 'center',
-          headerTitleStyle: {fontWeight: 'bold', fontSize: 20},
+          headerTitleStyle: {fontSize: 20, fontFamily: 'NanumMyeongjo_bold'},
           headerBackTitleVisible: false,
           headerTintColor: 'black',
           cardStyle: {backgroundColor: 'white'},
@@ -807,12 +838,14 @@ export default function App() {
           // 첫 실행 -> 인트로 화면 띄움
           return {
             ...prevState,
+            devMode: false,
             nowLoading: false,
           };
         case 'END_LOADING_LOGIN_PAGE':
           // 로그인 화면으로 이동
           return {
             ...prevState,
+            devMode: false,
             nowLoading: false,
             intro: false,
           };
@@ -820,6 +853,7 @@ export default function App() {
           // 자동로그인, 데이터 로딩 후 바로 사용화면으로 이동
           return {
             ...prevState,
+            devMode: false,
             nowLoading: false,
             intro: false,
             login: true,
@@ -829,6 +863,7 @@ export default function App() {
           // 유저정보 받아 사용자 화면으로 이동
           return {
             ...prevState,
+            devMode: false,
             nowLoading: false,
             intro: false,
             login: true,
@@ -894,12 +929,9 @@ export default function App() {
         return reply;
       },
       login: async data => {
-        //userData = await Storage.updateDataSet(dataList, data);
         console.log('token:', data.token);
         console.log('login start');
         userData = await Storage.updateDataSet(dataList, data);
-        console.log('\nlogin: ', userData);
-        //console.log('\ndataList: \n', dataList);
         console.log('login end');
         dispatch({ type: 'LOGIN', token:data.token });
       },
@@ -916,16 +948,40 @@ export default function App() {
         return await Connection.checkEmail(email);
       },
       introSkip: () => dispatch({type: 'INTRO_SKIP'}),
-      manualStart: () => {
-
-      },
+      loading: async () => {
+        await bootstrapAsync();
+      }
     }),
     []
   );  // 유저 인증 함수 등록
+  const systemContext = React.useMemo(
+    () => ({
+      function: () => {},
+      popupPushMessage: (data, time) => popupPushMessage(data, time),
+      getReply: (data, navigation) => getReply(data, systemContext.popupPushMessage, navigation, systemContext.doUpdate),
+      getUserData: () => {return userData},
+      getProductData: (id) => {return dataList[dataList.findIndex(obj => obj.id===id)]},
+      getProductDataList: () => {return dataList},
+      getInformData: () => {return informData},
+      getPushData: () => {return pushData},
+      updateUserData: data => userData = data,
+      updateProductData: data => {
+        let index = dataList.findIndex(obj => obj.id === data.id);
+        dataList[index] = data;
+      },
+      updateProductDataAll: data => dataList = data,
+      updataInformData: data => informData = data,
+      updatePushData: data => pushData = data,
+      setGlobalP: data => global_p_id = data,
+    }),
+    []
+  );
 
   const [notification, setNotification] = useState(null);
   const [loaded, error] = Font.useFonts({
     UhBeeSeulvely: require('./assets/font/UhBeeSeulvely.ttf'),
+    NanumMyeongjo: require('./assets/font/NanumMyeongjo.ttf'),
+    NanumMyeongjo_bold: require('./assets/font/NanumMyeongjoExtraBold.ttf'),
   });
 
   const handleNotification = (notify) => {
@@ -973,27 +1029,21 @@ export default function App() {
     red: '#5F5F5F',
     logo: logo,
   });
-  const [productData, setProductData] = useState({
-    0: {
-        isAvailable: true,
-        title: '상품제목',
-        text: '상품 설명',
-        imageSet: {thumbnailImg: defaultImg, logoImg: defaultImg, mainImg: defaultImg, avatarImg: defaultImg},
-        questionList: ['상품질문1','상품질문2','상품질문3'],
-        ansList: ['질문의 답변1','질문의 답변2','질문의 답변3'],
-        isRandomPushType: false, pushStartTime: Moment(), pushEndTime: Moment(),
-    },
-  });
   const [loadProductData, setLoadProductData] = useState(false);
-  const [updateCacheData, setUpdateCacheData] = useState(false);
+  const [updateCacheData, setUpdateCacheData] = useState({
+    autoLogin: false,
+    id: null,
+    password: null,
+    isFirstLogin: null,
+    isReady: false,
+  });
 
-  const initAsync = async () => {
 
-  };
   const bootstrapAsync = async () => {
     console.log('시작시간 : ', Moment().toDate());
 
     let permission = await getPermission();
+
     //if(!permission.ok) return dispatch({ type: 'NO_AUTH' });
 
     //await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory+'image/', { intermediates: true });
@@ -1010,29 +1060,75 @@ export default function App() {
       });
 
     Storage.updateCacheData()
-      .then(autoLogin => {
-        setUpdateCacheData(true);
-        if(autoLogin.ok){
-          let token = autoLogin.data.token;
+      .then(cache => {
+        let autoLogin = false;
+        let email = null;
+        let password = null;
+        let isFirstLogin = true;
+        if(cache.ok){
+          autoLogin = true;
+          email = cache.data.email;
+          password = cache.data.password;
           //dispatch({type: 'END_LOADING_RESTORE_DATA', action: token});
         }else{
-          let isFirstLogin = autoLogin.data.isFirstLogin;
+          let isFirstLogin = cache.data.isFirstLogin;
           //isFirstLogin ? dispatch({type: 'END_LOADING_FIRST_LOGIN', action: token}) : dispatch({type: 'END_LOADING_LOGIN_PAGE', action: token});
         }
+        setUpdateCacheData({
+          autoLogin: autoLogin,
+          email: email,
+          password: password,
+          isFirstLogin: isFirstLogin,
+          isReady: true,
+        });
       });
   };
 
   // *************************************                  백그라운드 및 Inactive 감지 함수
   const appState = useRef(AppState.currentState);
   const [appStateVisible, setAppStateVisible] = useState(appState.current);
+
+  let testAccount = {
+    use: true,
+    email: '77eric@naver.com',
+    password: '!!gmltjd',
+  }
   useEffect(() => {
     AppState.addEventListener("change", _handleAppStateChange);
-    bootstrapAsync();
+    //bootstrapAsync();
     //registerForPushNotificationsAsync({email: 'abc123@naver.com', username:'인간1'})
     return () => {
       AppState.removeEventListener("change", _handleAppStateChange);
     };
   }, []);
+  useEffect(() => {
+    console.log('loadProductData: ', loadProductData, 'updateCacheData', updateCacheData);
+    let move = null;
+    let cache = null;
+    if(loadProductData && updateCacheData.isReady && loaded){
+      if(updateCacheData.autoLogin === true || testAccount.use){
+        move = 'END_LOADING_RESTORE_DATA';
+        if(testAccount.use){
+          cache = {
+            email: testAccount.email,
+            password: testAccount.password,
+          }
+        }else{
+          cache = {
+            email: updateCacheData.email,
+            password: updateCacheData.password,
+          }
+        }
+        defaultLogin(cache.email, cache.password);
+      }else if(updateCacheData.isFirstLogin === true){
+        move = 'END_LOADING_FIRST_LOGIN';
+        dispatch({ type: move});
+      }else{
+        move = 'END_LOADING_LOGIN_PAGE';
+        dispatch({ type: move});
+      }
+    }
+  }, [loadProductData, updateCacheData, loaded]);
 
   const _handleAppStateChange = (nextAppState) => {
     if (
@@ -1053,11 +1149,9 @@ export default function App() {
     bootstrapAsync();
     console.log('update End');
   };
-  const defaultLogin = async () => {
+  const defaultLogin = async (email, password) => {
     console.log('자동 로그인 ~');
     const {signIn, login} = authContext;
-    let email = 'abc123@naver.com';
-    let password = 'abc123';
 
     let response = await signIn({email: email, password:password});
     if(response.ok) login({token: response.data.token, username: response.data.username, email: email, password: password});
@@ -1066,32 +1160,6 @@ export default function App() {
       dispatch({ type: 'LOGIN', token:data.token });
     }
   };
-  const noNetworkLogin = async () => {
-    console.log('자동 로그인 no network~');
-    userData = TestData.userTestData;
-    dataList = TestData.productTestData;
-    informData = TestData.informTestData;
-    pushList = TestData.pushTestData;
-  };
-
-  const [productdataContext, setProductdataContext] = useState(TestData.productTestData);
-  const [userdataContext, setUserdataContext] = useState(TestData.userTestData);
-  const [noticedataContext, setNoticedataContext] = useState(TestData.informTestData);
-  const [pushdataContext, setPushdataContext] = useState(TestData.pushTestData);
-  const systemContext = React.useMemo(
-    () => ({
-      function: () => {},
-      popupPushMessage: data => popupPushMessage(data),
-      getUserData: () => {return userdataContext},
-      getProductData: (id) => {return productdataContext[productdataContext.findIndex(obj => obj.id===id)]},
-    }),
-    []
-  );
-
-  const [devCache, setDevCache] = useState({
-    token: '',
-    isFirstLogin: true,
-  });
 
   const [pushContext, setPushContext] = useState({
     image: null,
@@ -1101,25 +1169,29 @@ export default function App() {
     lastPushed: Moment(),
     isPushShowed: false,
   });
-  const popupPushMessage = async (data) => {
-    setPushContext(data??{
-      image: null,
-      title: null,
-      text: null,
-      onPress: null,
-      lastPushed: Moment(),
-      isPushShowed: true,
-    });
-    Vibration.vibrate();
-    pushCount++;
+  const popupPushMessage = async (data, time) => {
+    let timer = time??800;
     setTimeout(() => {
-      pushCount--;
-      //console.log('push time out : ', pushCount);
-      if(pushCount===0) setPushContext({
-        pushContext,
-        isPushShowed: false,
+      setPushContext(data??{
+        image: null,
+        title: null,
+        text: null,
+        onPress: null,
+        lastPushed: Moment(),
+        isPushShowed: true,
       });
-    }, 2200);
+
+      Vibration.vibrate();
+      pushCount++;
+      setTimeout(() => {
+        pushCount--;
+        //console.log('push time out : ', pushCount);
+        if(pushCount===0) setPushContext({
+          pushContext,
+          isPushShowed: false,
+        });
+      }, 4800);
+    }, timer);
   }
 
   return (
@@ -1127,13 +1199,9 @@ export default function App() {
     <AuthContext.Provider value={authContext}>
       {state.devMode === true ? (
         <View style={{flex:1, marginTop:30, alignItems: 'center', justifyContent: 'center'}}>
-          <Text>테스트용</Text>
-        </View>
-      ) : state.nowLoading === true ? (
-        <View style={{flex:1, marginTop:30, alignItems: 'center', justifyContent: 'center'}}>
           <Text>스플래쉬 화면</Text>
           <Text> 유저 정보 여부에 따라 다음으로 분기 </Text>
-          <TouchableOpacity style={{margin: 10}} onPress={defaultLogin}>
+          <TouchableOpacity style={{margin: 10}} onPress={() => defaultLogin(testAccount.email, testAccount.password)}>
             <Text> - 저장된 계정 있음(자동 로그인)</Text>
           </TouchableOpacity>
           <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'END_LOADING_FIRST_LOGIN'})}}>
@@ -1142,8 +1210,8 @@ export default function App() {
           <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'END_LOADING_LOGIN_PAGE'})}}>
             <Text> - 저장된 계정 없음</Text>
           </TouchableOpacity>
-          <Text style={{padding:5, color:loadProductData?'blue':'red'}}>{'상품정보 로딩: ' + loadProductData}</Text>
-          <Text style={{padding:5, color:updateCacheData?'blue':'red'}}>{'캐쉬정보 로딩: ' + updateCacheData}</Text>
+          <Text style={{ padding:5, color:loadProductData?'blue':'red'}}>{'상품정보 로딩: ' + loadProductData}</Text>
+          <Text style={{ padding:5, color:updateCacheData?'blue':'red'}}>{'캐쉬정보 로딩: ' + updateCacheData}</Text>
           <TouchableOpacity style={{margin: 10}} onPress={updateFunction}>
             <Text>업데이트 상품정보</Text>
           </TouchableOpacity>
@@ -1151,9 +1219,11 @@ export default function App() {
             <Text>푸시 뛰우기</Text>
           </TouchableOpacity>
         </View>
+      ) : state.nowLoading === true ? (
+        <SplashScreen/>
       ) : state.noAuth === true ? (
         <View style={{flex:1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
-          <Text style={{fontSize:20}}>권한이 필요합니다.</Text>
+          <Text style={{fontFamily: 'NanumMyeongjo',fontSize:20}}>권한이 필요합니다.</Text>
         </View>
       ): state.intro === true ? (
         <IntroNavigation/>
@@ -1172,6 +1242,20 @@ export default function App() {
       {pushContext.isPushShowed && <PushNotification.PushMessage pushData={pushContext}/>}
     </AuthContext.Provider>
     </ThemeContext.Provider>
+  );
+}
+
+function SplashScreen(){
+  const {loading} = useContext(AuthContext);
+
+  useEffect(() => {
+    loading();
+  }, []);
+
+  return (
+    <View style={{flex:1, marginTop:30, alignItems: 'center', justifyContent: 'center'}}>
+      <Image source={logo} style={{height: screenWidth*0.25, width:screenWidth*0.25}} resizeMode={'cover'}/>
+    </View>
   );
 }
 
@@ -1287,11 +1371,11 @@ function AnimatableDiaryComponent(props){
           <View style={{position:'absolute', left:3, top:5, height: 185, width:130, backgroundColor: '#CCC', borderBottomRightRadius: 8, borderTopRightRadius: 8}}/>
           <Image style={{height: 190, width: 130}} source={diaryImgList[userData.myDiaryList[mydiarySettingIndex].color]} resizeMode='contain'/>
           <View>
-            <Text adjustsFontSizeToFit={true} style={{width: 130, fontSize: 16,  color: 'black', fontWeight:'bold', alignSelf: 'center', marginBottom: 3, marginTop:3}}>{data.product.title}</Text>
+            <Text adjustsFontSizeToFit={true} style={{fontFamily: 'NanumMyeongjo',width: 130, fontSize: 16,  color: 'black', fontWeight:'bold', alignSelf: 'center', marginBottom: 3, marginTop:3}}>{data.product.title}</Text>
             <View style={{flexDirection: 'column', marginBottom: 5}}>
               {makeTime.isSameOrAfter(nowTime, 'day')
-                ? <View><Text style={{fontSize: 8, color: 'gray'}}>오늘 생성한 다이어리</Text><Text style={{fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:62}}>총 {totalUpdateCount}회 기록</Text></View>
-                : <View><Text style={{fontSize: 8, color: 'gray'}}>{makeTime.format('L')} ~ {nowTime.format('L')}</Text><Text style={{fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:30}}>총 {totalUpdateCount}회 기록</Text></View>}
+                ? <View><Text style={{fontFamily: 'NanumMyeongjo',fontSize: 8, color: 'gray'}}>오늘 생성한 다이어리</Text><Text style={{fontFamily: 'NanumMyeongjo', fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:62}}>총 {totalUpdateCount}회 기록</Text></View>
+                : <View><Text style={{fontFamily: 'NanumMyeongjo',fontSize: 8, color: 'gray'}}>{makeTime.format('L')} ~ {nowTime.format('L')}</Text><Text style={{fontFamily: 'NanumMyeongjo', fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:30}}>총 {totalUpdateCount}회 기록</Text></View>}
             </View>
           </View>
     </View>
@@ -1323,11 +1407,11 @@ function DiaryComponent(props){
         <View style={{position:'absolute', left:3, top:5, height: 185, width:130, backgroundColor: '#CCC', borderBottomRightRadius: 8, borderTopRightRadius: 8}}/>
         <Image style={{height: 190, width: 130}} source={diaryImgList[userData.myDiaryList[mydiarySettingIndex].color]} resizeMode='contain'/>
         <View>
-          <Text adjustsFontSizeToFit={true} style={{width: 130, fontSize: 16, color: 'black', fontWeight:'bold', alignSelf: 'center', marginBottom: 3, marginTop:3}}>{data.product.title}</Text>
+          <Text adjustsFontSizeToFit={true} style={{fontFamily: 'NanumMyeongjo', width: 130, fontSize: 16, color: 'black', fontWeight:'bold', alignSelf: 'center', marginBottom: 3, marginTop:3}}>{data.product.title}</Text>
           <View style={{flexDirection: 'column', marginBottom: 5}}>
             {makeTime.isSameOrAfter(nowTime, 'day')
-              ? <View><Text style={{fontSize: 8, color: 'gray'}}>오늘 생성한 다이어리</Text><Text style={{fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:62}}>총 {totalUpdateCount}회 기록</Text></View>
-              : <View><Text style={{fontSize: 8, color: 'gray'}}>{makeTime.format('L')} ~ {nowTime.format('L')}</Text><Text style={{fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:30}}>총 {totalUpdateCount}회 기록</Text></View>}
+              ? <View><Text style={{fontFamily: 'NanumMyeongjo', fontSize: 8, color: 'gray'}}>오늘 생성한 다이어리</Text><Text style={{fontFamily: 'NanumMyeongjo', fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:62}}>총 {totalUpdateCount}회 기록</Text></View>
+              : <View><Text style={{fontFamily: 'NanumMyeongjo', fontSize: 8, color: 'gray'}}>{makeTime.format('L')} ~ {nowTime.format('L')}</Text><Text style={{fontFamily: 'NanumMyeongjo', fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:30}}>총 {totalUpdateCount}회 기록</Text></View>}
           </View>
         </View>
       </View>
@@ -1347,13 +1431,13 @@ function MyDropList(props){
       <View style={{height: 65, borderBottomWidth: 1, borderColor: '#AAA', backgroundColor: '#FFF', justifyContent: 'center'}}>
         <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center', padding: 5}} onPress={downloadPDFHandler}>
           <FontAwesome name="file-pdf-o" size={30} color="black" style={{marginLeft: 10}}/>
-          <Text style={{position: 'absolute', left: 50, fontSize: 23}}>PDF 다운로드</Text>
+          <Text style={{fontFamily: 'NanumMyeongjo', position: 'absolute', left: 50, fontSize: 23}}>PDF 다운로드</Text>
         </TouchableOpacity>
       </View>
       <View style={{height: 65, backgroundColor: '#FFF', justifyContent: 'center'}}>
         <TouchableOpacity style={{flexDirection: 'row',  alignItems: 'center', padding: 5}} onPress={shareWithLinkHandler}>
           <EvilIcons name="external-link" size={40} color="black" />
-          <Text style={{position: 'absolute', left: 50, fontSize: 23}}>링크로 공유하기</Text>
+          <Text style={{fontFamily: 'NanumMyeongjo', position: 'absolute', left: 50, fontSize: 23}}>링크로 공유하기</Text>
         </TouchableOpacity>
       </View>
       <TouchableOpacity onPress={props.handler} style={{flex:1, flexDirection: 'column', backgroundColor: '#AAA7'}}/>
@@ -1363,7 +1447,7 @@ function MyDropList(props){
 function NoDataInDiary(){
   return (
     <View style={{flex:1, flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-      <Text style={{fontSize: 15}}>채팅방에서 글을 작성해보세요.</Text>
+      <Text style={{fontFamily: 'NanumMyeongjo', fontSize: 15}}>채팅방에서 글을 작성해보세요.</Text>
     </View>
   );
 }
@@ -1428,7 +1512,7 @@ function DiaryTextWithDate(props){
       headerTitleAlign: 'center',
       headerRight: (props) => (
         <TouchableOpacity onPress={onEndEditingHandler}>
-          <Text style={{fontSize:20, marginRight: 20, justifyContent: 'center'}}>완료</Text>
+          <Text style={{fontFamily: 'NanumMyeongjo',fontSize:20, marginRight: 20, justifyContent: 'center'}}>완료</Text>
         </TouchableOpacity>
       )
     });
@@ -1495,12 +1579,12 @@ function DiaryTextWithDate(props){
       {showDateChanger && <DateTimePicker testID="DiaryDatePicker" value={props.message.createdAt.toDate()} mode={'date'}  display="default" onChange={dateChangerHandler}/>}
       <View style={{paddingLeft: 90, flexWrap:'wrap'}}>
         <TouchableOpacity onPress={()=>setEditMode(true)}>
-          <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{fontFamily: 'UhBeeSeulvely', textAlign: 'left', marginLeft: -15, fontSize: 14, padding:3, borderRadius: 5,width:screenWidth *0.76}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
+          <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{fontFamily: 'UhBeeSeulvely', textAlign: 'left', marginLeft: -15, fontSize: 14, padding:3, borderRadius: 5,width:screenWidth *0.56}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
         </TouchableOpacity>
       </View>
       <View style={{marginBottom: 30, marginRight: 20, alignItems: 'flex-end'}}>
         <TouchableOpacity onPress={()=>setShowTimeChanger(true)}>
-          <Text style={{fontSize:10, color: '#AAA'}}>{props.message.createdAt.format('LT')}</Text>
+          <Text style={{fontFamily: 'UhBeeSeulvely', fontSize:10, color: '#AAA'}}>{props.message.createdAt.format('LT')}</Text>
         </TouchableOpacity>
       </View>
       {showTimeChanger && <DateTimePicker testID="DiaryTimePicker" value={props.message.createdAt.toDate()} mode={'time'} is24Hour={true} display="default" onChange={timeChangerHandler}/>}
@@ -1545,7 +1629,7 @@ function LastDiaryTextWithDate(props){// 마지막 다이어리만위 위해 만
       headerTitleAlign: 'center',
       headerRight: (props) => (
         <TouchableOpacity onPress={onEndEditingHandler}>
-          <Text style={{fontSize:20, marginRight: 20, justifyContent: 'center'}}>완료</Text>
+          <Text style={{fontFamily: 'NanumMyeongjo',fontSize:20, marginRight: 20, justifyContent: 'center'}}>완료</Text>
         </TouchableOpacity>
       )
     });
@@ -1612,12 +1696,12 @@ function LastDiaryTextWithDate(props){// 마지막 다이어리만위 위해 만
       {showDateChanger && <DateTimePicker testID="DiaryDatePicker" value={props.message.createdAt.toDate()} mode={'date'}  display="default" onChange={dateChangerHandler}/>}
       <View style={{paddingLeft: 90, flexWrap:'wrap'}}>
         <TouchableOpacity onPress={()=>setEditMode(true)}>
-          <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{fontFamily: 'UhBeeSeulvely', textAlign: 'left', marginLeft: -15, fontSize: 14, padding:3, borderRadius: 5,width:screenWidth *0.76}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
+          <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{fontFamily: 'UhBeeSeulvely', textAlign: 'left', marginLeft: -15, fontSize: 14, padding:3, borderRadius: 5,width:screenWidth *0.56}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
         </TouchableOpacity>
       </View>
       <View style={{marginBottom: 30, marginRight: 20, alignItems: 'flex-end'}}>
         <TouchableOpacity onPress={()=>setShowTimeChanger(true)}>
-          <Text style={{fontSize:10, color: '#AAA'}}>{props.message.createdAt.format('LT')}</Text>
+          <Text style={{fontFamily: 'UhBeeSeulvely', fontSize:10, color: '#AAA'}}>{props.message.createdAt.format('LT')}</Text>
         </TouchableOpacity>
       </View>
       {showTimeChanger && <DateTimePicker testID="DiaryTimePicker" value={props.message.createdAt.toDate()} mode={'time'} is24Hour={true} display="default" onChange={timeChangerHandler}/>}

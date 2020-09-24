@@ -10,6 +10,12 @@ import {FILE, PRODUCT_LOOKUP} from './utils/constants';
 import * as Message from './utils/Message';
 import * as Connect from './ServerConnect';
 
+function diarySortByDate(myDiaryMessageList){
+  myDiaryMessageList.sort((a, b) => {
+    return a.createdAt > b.createdAt;
+  });
+}
+
 const downloadFile = async (url) => {
   // 사진 저장용 함수
   let path = url.split('/');
@@ -65,7 +71,7 @@ export async function updateDataSet(dataList, data){
           data.chatroom.lastMessageTime = Moment();
           data.chatroom.newItemCount = 0;
           data.chatroom.lastMessage = '';
-          data.chatroom.lastPushed = {pushTime: Moment(), questIndex: 1, solved:true};
+          data.chatroom.lastPushed = {pushTime: Moment(), questIndex0: 1, solved:true, ansMessage: null};
           data.push.pushStartTime = subscribe.pushStartTime;
           data.push.pushEndTime = subscribe.pushEndTime;
         })
@@ -77,6 +83,7 @@ export async function updateDataSet(dataList, data){
   await updateDiaryData(userData.token, userData.email)
     .then(response => {
       if(response.ok){
+
         response.data.forEach(diary => {
           userData.myDiaryList.push({id:diary.id, pos:diary.pos, color:diary.color});
           let data = dataList[dataList.findIndex(obj => obj.id===diary.id)];
@@ -84,6 +91,7 @@ export async function updateDataSet(dataList, data){
           data.diary.makeTime = diary.makeTime;
           data.diary.totalUpdateCount = diary.totalUpdateCount;
           data.diary.diarymessageList = diary.diarymessageList;
+          diarySortByDate(data.diary.diarymessageList);
         })
       }else{
         console.log('E : updateDiaryData: ', response.message);
@@ -244,7 +252,7 @@ async function updateDiaryData(token, email){
         let diarymessageList = [];
         let _id = 1;
         obj.chating.forEach(chat => {
-          diarymessageList.push({_id:_id, text:obj.chatcontent, createdAt:Moment(obj.time), islagacy:true, linkedMessageList: []})
+          diarymessageList.push({_id:_id, text:chat.chatcontent, createdAt:Moment(chat.time), islagacy:true, linkedMessageList: []})
           _id += 1;
         })
         reply.data.push({id:obj.dp_ID, pos:pos, color:chooseRandomIndex(10), makeTime:Moment(obj.chatedperiod_start), totalUpdateCount:obj.chatedamount, diarymessageList:diarymessageList});

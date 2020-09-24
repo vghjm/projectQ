@@ -1,5 +1,6 @@
 import React, {useState, useContext} from 'react';
 import {View, Text, Image, TouchableOpacity, TextInput, Alert, ScrollView, StyleSheet} from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Permissions from 'expo-permissions';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
@@ -7,10 +8,7 @@ import * as ImagePicker from 'expo-image-picker';      // https://docs.expo.io/v
 import { EvilIcons, AntDesign, Feather, MaterialCommunityIcons }
 from '@expo/vector-icons'; // https://icons.expo.fyi/
 
-
-
-import {AuthContext} from './Context';
-
+import {AuthContext, SystemContext} from './Context';
 
 const userData = {
   token: 'asfnjk436k3b46jh346bk',
@@ -33,6 +31,9 @@ const informTestData = {
 
 // 마이페이지
 export function MyPageScreen({navigation}) {
+  const Context = useContext(SystemContext);
+  let userData = Context.getUserData();
+  let dataList = Context.getProductDataList();
   const [myDiaryCount, setMyDiaryCount] = useState(10);
   const [totalCount, setTotalCount] = useState(256);
   const [image, setImage] = useState(userData.userImg);
@@ -150,6 +151,8 @@ export function MyPageScreen({navigation}) {
   );
 }
 export function MyChangePasswordPage({navigation}) {
+  const Context = useContext(SystemContext);
+  let userData = Context.getUserData();
   const [prevPassword, setPrevPassword] = useState('');
   const [nextPassword, setNextPassword] = useState('');
   const [nextAdditionalPassword, setAdditionalNextPassword] = useState('');
@@ -228,6 +231,9 @@ class SubscribeContentBoxComponent extends React.Component{
   }
 }
 export function UserHistoryPage({navigation}) {
+  const Context = useContext(SystemContext);
+  let userData = Context.getUserData();
+  let dataList = Context.getProductDataList();
   return (
     <ScrollView style={{flex:1, flexDirection: 'column', backgroundColor: '#fff'}}>
       <Text style={{margin:20, fontWeight:'bold', fontSize: 20}}>나의 구독 내역</Text>
@@ -288,6 +294,8 @@ class HelpContentComponent extends React.Component{
   }
 }
 export function HelpPage({navigation}) {
+  const Context = useContext(SystemContext);
+  let informData = Context.getInformData();
   return (
     <ScrollView style={{flex:1, flexDirection: 'column', marginTop: 10}}>
       {informData.help.map( message => {
@@ -322,6 +330,9 @@ class NoticeContentComponent extends React.Component{
   }
 }
 export function NoticePage({navigation}) {
+  const Context = useContext(SystemContext);
+
+  let informData = Context.getInformData();
   return (
     <ScrollView style={{flex:1, flexDirection: 'column', marginTop: 10}}>
       {informData.notice.map( message => {

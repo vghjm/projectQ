@@ -10,16 +10,14 @@ import _ from 'lodash'; // https://lodash.com/docs
 import uuid from 'react-native-uuid';       // https://www.npmjs.com/package/react-native-uuid
 
 import * as TestData from '../testData';
-import {ThemeContext} from './Context';
+import {ThemeContext, SystemContext} from './Context';
 const bookOn = require('../assets/icon/book_on.png');
 const bookOff = require('../assets/icon/book_off.png');
 const upArrow = require('../assets/icon/up_arrow.png');
 const downArrow = require('../assets/icon/down_arrow.png');
 
 
-let dataList = TestData.productTestData;
 
-let global_p_id = 0;               // 채팅창 사이드 메뉴에서 다른 상품정보로 보내기 위한 상품 id 값
 // 취소 및 삭제함수
 // 채팅창
 function renderLoading() {
@@ -73,10 +71,12 @@ function renderBubble(props) {
           color: 'black',
           fontSize: 15,
           padding: 3,
+          fontFamily: 'NanumMyeongjo',
         },
         left: {
           fontSize: 15,
           padding: 3,
+          fontFamily: 'NanumMyeongjo',
         }
       }}
       bottomContainerStyle={{
@@ -101,10 +101,12 @@ function renderTime(props) {
         right: {
           color: 'gray',
           fontSize: 8,
+          fontFamily: 'NanumMyeongjo',
         },
         left: {
           color: 'gray',
           fontSize: 8,
+          fontFamily: 'NanumMyeongjo',
         }
       }}
       containerStyle={{
@@ -135,6 +137,7 @@ function renderDay (props) {
   return (
     <Day {...props}
       wrapperStyle={{
+
         marginVertical: 10,
       }}
     />
@@ -155,12 +158,14 @@ function renderAvatar (props) {
   )
 }
 export default function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
-  const [messages, setMessages] = useState([]);
+  const Context = useContext(SystemContext);
+  //const updateCount = Context.updateFunc();
   const id = route.params.id;
   //let data = dataList[id-1];
   //let data = dataList[dataList.findIndex(obj => obj.id===id)];
   let data = route.params.data;
-  const [update, setUpdate] = useState(0);
+  const [messages, setMessages] = useState(data.chatroom.chatmessageList);
+  let myChat = '';
   const theme = useContext(ThemeContext);
 
   const makeDiaryMessage = (id, message) => { // 다이어리 메세지 생성기능
@@ -188,18 +193,19 @@ export default function MyChatRoomScreen({route, navigation}) {  // 채팅방 �
   }
 
   useEffect(() => {
-    setMessages(data.chatroom.chatmessageList);                 // 메세지 로드
     navigation.setOptions({ headerTitle: data.product.title }); // 채팅방 제목 설정
-    global_p_id = id;                                           // 전역변수에 현재 관심 id 설정
+    Context.setGlobalP(id);
 
     // 채팅방 확인
     data.chatroom.newItemCount = 0;
+    return (() => {
+      // 답변이 필요한 경우
+      if(!data.chatroom.lastPushed.solved && myChat!==''){
+        data.chatroom.lastPushed.solved = true;
+        Context.getReply(data, navigation);
+      }
+    });
   }, []);
-
-  const updateFunc = () => {
-    setUpdate(update+1);
-  }; // 화면 업데이트
-  console.log('messages last\n', messages[0]);
 
   const onDelete = useCallback((messageIdToDelete) => {
     console.log('delete message Id: ', messageIdToDelete);
@@ -237,19 +243,33 @@ export default function MyChatRoomScreen({route, navigation}) {  // 채팅방 �
       }
     }
 
-    // 답변이 필요한 경우
+    myChat += message.text;
     if(!data.chatroom.lastPushed.solved){
-      data.chatroom.lastPushed.solved=true;
-
+      data.chatroom.lastPushed.solved = true;
       setTimeout(() => {
-        let ansMessage = _.cloneDeep({
+        let ansMessage = {
           _id: uuid.v4(), text: data.product.ansList[data.chatroom.lastPushed.questIndex], createdAt: Moment(),
           user: { _id:2, avatar: data.product.imageSet.avatarImg.uri?? data.product.imageSet.avatarImg},
-        });
+        };
+        data.chatroom.newItemCount += 1;
         data.chatroom.lastMessageTime = Moment();
-        data.chatroom.chatmessageList.unshift(ansMessage);
+        data.chatroom.chatmessageList.unshift(_.cloneDeep(ansMessage));
+        data.chatroom.lastMessage = ansMessage.text;
+        data.chatroom.lastPushed.ansMessage = _.cloneDeep(ansMessage);
+        // Context.popupPushMessage({
+        //   image: data.product.imageSet.thumbnailImg,
+        //   title: data.product.title,
+        //   text: ansMessage.text,
+        //   onPress: ()=>navigation.navigate('chatroom', {id: data.id, data:data}),
+        //   lastPushed: Moment(),
+        //   isPushShowed: true,
+        // }, 0);
         setMessages(previousMessages => GiftedChat.append(previousMessages, ansMessage));
-      }, 5 * 1000);
+        //console.log('getReply ansMessage', ansMessage);
+        //updateF();
+        //return ansMessage;
+        //setMessages(previousMessages => GiftedChat.append(previousMessages, ansMessage));
+      }, 1900);
     }
 
   }, []);

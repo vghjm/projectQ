@@ -1,6 +1,13 @@
 import React from 'react';
 import Moment from 'moment';
 
+const userData = {
+  token: 'asfnjk436k3b46jh346bk',
+  username: '테스트 계정',
+  email: 'test@naver.com',
+  password: '1234567!!',
+  userImg: null,
+}
 
 
 
@@ -161,7 +168,7 @@ let realTestData1 = {
     ansList: [],
   },
   chatroom: {
-    lastMessageTime: Moment('20200705 0811'), newItemCount: 0, chatmessageList: thankQChatmessageListData, lastPushed: {pushTime: Moment(), questIndex: 1, solved:true},
+    lastMessageTime: Moment('20200705 0811'), newItemCount: 0, chatmessageList: thankQChatmessageListData, lastPushed: {pushTime: Moment(), questIndex: 1, solved:true, ansMessage: null},
     lastMessage: '',
   },
   diary: {

@@ -14,21 +14,6 @@ const defaultAlarm = () => {
   //Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   alert('누름!');
 }
-let pushData = {
-  image: defaultImg,
-  title: '상품제목',
-  text: '전달받은 메세지',
-  onPress: defaultAlarm,
-};
-
-export function setPushData(data){
-  pushData = {
-    image: data.image??defaultImg,
-    title: data.title??'상품제목',
-    text: data.text??'전달받은 메세지',
-    onPress: data.onPress??defaultAlarm,
-  };
-}
 
 export function PushMessage({pushData}){
   const image = pushData.image??defaultImg;
@@ -37,7 +22,7 @@ export function PushMessage({pushData}){
   const onPress = pushData.onPress??defaultAlarm;
   const time = pushData.lastPushed??Moment();
 
-  if(text.length > 11) text = text.substr(0, 11) + '...';
+  if(text.length > 28) text = text.substr(0, 28) + '...';
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <Image source={image} style={styles.image} resizeMode={'cover'}/>
@@ -45,29 +30,29 @@ export function PushMessage({pushData}){
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.text}>{text}</Text>
       </View>
-      <Text style={styles.time}>{time.format('LTS')}</Text>
     </TouchableOpacity>
   );
 }
+// <Text style={styles.time}>{time.format('LT')}</Text>
 
 const styles = StyleSheet.create({
   container: {
-    position:'absolute', top:30, backgroundColor: '#EEE', borderWidth: 1, borderColor:'black', borderRadius:10, width:WIDTH * 0.9, height: 70,
+    position:'absolute', top:30, backgroundColor: '#ededed', borderWidth: 0, borderColor:'#eee', borderRadius:0, width:WIDTH, height: 70,
     alignSelf: 'center', flexDirection: 'row',
   },
   image:{
-    width: 50, height: 50, margin:8, borderRadius: 14
+    width: 46, height: 46, marginLeft:16, borderRadius: 23, alignSelf: 'center', borderWidth:1, borderColor: '#48375F', marginBottom:1,
   },
   textArea: {
     flex:1, flexDirection:'column',
   },
   title: {
-    marginLeft:8, marginTop: 10, fontSize: 20, fontWeight: 'bold', marginRight:10,
+    marginLeft:16, marginTop: 15, fontSize: 16, fontWeight: 'bold', marginRight:10
   },
   text: {
-    marginLeft:8, marginTop:6, fontSize: 14, marginRight:10,
+    marginLeft:16, marginTop:6, fontSize: 13, marginRight:10,
   },
   time: {
-    position: 'absolute', right: 8, bottom:8, fontSize: 10,
+    position: 'absolute', right: 20, bottom:8, fontSize: 10,
   },
 });
