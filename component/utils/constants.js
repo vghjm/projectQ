@@ -22,6 +22,7 @@ export const TIMESET = HTTP + '/subscribe/timesetting';
 export const MAKELINK = HTTP + '/makelink';
 export const SETPUSHTOKEN = HTTP + '/token';
 export const MESSAGE = HTTP + '/message';
+export const CHATREPLY = HTTP + '/chating';
 
 export const FILE = HTTP + '/files/';
 

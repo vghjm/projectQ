@@ -4,8 +4,11 @@ import DateTimePicker from '@react-native-community/datetimepicker'; // https://
 import {ProductContext} from './Context';
 import Moment from 'moment';
 import _ from 'lodash'; // https://lodash.com/docs
+import uuid from 'uuid';
+import * as Permissions from 'expo-permissions';
 
 import {SystemContext} from './Context';
+import {subscribe} from './ServerConnect';
 
 
 const screenHeight = Dimensions.get('window').height;
@@ -24,7 +27,6 @@ export default function SubscribeContentScreen({route, navigation}){
   const id = route.params.id;
   const goToEnd = route.params.goToEnd??null;
   let userData = Context.getUserData();
-  console.log('id: ', id);
   let data = Context.getProductData(id);
 
   const [show0, setShow0] = useState(false);
@@ -66,7 +68,7 @@ export default function SubscribeContentScreen({route, navigation}){
         image: data.product.imageSet.thumbnailImg,
         title: data.product.title,
         text: makeChatmessageListData[1].text,
-        onPress: ()=>navigation.navigate('chatroom', {id: id, data:data}),
+        onPress: ()=>navigation.navigate('chatroom', {id: id}),
         lastPushed: Moment(),
         isPushShowed: true,
       });
@@ -75,7 +77,7 @@ export default function SubscribeContentScreen({route, navigation}){
           image: data.product.imageSet.thumbnailImg,
           title: data.product.title,
           text: makeChatmessageListData[0].text,
-          onPress: ()=>navigation.navigate('chatroom', {id: id, data:data}),
+          onPress: ()=>navigation.navigate('chatroom', {id: id}),
           lastPushed: Moment(),
           isPushShowed: true,
         },2100);
@@ -110,16 +112,32 @@ export default function SubscribeContentScreen({route, navigation}){
       })
     }
     if(goToEnd) thisScrollView.scrollToEnd({animated: true});
-
-    // return (
-    //   () => {
-    //     Context.updateUserData(userData);
-    //     Context.updateProductData(data);
-    //   }
-    // );
   }, []);
 
-  const subscribeOffHandler = () => {
+  const subscribeOffHandler = async () => {
+    const {status} = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+    if (status !== 'granted') {
+      Alert.alert('푸시 권한이 필요합니다.');
+      return;
+    }
+
+    const res = {
+      jwt: userData.token,
+      p_name: data.product.title,
+      p_ID: data.id,
+      d_ID: data.diary.id,
+      start_time: data.push.pushStartTime,
+      end_time: data.push.pushEndTime,
+      pushType: data.push.isRandomPushType,
+      subscribe: 0,
+    };
+
+    let response = await subscribe(res);
+    if(!response.ok){
+      Alert.alert('푸시 해제에 실패하였습니다.',response.message);
+      return;
+    }
+
     userData.mySubscribeList.splice(userData.mySubscribeList.findIndex(obj => obj.id === data.id), 1);
     data.isSubscribe = false; // false
     setIsSubscribeButton(false);
@@ -127,12 +145,36 @@ export default function SubscribeContentScreen({route, navigation}){
     setPushEndTime(data.push.pushEndTime);
 
   };
-  const subscribeOnHandler = (startTime, endTime) => {
+  const subscribeOnHandler = async (startTime, endTime) => {
+    const {status} = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+    if (status !== 'granted') {
+      Alert.alert('푸시 권한이 필요합니다.');
+      return;
+    }
+
+    let d_ID = uuid.v4();
+    const res = {
+      jwt: userData.token,
+      p_name: data.product.title,
+      p_ID: data.id,
+      d_ID: d_ID,
+      start_time: startTime,
+      end_time: endTime,
+      pushType: data.push.isRandomPushType,
+      subscribe: 1,
+    };
+    data.diary.id = d_ID;
+
+    let response = await subscribe(res);
+    if(!response.ok){
+      Alert.alert('푸시 등록이 실패하였습니다.',response.message);
+      return ;
+    }
+
     // 시간 설정 성공
     userData.mySubscribeList.push({id:data.id, pushStartTime:startTime, pushEndTime:endTime});
     data.isSubscribe = true; // true
     setIsSubscribeButton(true);
-
 
     // 채팅창 초기화 준비
     chatroomInitializeFunction(data.id);

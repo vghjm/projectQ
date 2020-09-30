@@ -5,6 +5,8 @@ import * as MediaLibrary from 'expo-media-library';
 import Moment from 'moment';
 Moment.locale("ko");
 import _ from 'lodash'; // https://lodash.com/docs
+import { Notifications } from 'expo'; // https://docs.expo.io/versions/latest/sdk/notifications/
+
 
 import {FILE, PRODUCT_LOOKUP} from './utils/constants';
 import * as Message from './utils/Message';
@@ -44,6 +46,7 @@ const chooseRandomIndex = (value) => {
 export async function updateDataSet(dataList, data){
   let userData = {
     token: data.token,
+    pushToken: await Notifications.getExpoPushTokenAsync(),
     email: data.email,
     password: data.password,
     username: data.username,
@@ -52,7 +55,7 @@ export async function updateDataSet(dataList, data){
     myChatroomList: [],
     myDiaryList: [],
   }
-  console.log('updateDataSet\n', userData);
+  //console.log('updateDataSet\n', userData);
 
   await updateUserData(userData.token, userData.email)
     .then(response => {
@@ -88,6 +91,7 @@ export async function updateDataSet(dataList, data){
           userData.myDiaryList.push({id:diary.id, pos:diary.pos, color:diary.color});
           let data = dataList[dataList.findIndex(obj => obj.id===diary.id)];
           data.hasDiary = true;
+          data.diary.id = diary.d_ID;
           data.diary.makeTime = diary.makeTime;
           data.diary.totalUpdateCount = diary.totalUpdateCount;
           data.diary.diarymessageList = diary.diarymessageList;
@@ -127,9 +131,9 @@ export async function updateProductData(){
       // 질문 분류기
       product.question.forEach((questObj, i) => {
         if(i%2 === 0){
-          myQuestList.push(questObj.content);
+          myQuestList.push({q_ID: questObj.q_ID, content: questObj.content});
         }else{
-          myAnsList.push(questObj.content);
+          myAnsList.push({q_ID: questObj.q_ID, content: questObj.content});
         }
       })
 
@@ -255,7 +259,7 @@ async function updateDiaryData(token, email){
           diarymessageList.push({_id:_id, text:chat.chatcontent, createdAt:Moment(chat.time), islagacy:true, linkedMessageList: []})
           _id += 1;
         })
-        reply.data.push({id:obj.dp_ID, pos:pos, color:chooseRandomIndex(10), makeTime:Moment(obj.chatedperiod_start), totalUpdateCount:obj.chatedamount, diarymessageList:diarymessageList});
+        reply.data.push({id:obj.dp_ID, pos:pos, color:chooseRandomIndex(10), d_ID:obj.d_ID, makeTime:Moment(obj.chatedperiod_start), totalUpdateCount:obj.chatedamount, diarymessageList:diarymessageList});
         pos += 1;
       })
     }
@@ -283,7 +287,6 @@ async function loadProductData(){
     else {
       reply.ok = true;
       reply.data = json.products;
-
     };
   }else{
     reply.message = Message.NO_CONNECT_ERROR;

@@ -3,6 +3,7 @@ import Moment from 'moment';
 
 const userData = {
   token: 'asfnjk436k3b46jh346bk',
+  pushToken: 'aa',
   username: '테스트 계정',
   email: 'test@naver.com',
   password: '1234567!!',
@@ -150,6 +151,7 @@ let realTestData1 = {
     text: '매일 당신에게 질문하는 감사 일기장',
     imageSet: {thumbnailImg: require('./assets/product/new땡Q노트/thumbnail.png'), logoImg: require('./assets/product/new땡Q노트/logo.png'), mainImg: require('./assets/product/new땡Q노트/main.png'), avatarImg: require('./assets/product/new땡Q노트/thumbnail.png')},
     questionList: [
+      {q_ID: 1, content: "aaaaaaAA~~~~"},
       '지금 문득 감사하고 싶은 사람이 있어?',
       '너가 감사함을 느끼는 추억은 어떤거야?',
       '너가 평소 감사하고 있는 일은 어떤거야?',
@@ -172,7 +174,7 @@ let realTestData1 = {
     lastMessage: '',
   },
   diary: {
-    makeTime: Moment('20200702 211034'), totalUpdateCount: 0, diarymessageList: [],
+    makeTime: Moment('20200702 211034'), totalUpdateCount: 0, diarymessageList: [], id: '~',
   },
   push: {
     isRandomPushType: false, pushStartTime: Moment('20200812 0830'), pushEndTime: Moment('20200812 0830'),

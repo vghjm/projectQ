@@ -12,7 +12,8 @@ from '@expo/vector-icons'; // https://icons.expo.fyi/
 import * as ImagePicker from 'expo-image-picker';      // https://docs.expo.io/versions/latest/sdk/imagepicker/
 // import Constants from 'expo-constants';
 import DateTimePicker from '@react-native-community/datetimepicker'; // https://github.com/react-native-community/datetimepicker
-import { Notifications } from 'expo'; // https://docs.expo.io/versions/latest/sdk/notifications/
+//import { Notifications } from 'expo'; // https://docs.expo.io/versions/latest/sdk/notifications/
+import * as Notifications from 'expo-notifications';
 import * as Permissions from 'expo-permissions';
 import Moment from 'moment';
 import  "moment/locale/ko";
@@ -144,7 +145,7 @@ function getReply(data, popupPushMessage, navigation, updateF){
   console.log('getReply', data);
   setTimeout(() => {
     let ansMessage = {
-      _id: uuid.v4(), text: data.product.ansList[data.chatroom.lastPushed.questIndex], createdAt: Moment(),
+      _id: uuid.v4(), text: data.product.ansList[data.chatroom.lastPushed.questIndex].content, createdAt: Moment(),
       user: { _id:2, avatar: data.product.imageSet.avatarImg.uri?? data.product.imageSet.avatarImg},
     };
     data.chatroom.newItemCount += 1;
@@ -171,20 +172,30 @@ function getReply(data, popupPushMessage, navigation, updateF){
 // 테스트
 function TestScreen({navigation}){
   const [mytext, setMytext] = useState('빈 텍스트 칸');
+  let url;
 
   const printToPdf = async () => {
+      let html;
+
+      let responsePDF = await Connection.makeLink(userData.token, dataList[1].diary.id, 1);
+      if(responsePDF.ok){
+        html = responsePDF.data.htmls;
+        console.log('printToPdf: ', html);
+      }else{
+        Alert.alert('printToPdf ERROR', responsePDF.message);
+        return;
+      }
+
       // https://forums.expo.io/t/expo-print-creating-pdf-and-giving-it-a-file-name/36164
-      const response = await Print.printToFileAsync({ html: '<h1>Test-Invoice</h1>' });
+      const responsePrintToFile = await Print.printToFileAsync({ html: html });
 
-      // this changes the bit after the last slash of the uri (the document's name) to "invoice_<date of transaction"
-
-      const pdfName = `${response.uri.slice(
+      const pdfName = `${responsePrintToFile.uri.slice(
           0,
-          response.uri.lastIndexOf('/') + 1
+          responsePrintToFile.uri.lastIndexOf('/') + 1
       )}testPDF_${Moment()}.pdf`;
 
       await FileSystem.moveAsync({
-          from: response.uri,
+          from: responsePrintToFile.uri,
           to: pdfName,
       });
       sharePdf(pdfName)
@@ -194,23 +205,42 @@ function TestScreen({navigation}){
       Sharing.shareAsync(url)
   }
 
-  const shareWithLink = () => {
-    let url = 'https://comic.naver.com/index.nhn';
+  const shareWithLink = async () => {
+    let responseMakeLink = await Connection.makeLink(userData.token, dataList[1].diary.id, 0);
+    if(responseMakeLink.ok){
+      url = responseMakeLink.data.linkname;
+      console.log('shareWithLink: ', responseMakeLink.data.linkname);
+    }else{
+      Alert.alert('shareWithLink ERROR', responseMakeLink.message);
+    }
+
     Clipboard.setString(url);
     Alert.alert('링크가 클립보드에 저장됨');
   }
 
+  const showUserData = () => {
+    console.log('\nuserData: \n', userData);
+  }
+  const showDataList = () => {
+    console.log('\ndataList: \n', dataList);
+  }
+
   return (
     <ScrollView>
-    <View style={{flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: screenHeight}}>
+    <View style={{flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: screenHeight-60}}>
       <Text style={{fontFamily: 'NanumMyeongjo'}}>기능 테스트 공간</Text>
-      <TouchableOpacity onPress={printToPdf} style={{margin:20, borderWidth: 1, borderRadius: 35, height:70, width: 70, backgroundColor: 'pink', alignItems: 'center', justifyContent: 'center'}}>
+      <TouchableOpacity onPress={printToPdf} style={{margin:20}}>
         <Text style={{fontFamily: 'NanumMyeongjo'}}>PDF 생성</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={shareWithLink} style={{margin:20, borderWidth: 1, borderRadius: 35, height:70, width: 70, backgroundColor: '#6495ED', alignItems: 'center', justifyContent: 'center'}}>
+      <TouchableOpacity onPress={shareWithLink} style={{margin:20}}>
         <Text style={{fontFamily: 'NanumMyeongjo'}}>링크공유</Text>
       </TouchableOpacity>
-      <TextInput value={mytext}  style={{fontFamily: 'NanumMyeongjo'}} onChangeText={text => setMytext(text)}/>
+      <TouchableOpacity onPress={showUserData} style={{margin:20}}>
+        <Text style={{fontFamily: 'NanumMyeongjo'}}>user data show</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={showDataList} style={{margin:20}}>
+        <Text style={{fontFamily: 'NanumMyeongjo'}}>dataList show</Text>
+      </TouchableOpacity>
     </View>
     </ScrollView>
   );
@@ -288,10 +318,10 @@ function MainPageScreen({navigation, route}){
       <Tab.Screen name="SubscribeListScreen"  component={SubscribeListScreen}/>
       <Tab.Screen name="MyChatListScreen"  component={MyChatListScreen} />
       <Tab.Screen name="MyDiaryScreen"  component={MyDiaryScreen} />
+      <Tab.Screen name="testScreen"  component={TestScreen} />
     </Tab.Navigator>
   );
 }
-// <Tab.Screen name="testScreen"  component={TestScreen} />
 function SubscribeContentLayout(props){
   let data = props.data;
   let productInfo = data.product;
@@ -390,7 +420,7 @@ function ChatroomContentLayout(props){
   });
 
   return (
-    <TouchableHighlight style={{marginBottom: 10}} onPress={()=>props.nav.navigate('chatroom', {id: id, data:data})}>
+    <TouchableHighlight style={{marginBottom: 10}} onPress={()=>props.nav.navigate('chatroom', {id: id})}>
     <View style={{flexDirection: 'row', height: 60, backgroundColor: 'white'}}>
       <Image source={productInfo.imageSet.thumbnailImg} style={{height: 46, width: 46, margin: 5,borderWidth: 1, borderColor: '#f7f7f7', marginLeft: 10, borderRadius: 23, backgroundColor: '#DDD'}}/>
       <View style={{flexDirection: 'column'}}>
@@ -443,7 +473,7 @@ function MyChatListScreen({navigation, route}){
     let chatroom = data.chatroom;
     let avatar = product.imageSet.avatarImg.uri?? product.imageSet.avatarImg;
     let randomIndex = chooseRandomIndex(product.questionList);
-    let newMessage = { _id: uuid.v4(), text: product.questionList[randomIndex], createdAt: Moment(),
+    let newMessage = { _id: uuid.v4(), text: product.questionList[randomIndex].content, createdAt: Moment(),
       user: { _id:2, avatar: avatar}
     };
     chatroom.newItemCount += 1;
@@ -482,12 +512,12 @@ function MyChatListScreen({navigation, route}){
         closeOnRowPress={true}
         closeOnScroll={true}
       />
+      <TouchableHighlight onPress={()=>pushTestHandler(getPushMessage)} style={{position:'absolute', width:60, height: 60, right:15, bottom: 15, borderWidth: 1, borderRadius: 30, backgroundColor: 'gray', alignItems: 'center', justifyContent: 'center'}}>
+        <Text style={{color: 'white', fontSize: 24}}>푸시</Text>
+      </TouchableHighlight>
     </View>
   );
 }
-// <TouchableHighlight onPress={()=>pushTestHandler(getPushMessage)} style={{position:'absolute', width:60, height: 60, right:15, bottom: 15, borderWidth: 1, borderRadius: 30, backgroundColor: 'gray', alignItems: 'center', justifyContent: 'center'}}>
-// <Text style={{color: 'white', fontSize: 24}}>푸시</Text>
-// </TouchableHighlight>
 function MyDiaryScreen({route, navigation}){
   const [editMode, setEditMode] = useState(false);    // 편집모드 중인경우 애니메이션 기능
   const [numberOfDiary, setNumberOfDiary] = useState(-1); // 다이어리의 수
@@ -522,7 +552,7 @@ function MyDiaryScreen({route, navigation}){
     let size = Math.ceil(userData.myDiaryList.length/2)*300;
     if(size <= screenHeight-90) setBackgroundWidth(screenHeight-90);
     else setBackgroundWidth(size);
-    console.log('update backgroundWidth: ', size);
+    //console.log('update backgroundWidth: ', size);
   }
 
   const updateDiary = (erasePos) => {
@@ -545,7 +575,7 @@ function MyDiaryScreen({route, navigation}){
   });
 
   return (
-    <ScrollView canCancelContentTouches={cancelScroll} bounces={false} onScroll={(event) => {global_y = event.nativeEvent.contentOffset.y; console.log('scroll: ', global_y)}}>
+    <ScrollView canCancelContentTouches={cancelScroll} bounces={false} onScroll={(event) => {global_y = event.nativeEvent.contentOffset.y}}>
       <View style={{width: screenWidth, height: backgroundWidth, backgroundColor: 'white'}}>
         {numberOfDiary < 1 && <View style={{fontFamily: 'NanumMyeongjo', flex:1, flexDirection: 'column',  justifyContent: 'center', alignItems: 'center'}}><Text style={{fontFamily: 'NanumMyeongjo'}}>생성된 다이어리가 없습니다.</Text></View>}
         {userData.myDiaryList.map((obj) => {
@@ -830,6 +860,11 @@ async function getPermission(){
 
   return reply;
 }
+
+async function diaryBackup(){
+
+}
+
 export default function App() {
   const [state, dispatch] = React.useReducer(
     (prevState, action) => {
@@ -897,7 +932,7 @@ export default function App() {
       }
     },
     {
-      devMode: false,
+      devMode: true,
       noAuth: false,
       nowLoading: true,
       intro: true,
@@ -914,7 +949,8 @@ export default function App() {
         let response = await Connection.login(data.email, data.password);
 
         if(response.ok){
-          let pushRegistered = await registerForPushNotificationsAsync({email: data.email, username:response.data.username});
+          let username = response.data.username;
+          let pushRegistered = await registerForPushNotificationsAsync({email: data.email, username: username});
 
           if(pushRegistered.ok){
             reply.ok = true;
@@ -932,6 +968,8 @@ export default function App() {
         console.log('token:', data.token);
         console.log('login start');
         userData = await Storage.updateDataSet(dataList, data);
+        console.log('userData aa : ', userData);
+        //registerForPushNotificationsAsync(userData);
         console.log('login end');
         dispatch({ type: 'LOGIN', token:data.token });
       },
@@ -984,11 +1022,17 @@ export default function App() {
     NanumMyeongjo_bold: require('./assets/font/NanumMyeongjoExtraBold.ttf'),
   });
 
-  const handleNotification = (notify) => {
-    setNotification(notify);
-    console.log('notification', notify);
+  const handleNotification1 = ({request}) => {
+    let content = request.content
+    let q_id = content.data.q_ID[0];
+    let message = content.body;
+    console.log(`\n notify receive  - q_ID: ${q_id}, message: ${message}`);
   };
-  const registerForPushNotificationsAsync = async (userData) => {
+  const handleNotification2 = (notify) => {
+    setNotification(notify);
+    console.log('notification2', notify);
+  };
+  const registerForPushNotificationsAsync = async (data) => {
     const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
 
     if (status !== 'granted') {
@@ -1001,8 +1045,9 @@ export default function App() {
 
     const token = await Notifications.getExpoPushTokenAsync();
 
-    Notifications.addListener(handleNotification);
-    console.log(`registerForPushNotificationsAsync\ntoken: ${token}\nemail: ${userData.email}, username: ${userData.username}`);
+    Notifications.addNotificationReceivedListener(handleNotification1);
+    Notifications.addNotificationResponseReceivedListener(handleNotification2);
+    console.log(`registerForPushNotificationsAsync\ntoken: ${token}\nemail: ${data.email}, username: ${data.username}`);
     //Alert.alert('registerForPushNotificationsAsync', `token: ${token}\nemail: ${userData.email}, username: ${userData.username}`);
 
     return fetch(PUSH_REGISTRATION_ENDPOINT, {
@@ -1016,8 +1061,8 @@ export default function App() {
           value: token,
         },
         user: {
-          email: userData.email,
-          username: userData.username,
+          email: data.email,
+          username: data.username,
         },
       }),
     });
@@ -1040,7 +1085,7 @@ export default function App() {
 
 
   const bootstrapAsync = async () => {
-    console.log('시작시간 : ', Moment().toDate());
+    console.log('\nbootstrapAsync\n시작시간 : ', Moment().toDate());
 
     let permission = await getPermission();
 
@@ -1096,7 +1141,6 @@ export default function App() {
   useEffect(() => {
     AppState.addEventListener("change", _handleAppStateChange);
     //bootstrapAsync();
-    //registerForPushNotificationsAsync({email: 'abc123@naver.com', username:'인간1'})
     return () => {
       AppState.removeEventListener("change", _handleAppStateChange);
     };
@@ -1154,8 +1198,9 @@ export default function App() {
     const {signIn, login} = authContext;
 
     let response = await signIn({email: email, password:password});
-    if(response.ok) login({token: response.data.token, username: response.data.username, email: email, password: password});
-    else {
+    if(response.ok) {
+      login({token: response.data.token, username: response.data.username, email: email, password: password});
+    }else {
       userData = _.cloneDeep(TestData.userTestData);
       dispatch({ type: 'LOGIN', token:data.token });
     }

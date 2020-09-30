@@ -19,19 +19,19 @@ export const httpConnection = async (address, data, type, timeout=4000) => {
   ]).catch(e => console.log(e));
 }
 
-export async function login(email, password){
+
+export async function subscribe(data){
   let reply = {ok: false, data: null, message: ''};
-  let response = await httpConnection(Constants.LOGIN, {email: email, password: password}, 'POST');
+  let response = await httpConnection(Constants.PUSHSET, data, 'POST');
 
   if(response.ok){ // HTTP 상태 코드가 200~299일 경우
     let json = await response.json();
 
-    if(json.res === 'no email') reply.message = Message.NO_EMAIL_ERROR;
-    else if(json.res === 'password mismatch') reply.message = Message.PASSWORD_MISMATCH_ERROR;
+    if(json.res === 'fail') reply.message = Message.FAIL_ERROR;
+    else if(json.res === 'noAuth') reply.message = Message.NO_AUTH_ERROR;
     else if(json.res === 'success'){
       reply.ok = true;
       //console.log('json\n', json);
-      reply.data = {token: json.token, username: json.name};
     }
     else reply.message = Message.UNKNOWN_ERROR;
   }else{
@@ -79,6 +79,27 @@ export async function loadSubscribeDataFromServer(token){
     reply.message = Message.NO_CONNECT_ERROR;
   }
   console.log('load userdata from server\n', reply);
+
+  return reply;
+}
+export async function login(email, password){
+  let reply = {ok: false, data: null, message: ''};
+  let response = await httpConnection(Constants.LOGIN, {email: email, password: password}, 'POST');
+
+  if(response.ok){ // HTTP 상태 코드가 200~299일 경우
+    let json = await response.json();
+
+    if(json.res === 'no email') reply.message = Message.NO_EMAIL_ERROR;
+    else if(json.res === 'password mismatch') reply.message = Message.PASSWORD_MISMATCH_ERROR;
+    else if(json.res === 'success'){
+      reply.ok = true;
+      //console.log('json\n', json);
+      reply.data = {token: json.token, username: json.name};
+    }
+    else reply.message = Message.UNKNOWN_ERROR;
+  }else{
+    reply.message = Message.NO_CONNECT_ERROR;
+  }
 
   return reply;
 }
@@ -204,6 +225,122 @@ export async function downloadUserdata(token){
       //console.log('json\n', json);
       reply.data = json.res;
     }
+  }else{
+    reply.message = Message.NO_CONNECT_ERROR;
+  }
+
+  return reply;
+}
+
+export async function makeLink(token, d_ID, pdfType){
+  let reply = {ok: false, data: null, message: ''};
+  let response = await httpConnection(Constants.MAKELINK, {jwt: token, d_ID: d_ID, pdfType: pdfType}, 'POST');
+  console.log('\nconnection makeLink param : ', {jwt: token, d_ID: d_ID, pdfType: pdfType});
+
+  if(response.ok){ // HTTP 상태 코드가 200~299일 경우
+    let json = await response.json();
+
+    if(json.res === 'fail') reply.message = Message.FAIL_ERROR;
+    else if(json.res === 'noAuth') reply.message = Message.NO_AUTH_ERROR;
+    else{
+      reply.ok = true;
+      //console.log('json\n', json);
+      reply.data = {linkname: json.linkname??null, htmls: json.htmls??null};
+    }
+  }else{
+    reply.message = Message.NO_CONNECT_ERROR;
+  }
+  console.log('\nconnection makeLink reply : ', reply);
+
+  return reply;
+}
+export async function chatReply(token, q_ID, message){
+  let reply = {ok: false, data: null, message: ''};
+  let response = await httpConnection(Constants.CHATREPLY, {token: token, q_ID: q_ID, message: message}, 'POST');
+  console.log('\nconnection chatReply param : ', {token: token, q_ID: q_ID, message: message});
+
+  if(response.ok){ // HTTP 상태 코드가 200~299일 경우
+    let json = await response.json();
+
+    if(json.res === 'success') {
+      reply.ok = true;
+    }else{
+      reply.message = Message.UNKNOWN_ERROR;
+    }
+  }else{
+    reply.message = Message.NO_CONNECT_ERROR;
+  }
+  console.log('\nconnection chatReply reply : ', reply);
+
+  return reply;
+}
+
+export async function changeTime(token, p_ID, pushStartTime, pushEndTime, pushType){
+  let reply = {ok: false, data: null, message: ''};
+  let data = {
+    jwt: token,
+    p_ID: p_ID,
+    start_time: pushStartTime,
+    end_time: pushEndTime,
+    pushType: pushType,
+  };
+  let response = await httpConnection(Constants.TIMESET, data, 'POST');
+
+  if(response.ok){ // HTTP 상태 코드가 200~299일 경우
+    let json = await response.json();
+
+    if(json.res === 'fail') reply.message = Message.FAIL_ERROR;
+    else if(json.res === 'noAuth') reply.message = Message.NO_AUTH_ERROR;
+    else if(json.res === 'success'){
+      reply.ok = true;
+    }
+    else reply.message = Message.UNKNOWN_ERROR;
+  }else{
+    reply.message = Message.NO_CONNECT_ERROR;
+  }
+
+  return reply;
+}
+export async function diaryBackUp(token, diaryData){
+  let reply = {ok: false, data: null, message: ''};
+  let data = {
+    jwt: token,
+    diary: diaryData,
+  };
+  let response = await httpConnection(Constants.DIARY_BACKUP, data, 'POST');
+
+  if(response.ok){ // HTTP 상태 코드가 200~299일 경우
+    let json = await response.json();
+
+    if(json.res === 'fail') reply.message = Message.FAIL_ERROR;
+    else if(json.res === 'noAuth') reply.message = Message.NO_AUTH_ERROR;
+    else if(json.res === 'success'){
+      reply.ok = true;
+    }
+    else reply.message = Message.UNKNOWN_ERROR;
+  }else{
+    reply.message = Message.NO_CONNECT_ERROR;
+  }
+
+  return reply;
+}
+export async function diaryDelete(token, d_ID){
+  let reply = {ok: false, data: null, message: ''};
+  let data = {
+    jwt: token,
+    d_ID: d_ID,
+  };
+  let response = await httpConnection(Constants.DIARY_DELETE, data, 'POST');
+
+  if(response.ok){ // HTTP 상태 코드가 200~299일 경우
+    let json = await response.json();
+
+    if(json.res === 'fail') reply.message = Message.FAIL_ERROR;
+    else if(json.res === 'noAuth') reply.message = Message.NO_AUTH_ERROR;
+    else if(json.res === 'success'){
+      reply.ok = true;
+    }
+    else reply.message = Message.UNKNOWN_ERROR;
   }else{
     reply.message = Message.NO_CONNECT_ERROR;
   }

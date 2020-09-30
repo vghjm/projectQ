@@ -9,8 +9,10 @@ import { createNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem, }
 import _ from 'lodash'; // https://lodash.com/docs
 import uuid from 'react-native-uuid';       // https://www.npmjs.com/package/react-native-uuid
 
+
 import * as TestData from '../testData';
 import {ThemeContext, SystemContext} from './Context';
+import {chatReply} from './ServerConnect';
 const bookOn = require('../assets/icon/book_on.png');
 const bookOff = require('../assets/icon/book_off.png');
 const upArrow = require('../assets/icon/up_arrow.png');
@@ -163,9 +165,10 @@ export default function MyChatRoomScreen({route, navigation}) {  // 채팅방 �
   const id = route.params.id;
   //let data = dataList[id-1];
   //let data = dataList[dataList.findIndex(obj => obj.id===id)];
-  let data = route.params.data;
+  let data = Context.getProductData(id);
+  let userData = Context.getUserData();
   const [messages, setMessages] = useState(data.chatroom.chatmessageList);
-  let myChat = '';
+
   const theme = useContext(ThemeContext);
 
   const makeDiaryMessage = (id, message) => { // 다이어리 메세지 생성기능
@@ -198,13 +201,13 @@ export default function MyChatRoomScreen({route, navigation}) {  // 채팅방 �
 
     // 채팅방 확인
     data.chatroom.newItemCount = 0;
-    return (() => {
-      // 답변이 필요한 경우
-      if(!data.chatroom.lastPushed.solved && myChat!==''){
-        data.chatroom.lastPushed.solved = true;
-        Context.getReply(data, navigation);
-      }
-    });
+    // return (() => {
+    //   // 답변이 필요한 경우
+    //   if(!data.chatroom.lastPushed.solved && myChat!==''){
+    //     data.chatroom.lastPushed.solved = true;
+    //     Context.getReply(data, navigation);
+    //   }
+    // });
   }, []);
 
   const onDelete = useCallback((messageIdToDelete) => {
@@ -243,34 +246,34 @@ export default function MyChatRoomScreen({route, navigation}) {  // 채팅방 �
       }
     }
 
-    myChat += message.text;
-    if(!data.chatroom.lastPushed.solved){
-      data.chatroom.lastPushed.solved = true;
-      setTimeout(() => {
-        let ansMessage = {
-          _id: uuid.v4(), text: data.product.ansList[data.chatroom.lastPushed.questIndex], createdAt: Moment(),
-          user: { _id:2, avatar: data.product.imageSet.avatarImg.uri?? data.product.imageSet.avatarImg},
-        };
-        data.chatroom.newItemCount += 1;
-        data.chatroom.lastMessageTime = Moment();
-        data.chatroom.chatmessageList.unshift(_.cloneDeep(ansMessage));
-        data.chatroom.lastMessage = ansMessage.text;
-        data.chatroom.lastPushed.ansMessage = _.cloneDeep(ansMessage);
-        // Context.popupPushMessage({
-        //   image: data.product.imageSet.thumbnailImg,
-        //   title: data.product.title,
-        //   text: ansMessage.text,
-        //   onPress: ()=>navigation.navigate('chatroom', {id: data.id, data:data}),
-        //   lastPushed: Moment(),
-        //   isPushShowed: true,
-        // }, 0);
-        setMessages(previousMessages => GiftedChat.append(previousMessages, ansMessage));
-        //console.log('getReply ansMessage', ansMessage);
-        //updateF();
-        //return ansMessage;
-        //setMessages(previousMessages => GiftedChat.append(previousMessages, ansMessage));
-      }, 1900);
-    }
+    // 답변해결
+    // if(!data.chatroom.lastPushed.solved){
+    //   data.chatroom.lastPushed.solved = true;
+    //   setTimeout(() => {
+    //     let ansMessage = {
+    //       _id: uuid.v4(), text: data.product.ansList[data.chatroom.lastPushed.questIndex], createdAt: Moment(),
+    //       user: { _id:2, avatar: data.product.imageSet.avatarImg.uri?? data.product.imageSet.avatarImg},
+    //     };
+    //     data.chatroom.newItemCount += 1;
+    //     data.chatroom.lastMessageTime = Moment();
+    //     data.chatroom.chatmessageList.unshift(_.cloneDeep(ansMessage));
+    //     data.chatroom.lastMessage = ansMessage.text;
+    //     data.chatroom.lastPushed.ansMessage = _.cloneDeep(ansMessage);
+    //     // Context.popupPushMessage({
+    //     //   image: data.product.imageSet.thumbnailImg,
+    //     //   title: data.product.title,
+    //     //   text: ansMessage.text,
+    //     //   onPress: ()=>navigation.navigate('chatroom', {id: data.id, data:data}),
+    //     //   lastPushed: Moment(),
+    //     //   isPushShowed: true,
+    //     // }, 0);
+    //     setMessages(previousMessages => GiftedChat.append(previousMessages, ansMessage));
+    //   }, 1900);
+    // }
+
+    let ansInfo = data.product.ansList[data.chatroom.lastPushed.questIndex];
+    console.log('ansInfo: ', ansInfo);
+    chatReply(userData.pushToken, ansInfo.q_ID, ansInfo.content);
 
   }, []);
 
