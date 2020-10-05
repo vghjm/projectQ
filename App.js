@@ -103,8 +103,6 @@ function chooseRandomly(a){
   return a[Math.floor(Math.random() * a.length)];
 }
 
-
-
 // 다이어리 html
 function buildHtml(id) {
     let name = userData.username;
@@ -862,7 +860,33 @@ async function getPermission(){
 }
 
 async function diaryBackup(){
-
+  if(userData.token){
+    console.log(userData.token);
+  }
+  console.log(userData.token);
+  let backupDiary = [];
+  dataList.forEach( data => {
+    if(data.hasDiary){
+      let diaryData = data.diary;
+      let productData = data.product;
+      let myDiary = userData.myDiaryList[userData.myDiaryList.findIndex(obj => obj.id === data.id)];
+      let diaryBackupData = {
+        d_ID: diaryData.id,
+        p_ID: data.id,
+        p_name: productData.title,
+        chatedperiod_start: diaryData.makeTime.format('YYYYMMDD'),
+        chatedperiod_end: Moment().format('YYYYMMDD'),
+        linkname: 'temp',
+        color: myDiary.color,
+        position: myDiary.pos,
+        diaryMessage: diaryData.diarymessageList,
+      }
+      console.log('diaryBackupData ', diaryBackupData);
+      backupDiary.push(_.cloneDeep(diaryBackupData));
+    }
+  });
+  console.log('diary backup', backupData);
+  Connection.diaryBackUp(userData.token, backupDiary);
 }
 
 export default function App() {
@@ -1175,18 +1199,21 @@ export default function App() {
   }, [loadProductData, updateCacheData, loaded]);
 
   const _handleAppStateChange = (nextAppState) => {
-    if (
-      appState.current.match(/inactive|background/) &&
-      nextAppState === "active"
-    ) {
+    if(appState.current.match(/inactive|background/) && nextAppState === "active"){
       console.log("App has come to the foreground!");
     }
+    
+    if(appState.current!='active'){
+      diaryBackup();
+    }
+
 
     appState.current = nextAppState;
     setAppStateVisible(appState.current);
     console.log("AppState", appState.current);
   };
   // *************************************                  백그라운드 및 Inactive 감지 함수
+  console.log('state ', state);
 
   const updateFunction = async () => {
     console.log('update Start');

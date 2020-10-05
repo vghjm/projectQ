@@ -270,10 +270,11 @@ export default function MyChatRoomScreen({route, navigation}) {  // 채팅방 �
     //     setMessages(previousMessages => GiftedChat.append(previousMessages, ansMessage));
     //   }, 1900);
     // }
-
-    let ansInfo = data.product.ansList[data.chatroom.lastPushed.questIndex];
-    console.log('ansInfo: ', ansInfo);
-    chatReply(userData.pushToken, ansInfo.q_ID, ansInfo.content);
+    if(!data.chatroom.lastPushed.solved){
+      let ansInfo = data.product.ansList[data.chatroom.lastPushed.questIndex];
+      console.log('ansInfo: ', ansInfo);
+      chatReply(userData.pushToken, ansInfo.q_ID, ansInfo.content);
+    }
 
   }, []);
 
