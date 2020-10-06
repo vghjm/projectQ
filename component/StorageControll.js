@@ -44,7 +44,7 @@ const chooseRandomIndex = (value) => {
   return Math.floor(Math.random() * value);
 }
 
-export async function updateDataSet(dataList, data, debugPrint=true){
+export async function updateDataSet(dataList, data, debugPrint=false){
   if(debugPrint) printUnitTest('StorageControll > updateDataSet');
 
   let userData = {

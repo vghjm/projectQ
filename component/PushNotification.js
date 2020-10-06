@@ -23,6 +23,7 @@ export function PushMessage({pushData}){
   const time = pushData.lastPushed??Moment();
 
   if(text.length > 28) text = text.substr(0, 28) + '...';
+  console.log(pushData);
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <Image source={image} style={styles.image} resizeMode={'cover'}/>
