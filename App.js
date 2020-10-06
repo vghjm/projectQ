@@ -33,7 +33,6 @@ import * as Animatable from 'react-native-animatable'; // https://github.com/obl
 import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npmjs.com/package/react-native-swipe-list-view
 //import * as Haptics from 'expo-haptics';
 
-//jj
 // my component
 import InlineTextInput from './component/InlineTextInput';
 import LoginNavigation from './component/LoginForm';
@@ -74,14 +73,14 @@ const Tab = createMaterialTopTabNavigator();
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 
-let dataList = [];
-let informData = {
+var dataList = [];
+var informData = {
   introduction: [],
   help: [],
   notice: [],
 };
-let pushList = [];
-let userData;
+var pushList = [];
+var userData;
 import * as TestData from './testData';
 
 
@@ -860,33 +859,54 @@ async function getPermission(){
 }
 
 async function diaryBackup(){
-  if(userData.token){
-    console.log(userData.token);
+  if(!userData){
+    console.log('ERROR : 로그인 없는 diary backup 탐지');
+    return -1;
   }
-  console.log(userData.token);
   let backupDiary = [];
   dataList.forEach( data => {
     if(data.hasDiary){
       let diaryData = data.diary;
       let productData = data.product;
       let myDiary = userData.myDiaryList[userData.myDiaryList.findIndex(obj => obj.id === data.id)];
+      let diaryMessage = diaryData.diarymessageList.map(message => {
+        let content = '';
+        if(message.islagacy){
+          content = message.text;
+        }else{
+          message.linkedMessageList.forEach(linkedMessage => {
+            if(content === '') content = linkedMessage.text;
+            else content += ' ' + linkedMessage.text;
+          })
+        }
+        return {
+          dm_ID: message._id,
+          chatcontent: content,
+          chatedtime: message.createdAt,
+        }
+      });
       let diaryBackupData = {
         d_ID: diaryData.id,
         p_ID: data.id,
         p_name: productData.title,
         chatedperiod_start: diaryData.makeTime.format('YYYYMMDD'),
         chatedperiod_end: Moment().format('YYYYMMDD'),
+        chatedamount: diaryData.totalUpdateCount,
         linkname: 'temp',
         color: myDiary.color,
         position: myDiary.pos,
-        diaryMessage: diaryData.diarymessageList,
+        diaryMessage: diaryMessage,
       }
-      console.log('diaryBackupData ', diaryBackupData);
       backupDiary.push(_.cloneDeep(diaryBackupData));
     }
   });
-  console.log('diary backup', backupData);
-  Connection.diaryBackUp(userData.token, backupDiary);
+  console.log('diary backup', backupDiary);
+  let response = await Connection.diaryBackUp(userData.token, backupDiary);
+  if(response.ok){
+    console.log('다이어리 백업 성공!');
+  }else{
+    console.log('ERROR : 다이어리 백업 실패 , ', response.message);
+  }
 }
 
 export default function App() {
@@ -992,7 +1012,6 @@ export default function App() {
         console.log('token:', data.token);
         console.log('login start');
         userData = await Storage.updateDataSet(dataList, data);
-        console.log('userData aa : ', userData);
         //registerForPushNotificationsAsync(userData);
         console.log('login end');
         dispatch({ type: 'LOGIN', token:data.token });
@@ -1170,7 +1189,6 @@ export default function App() {
     };
   }, []);
   useEffect(() => {
-    console.log('loadProductData: ', loadProductData, 'updateCacheData', updateCacheData);
     let move = null;
     let cache = null;
     if(loadProductData && updateCacheData.isReady && loaded){
@@ -1201,19 +1219,15 @@ export default function App() {
   const _handleAppStateChange = (nextAppState) => {
     if(appState.current.match(/inactive|background/) && nextAppState === "active"){
       console.log("App has come to the foreground!");
+    }else{
+      //diaryBackup();
     }
-    
-    if(appState.current!='active'){
-      diaryBackup();
-    }
-
 
     appState.current = nextAppState;
     setAppStateVisible(appState.current);
     console.log("AppState", appState.current);
   };
   // *************************************                  백그라운드 및 Inactive 감지 함수
-  console.log('state ', state);
 
   const updateFunction = async () => {
     console.log('update Start');
