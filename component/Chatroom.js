@@ -161,28 +161,18 @@ function renderAvatar (props) {
 }
 export default function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
   const Context = useContext(SystemContext);
-  //const updateCount = Context.updateFunc();
   const id = route.params.id;
-  //let data = dataList[id-1];
-  //let data = dataList[dataList.findIndex(obj => obj.id===id)];
   let data = Context.getProductData(id);
   let userData = Context.getUserData();
   const [messages, setMessages] = useState(data.chatroom.chatmessageList);
-
   const theme = useContext(ThemeContext);
 
   const makeDiaryMessage = (id, message) => { // 다이어리 메세지 생성기능
-    //let data = dataList[id-1];
-    //let _data = dataList[dataList.findIndex(obj => obj.id===id)];
     let diaryForm = { _id: uuid.v4(), text: '', createdAt: message.createdAt, islagacy: false, linkedMessageList: [{id: message._id, text:message.text}]};
     data.diary.diarymessageList.push(_.cloneDeep(diaryForm));
     data.diary.totalUpdateCount += 1;
   }
   const deleteMessage = (id, messageId) => { // 다이어리와 연동중이면 해당하는 메시지를 지운다.
-    //let data = dataList[id-1];
-    //let _data = dataList[dataList.findIndex(obj => obj.id===id)];
-    //let deleteIndex = null;
-
     data.diary.diarymessageList.some(message => {
       if(!message.islagacy){
         // 연동중이면
@@ -201,17 +191,10 @@ export default function MyChatRoomScreen({route, navigation}) {  // 채팅방 �
 
     // 채팅방 확인
     data.chatroom.newItemCount = 0;
-    // return (() => {
-    //   // 답변이 필요한 경우
-    //   if(!data.chatroom.lastPushed.solved && myChat!==''){
-    //     data.chatroom.lastPushed.solved = true;
-    //     Context.getReply(data, navigation);
-    //   }
-    // });
   }, []);
 
   const onDelete = useCallback((messageIdToDelete) => {
-    console.log('delete message Id: ', messageIdToDelete);
+    //console.log('delete message Id: ', messageIdToDelete);
     data.chatroom.chatmessageList.splice(data.chatroom.chatmessageList.findIndex(chatmessage => chatmessage._id === messageIdToDelete), 1); // 데이터에서 지우기
     setMessages(previousMessages => previousMessages.filter(message => message._id !== messageIdToDelete)); // 채팅방에서 지우기
     deleteMessage(id, messageIdToDelete); // 다이어리에서 지우기
@@ -245,6 +228,7 @@ export default function MyChatRoomScreen({route, navigation}) {  // 채팅방 �
         makeDiaryMessage(id, message);
       }
     }
+    console.log('\n@메세지 정상 저장 테스트 : chatroom > onSend\n', data.diary);
 
     // 답변해결
     // if(!data.chatroom.lastPushed.solved){

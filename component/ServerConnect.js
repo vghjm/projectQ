@@ -57,7 +57,7 @@ export async function loadDiaryDataFromServer(token){
   }else{
     reply.message = Message.NO_CONNECT_ERROR;
   }
-  console.log('load diary from server\n', reply);
+  //console.log('load diary from server\n', reply);
 
   return reply;
 }
@@ -78,7 +78,7 @@ export async function loadSubscribeDataFromServer(token){
   }else{
     reply.message = Message.NO_CONNECT_ERROR;
   }
-  console.log('load userdata from server\n', reply);
+  //console.log('load userdata from server\n', reply);
 
   return reply;
 }
@@ -307,6 +307,7 @@ export async function diaryBackUp(token, diaryData){
     jwt: token,
     diary: diaryData,
   };
+  console.log('\n@테스트 diaryBackUp 입력값\n', data);
   let response = await httpConnection(Constants.DIARY_BACKUP, data, 'POST');
 
   if(response.ok){ // HTTP 상태 코드가 200~299일 경우

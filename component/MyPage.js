@@ -7,27 +7,11 @@ import * as MediaLibrary from 'expo-media-library';
 import * as ImagePicker from 'expo-image-picker';      // https://docs.expo.io/versions/latest/sdk/imagepicker/
 import { EvilIcons, AntDesign, Feather, MaterialCommunityIcons }
 from '@expo/vector-icons'; // https://icons.expo.fyi/
+import Moment from 'moment';
 
 import {AuthContext, SystemContext} from './Context';
 
-const userData = {
-  token: 'asfnjk436k3b46jh346bk',
-  username: '테스트 계정',
-  email: 'test@naver.com',
-  password: '1234567!!',
-  userImg: null,
-  mySubscribeList: [],
-  myDiaryList: [],
-  myChatroomList: [],
-};
-
-let dataList = [];
-
-const informTestData = {
-  introduction: [],
-  help: [],
-  notice: [],
-};
+const defaultUser = require('../assets/img/default_user.png');
 
 // 마이페이지
 export function MyPageScreen({navigation}) {

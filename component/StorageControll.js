@@ -12,6 +12,10 @@ import {FILE, PRODUCT_LOOKUP} from './utils/constants';
 import * as Message from './utils/Message';
 import * as Connect from './ServerConnect';
 
+const testUpdateDataSet = true;
+const testUpdateProductData = false;
+const testUpdateCacheData = false;
+
 function diarySortByDate(myDiaryMessageList){
   myDiaryMessageList.sort((a, b) => {
     return a.createdAt > b.createdAt;
@@ -44,6 +48,8 @@ const chooseRandomIndex = (value) => {
 }
 
 export async function updateDataSet(dataList, data){
+  if(testUpdateDataSet) console.log('\n\n@ 기능체크 시작, 경로: StorageControll > updateDataSet\n');
+
   let userData = {
     token: data.token,
     pushToken: await Notifications.getExpoPushTokenAsync(),
@@ -55,11 +61,13 @@ export async function updateDataSet(dataList, data){
     myChatroomList: [],
     myDiaryList: [],
   }
-  //console.log('updateDataSet\n', userData);
+
+
 
   await updateUserData(userData.token, userData.email)
     .then(response => {
       if(response.ok) userData.userImg = response.data;
+      else if(testUpdateDataSet) console.log(' > ERROR : updateUserData: ', response.message);
     });
 
   await updateSubscribeData(userData.token, userData.email)
@@ -79,7 +87,7 @@ export async function updateDataSet(dataList, data){
           data.push.pushEndTime = subscribe.pushEndTime;
         })
       }else{
-        console.log('E : updateSubscribeData: ', response.message);
+        if(testUpdateDataSet) console.log(' > ERROR : updateSubscribeData: ', response.message);
       }
     });
 
@@ -98,7 +106,7 @@ export async function updateDataSet(dataList, data){
           diarySortByDate(data.diary.diarymessageList);
         })
       }else{
-        console.log('E : updateDiaryData: ', response.message);
+        if(testUpdateDataSet) console.log(' > ERROR : updateDiaryData: ', response.message);
       }
     })
 
@@ -112,13 +120,28 @@ export async function updateDataSet(dataList, data){
           data.chatroom.noMessage = false;
         })
       }else{
-        console.log('E : updateChatData: ', response.message);
+        if(testUpdateDataSet) console.log(' > ERROR : updateChatData: ', response.message);
       }
     });
+
+  if(testUpdateDataSet){
+    console.log(' > 업데이트 userData\n', userData);
+    console.log(' > 업데이트 dataList\n');
+    dataList.forEach(data => {
+      console.log(`\tid: ${data.id}\n`);
+      console.log(`\tisAvailable: ${data.isAvailable}, hasDiary: ${data.hasDiary}, hasChatroom: ${data.hasChatroom}, isSubscribe: ${data.isSubscribe}\n`);
+      console.log(`\tproduct: ${data.product.title}\n`);
+      console.log(`\tdiary: ${data.diary.id}, totalUpdateCount: ${data.diary.totalUpdateCount}\n`, data.diary.diarymessageList);
+      console.log('\n\n');
+    })
+  }
+
 
   return userData;
 }
 export async function updateProductData(){
+  if(testUpdateProductData) console.log('\n\n@ 기능체크 시작, 경로: StorageControll > updateProductData\n');
+
   let reply = {ok: false, data: [], message: ''};
   let response = await loadProductData();
 
@@ -179,9 +202,13 @@ export async function updateProductData(){
   return reply;
 }
 export async function updateCacheData(){
+  if(testUpdateCacheData) console.log('\n\n@ 기능체크 시작, 경로: StorageControll > updateCacheData\n');
+
   let reply = {ok:false, data:null, message:''};
   let cache = await AsyncStorage.getItem('cacheData');
-  console.log('loadCacheData: ', cache);
+
+  if(testUpdateCacheData) console.log(' > loadCacheData : ', cache);
+
   if(cache === null){
     reply.data = {token: null, isFirstLogin:true};
   }else{
@@ -211,7 +238,7 @@ async function updateSubscribeData(token, email){
       });
     }else reply.message = serverResponse.message;
   }
-  console.log('updateSubscribeData : ', reply);
+  // console.log('updateSubscribeData : ', reply);
 
   return reply;
 }
@@ -223,7 +250,7 @@ async function updateChatData(token, email){
     reply.ok = true;
     reply.data = localResponse.data;
   }
-  console.log('updateChatData: ', reply);
+  //console.log('updateChatData: ', reply);
 
   return reply;
 }
@@ -234,8 +261,10 @@ async function updateUserData(token, email){
   if(localResponse.ok){
     reply.ok = true;
     reply.data = localResponse.data;
+  }else{
+    reply.message = localResponse.message;
   }
-  console.log('updateUserData: ', reply);
+  //console.log('updateUserData: ', reply);
 
   return reply;
 }
@@ -264,7 +293,7 @@ async function updateDiaryData(token, email){
       })
     }
   }
-  console.log('updateDiaryData : ', reply);
+  //console.log('updateDiaryData : ', reply);
 
   return reply;
 }
@@ -298,7 +327,7 @@ async function loadProductData(){
 async function loadDiaryData(email){
   let reply = {ok:false, data:null, message:''};
   let diary = await AsyncStorage.getItem('diaryData%' + email);
-  console.log('load local DiaryData: ', diary);
+  //console.log('load local DiaryData: ', diary);
   if(diary === null){
     reply.message = Message.NO_DATA_ERROR;
   }else{
@@ -311,7 +340,7 @@ async function loadDiaryData(email){
 async function loadChatData(email){
   let reply = {ok:false, data:null, message:''};
   let chat = await AsyncStorage.getItem('chatData%' + email);
-  console.log('load local ChatData: ', chat);
+  //console.log('load local ChatData: ', chat);
   if(chat === null){
     reply.message = Message.NO_DATA_ERROR;
   }else{
@@ -324,7 +353,7 @@ async function loadChatData(email){
 async function loadSubscribeData(email){
   let reply = {ok:false, data:null, message:''};
   let subscribe = await AsyncStorage.getItem('subscribeData%'+email);
-  console.log('load local SubscribeData: ', subscribe);
+  //console.log('load local SubscribeData: ', subscribe);
   if(subscribe === null){
     reply.message = Message.NO_DATA_ERROR;
   }else{
@@ -337,7 +366,7 @@ async function loadSubscribeData(email){
 async function loadUserData(email){
   let reply = {ok:false, data:null, message:''};
   let user = await AsyncStorage.getItem('userData%' + email);
-  console.log('load local UserData: ', user);
+  //console.log('load local UserData: ', user);
   if(user === null){
     reply.message = Message.NO_DATA_ERROR;
   }else{
