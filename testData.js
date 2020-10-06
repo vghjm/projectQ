@@ -1,14 +1,84 @@
 import React from 'react';
 import Moment from 'moment';
 
-const userData = {
+// 데이터 형식
+const userDataForm = {
   token: 'asfnjk436k3b46jh346bk',
-  pushToken: 'aa',
-  username: '테스트 계정',
+  pushToken: 'exp[~~~]',
   email: 'test@naver.com',
   password: '1234567!!',
+  username: '테스트 계정',
   userImg: null,
+  mySubscribeList: [{id:0, pushEndTime: Moment(), pushStartTime: Moment()}],
+  myChatroomList: [{id:0, getPushAlarm: true, key: 0}],
+  myDiaryList: [{id:0, color:0, pos:1}],
 }
+const chatmessageListForm = [
+  {
+    _id: 3, text: '나랑 함께 일하는 사람들에게 감사해. 나 혼자였다면 하지', createdAt: Moment('20200703 0802'),
+    user: { _id:1,},
+  },
+  { _id: 2, text: '지금 문득 감사하고 싶은 사람이 있어?', createdAt: Moment('20200703 0800'),
+    user: { _id:2, avatar: require('./assets/product/new땡Q노트/thumbnail.png')},
+  },
+  {
+    _id: 1, text: '이제 THANK Q 감사노트 구독이 시작됩니다.\n오전 8시가 되면 질문 드릴게요.', createdAt: Moment('20200702 211034'),
+    user: { _id:2, avatar: require('./assets/product/new땡Q노트/thumbnail.png')},
+  },
+];
+const diaryMessageListForm = [
+  { _id: 1, text: '오늘은 바빠서 점심에 후딱 샐러드를 먹긴 했는데,', createdAt: Moment('20200810 2110'), islagacy: true, linkedMessageList: []},
+  { _id: 2, text: '오늘은 집에 왔는데', createdAt: Moment('20200811 2108'), islagacy: false, linkedMessageList: [{id: 1, text: '~~~~'}]},
+];
+const dataForm = {
+  id: 4, isAvailable: true, hasDiary:true, hasChatroom: true, isSubscribe:true,
+  product: {
+    title: 'THANK Q 감사노트',
+    text: '매일 당신에게 질문하는 감사 일기장',
+    imageSet: {thumbnailImg: require('./assets/product/new땡Q노트/thumbnail.png'), logoImg: require('./assets/product/new땡Q노트/logo.png'), mainImg: require('./assets/product/new땡Q노트/main.png'), avatarImg: require('./assets/product/new땡Q노트/thumbnail.png')},
+    questionList: [
+      {q_ID: 1, content: "지금 문득 감사하고 싶은 사람이 있어?"},
+      {q_ID: 2, content: "너가 감사함을 느끼는 추억은 어떤거야?"},
+    ],
+    ansList: [
+      {q_ID: 1, content: "지금 문득 감사하고 싶은 사람이 있어?"},
+      {q_ID: 2, content: "너가 감사함을 느끼는 추억은 어떤거야?"},
+    ],
+  },
+  chatroom: {
+    lastMessageTime: Moment('20200705 0811'), newItemCount: 0, chatmessageList: chatmessageListForm, lastPushed: {pushTime: Moment(), questIndex: 1, solved:true, ansMessage: null},
+    lastMessage: '',
+  },
+  diary: {
+    makeTime: Moment('20200702 211034'), totalUpdateCount: 0, diarymessageList: diaryMessageListForm, id: '~',
+  },
+  push: {
+    isRandomPushType: false, pushStartTime: Moment('20200812 0830'), pushEndTime: Moment('20200812 0830'),
+  },
+};
+const informDataForm = {
+  introduction: [],
+  help: [],
+  notice: [],
+};
+const pushListForm = [];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

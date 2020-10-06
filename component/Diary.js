@@ -1,12 +1,33 @@
 import React, {useContext, useState, useEffect} from 'react';
-import {View, TouchableOpacity, Image, KeyboardAvoidingView, ScrollView, Text, TextInput, Alert} from 'react-native';
+import {View, TouchableOpacity, Image, KeyboardAvoidingView, ScrollView, Text, TextInput, Alert, Dimensions} from 'react-native';
 import Draggable from 'react-native-draggable'; // https://github.com/tongyy/react-native-draggable
 import * as Animatable from 'react-native-animatable'; // https://github.com/oblador/react-native-animatable
 import Moment from 'moment';
+import { useFocusEffect } from '@react-navigation/native';
+import { FontAwesome, EvilIcons }
+from '@expo/vector-icons'; // https://icons.expo.fyi/
+import DateTimePicker from '@react-native-community/datetimepicker'; // https://github.com/react-native-community/datetimepicker
 
 import * as TestData from '../testData';
+import {SystemContext} from './Context';
 let userData = TestData.userTestData;
 let dataList = TestData.productTestData;
+const diaryImgList = [
+  require('../assets/icon/diary_1.png'),
+  require('../assets/icon/diary_2.png'),
+  require('../assets/icon/diary_3.png'),
+  require('../assets/icon/diary_4.png'),
+  require('../assets/icon/diary_5.png'),
+  require('../assets/icon/diary_6.png'),
+  require('../assets/icon/diary_7.png'),
+  require('../assets/icon/diary_8.png'),
+  require('../assets/icon/diary_9.png'),
+  require('../assets/icon/diary_10.png'),
+];
+const upArrow = require('../assets/icon/up_arrow.png');
+const downArrow = require('../assets/icon/down_arrow.png');
+const screenHeight = Dimensions.get('window').height;
+const screenWidth = Dimensions.get('window').width;
 
 // 드래그기능 있는 다이어리
 function diarySortByDate(myDiaryMessageList){
@@ -27,9 +48,8 @@ function diaryPosToRealPos(diaryPos){
 
   return realPos;
 }
-function realPosToDiaryPos(realPos){
+function realPosToDiaryPos(realPos, numberOfDiary){
   let diaryPos = 0;
-  let numberOfDiary = userData.myDiaryList.length;
   console.log('x, y : ', realPos.x, realPos.y);
 
   if(realPos.y <= 0){
@@ -48,8 +68,12 @@ function realPosToDiaryPos(realPos){
 }
 export function DraggableDiary({id, changePosHandler, nav, updateDiary, cancelDrag}){ // 애니메이션 다이어리에 드래그 기능 추가
   const [z, setZ] = useState(1);
+  const Context = useContext(SystemContext);
+  let userData = Context.getUserData(id);
+  let numberOfDiary = userData.myDiaryList.length;
   let diaryIndex = userData.myDiaryList.findIndex(obj => obj.id === id);
   let pos = diaryPosToRealPos(userData.myDiaryList[diaryIndex].pos);
+  let global_y = Context.getGlobalY();
 
   const zUp = () =>{
     if(z!=10) setZ(10);
@@ -57,16 +81,21 @@ export function DraggableDiary({id, changePosHandler, nav, updateDiary, cancelDr
   const zDown = () =>{
     if(z!=1) setZ(1);
   }
+
   return (
-    <Draggable x={pos.x} y={pos.y} z={z}  shouldReverse onDragRelease={(event, gestureState) => {zDown();  changePosHandler(userData.myDiaryList[diaryIndex].pos, realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY})); cancelDrag(true)}} onDrag={(event)=>{zUp(); cancelDrag(false);}} >
+    <Draggable x={pos.x} y={pos.y} z={z}  shouldReverse onDragRelease={(event, gestureState) => {zDown();  changePosHandler(userData.myDiaryList[diaryIndex].pos, realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY, numberOfDiary:numberOfDiary})); cancelDrag(true)}} onDrag={(event)=>{zUp(); cancelDrag(false);}} >
       <AnimatableDiaryComponent id={id} nav={nav} updateDiary={updateDiary} />
     </Draggable>
   );
 }
-export function BasiceDiary({id, changePosHandler, nav}){  // 기본 다이어리에 위치를 잡아줌, 드래그 기능은 없음
+export function BasicDiary({id, changePosHandler, nav}){  // 기본 다이어리에 위치를 잡아줌, 드래그 기능은 없음
   const [z, setZ] = useState(1);
+  const Context = useContext(SystemContext);
+  let userData = Context.getUserData(id);
+  let numberOfDiary = userData.myDiaryList.length;
   let diaryIndex = userData.myDiaryList.findIndex(obj => obj.id === id);
   let pos = diaryPosToRealPos(userData.myDiaryList[diaryIndex].pos);
+  let global_y = Context.getGlobalY();
 
   const zUp = () =>{
     if(z!=2) setZ(2);
@@ -74,16 +103,18 @@ export function BasiceDiary({id, changePosHandler, nav}){  // 기본 다이어�
   const zDown = () =>{
     if(z!=1) setZ(1);
   }
+
   return (
-    <Draggable x={pos.x} y={pos.y} z={z} disabled={true} shouldReverse onDragRelease={(event, gestureState) => {zDown();  changePosHandler(userData.myDiaryList[diaryIndex].pos, realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY}));}} onDrag={(event, gestureState)=>{zUp(); console.log('x, y ~~ : ', gestureState.moveX, global_y+gestureState.moveY); console.log('pos: ', realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY}))}} >
+    <Draggable x={pos.x} y={pos.y} z={z} disabled={true} shouldReverse onDragRelease={(event, gestureState) => {zDown();  changePosHandler(userData.myDiaryList[diaryIndex].pos, realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY, numberOfDiary:numberOfDiary}));}} onDrag={(event, gestureState)=>{zUp(); console.log('x, y ~~ : ', gestureState.moveX, global_y+gestureState.moveY); console.log('pos: ', realPosToDiaryPos({x:gestureState.moveX, y:global_y+gestureState.moveY, numberOfDiary: numberOfDiary}))}} >
       <DiaryComponent id={id} nav={nav}/>
     </Draggable>
   );
 }
 function AnimatableDiaryComponent(props){
   const id = props.id;
-  //const data = dataList[id-1];
-  let data = dataList[dataList.findIndex(obj => obj.id===id)];
+  const Context = useContext(SystemContext);
+  let data = Context.getProductData(id);
+  let userData = Context.getUserData(id);
   const [makeTime, setMakeTime] = useState(data.diary.makeTime);
   const [totalUpdateCount, setTotalUpdateCount] = useState(data.diary.totalUpdateCount);
   const [nowTime, setNowTime] = useState(Moment());
@@ -136,8 +167,9 @@ function AnimatableDiaryComponent(props){
 }
 function DiaryComponent(props){
   const id = props.id;
-  //const data = dataList[id-1];
-  let data = dataList[dataList.findIndex(obj => obj.id===id)];
+  const Context = useContext(SystemContext);
+  let data = Context.getProductData(id);
+  let userData = Context.getUserData(id);
   const [makeTime, setMakeTime] = useState(data.diary.makeTime);
   const [totalUpdateCount, setTotalUpdateCount] = useState(data.diary.totalUpdateCount);
   const [nowTime, setNowTime] = useState(Moment());
@@ -370,7 +402,6 @@ function LastDiaryTextWithDate(props){// 마지막 다이어리만위 위해 만
     props.diarySort();
   }
 
-
   const onFocusHandler = () => {
     props.nav.setOptions({
       headerTitle: '내 기록편집',
@@ -457,9 +488,9 @@ function LastDiaryTextWithDate(props){// 마지막 다이어리만위 위해 만
   );
 }
 export function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
+  const Context = useContext(SystemContext);
   const id = route.params.id;
-  //let data = dataList[id-1];
-  let data = dataList[dataList.findIndex(obj => obj.id===id)];
+  let data = Context.getProductData(id);
   let time = false;
   let lastDate = data.diary.diarymessageList.length>0 ? data.diary.diarymessageList[data.diary.diarymessageList.length-1].createdAt : null;
   let goToEnd = route.params.goToEnd;
@@ -472,6 +503,7 @@ export function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 
   const [minusPos, setMinusPos] = useState(0);
   const [updated, setUpdated] = useState(0);
 
+  // 다이어리 옵션 해제 함수
   const diaryOptionBlurHandler = () => {
       setShowDropbox(false);
       navigation.setOptions({
@@ -483,9 +515,10 @@ export function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 
         )
       });
   };
+
+  // 다이어리 옵션 클릭 함수
   const diaryOptionFocusHandler = () => {
       setShowDropbox(true);
-      console.log('diaryOptionFocusHandler');
       navigation.setOptions({
         headerRight: (props) => (
           <TouchableOpacity onPress={diaryOptionBlurHandler}>
@@ -494,6 +527,8 @@ export function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 
         )
       });
   };
+
+  // 다이어리 생성시 제목 설정 함수
   React.useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: data.product.title,
@@ -505,11 +540,12 @@ export function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 
     });
   }, [navigation, route]);
 
+  // 동적으로 차이값 설정
   const getMinusContentPositionHandler = (value) => {
     if(value != minusPos) setMinusPos(value);
-    //console.log('setMinusPos: ', minusPos);
   }
 
+  // 다이어리 시간순 정렬
   const diarySort = () => {
     //console.log('sorting -------------------------------------- ');
     diarySortByDate(data.diary.diarymessageList);

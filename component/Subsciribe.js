@@ -41,7 +41,8 @@ export default function SubscribeContentScreen({route, navigation}){
   let tempTime;
   let thisScrollView = null;
 
-  const chatroomInitializeFunction = (id) => { // 채팅방 초기로 생성 함수
+  // 채팅방 초기로 생성 함수
+  const chatroomInitializeFunction = (id) => {
     // 기존의 채팅창이 있는지 확인함
     if(!data.hasChatroom) {
       // 초기버전 채팅창을 만듦
@@ -51,7 +52,7 @@ export default function SubscribeContentScreen({route, navigation}){
       // 채팅창 초기 데이터 구성
       let makeChatmessageListData = [
         {
-          _id: 2, text: data.product.questionList[0], createdAt: Moment(),
+          _id: 2, text: data.product.questionList[0].content, createdAt: Moment(),
           user: { _id:2, avatar: data.product.imageSet.avatarImg.uri??data.product.imageSet.avatarImg},
         },
         {
@@ -64,6 +65,8 @@ export default function SubscribeContentScreen({route, navigation}){
       };
 
       data.chatroom = _.cloneDeep(makeChatroomData); // 채팅창 데이터 연결
+
+      // 생성 후 푸시알림
       Context.popupPushMessage({
         image: data.product.imageSet.thumbnailImg,
         title: data.product.title,
@@ -84,7 +87,9 @@ export default function SubscribeContentScreen({route, navigation}){
       //}, 1300);
     }
   }
-  const diaryInitializeFunction = (id) => { // 다이어리 초기로 생성 함수
+
+  // 다이어리 초기로 생성 함수
+  const diaryInitializeFunction = (id) => {
     // 기존의 다이어리 있는지 확인
     if(!data.hasDiary) {
       // 초기버전 다이어리 만듦

@@ -11,10 +11,7 @@ import { Notifications } from 'expo'; // https://docs.expo.io/versions/latest/sd
 import {FILE, PRODUCT_LOOKUP} from './utils/constants';
 import * as Message from './utils/Message';
 import * as Connect from './ServerConnect';
-
-const testUpdateDataSet = true;
-const testUpdateProductData = false;
-const testUpdateCacheData = false;
+import {printStatus, printUserData, printDataList, printUnitTest} from './utils/Print';
 
 function diarySortByDate(myDiaryMessageList){
   myDiaryMessageList.sort((a, b) => {
@@ -47,8 +44,8 @@ const chooseRandomIndex = (value) => {
   return Math.floor(Math.random() * value);
 }
 
-export async function updateDataSet(dataList, data){
-  if(testUpdateDataSet) console.log('\n\n@ 기능체크 시작, 경로: StorageControll > updateDataSet\n');
+export async function updateDataSet(dataList, data, debugPrint=false){
+  if(debugPrint) printUnitTest('StorageControll > updateDataSet');
 
   let userData = {
     token: data.token,
@@ -62,15 +59,12 @@ export async function updateDataSet(dataList, data){
     myDiaryList: [],
   }
 
-
-
-  await updateUserData(userData.token, userData.email)
+  await updateUserData(userData.token, userData.email, debugPrint)
     .then(response => {
       if(response.ok) userData.userImg = response.data;
-      else if(testUpdateDataSet) console.log(' > ERROR : updateUserData: ', response.message);
     });
 
-  await updateSubscribeData(userData.token, userData.email)
+  await updateSubscribeData(userData.token, userData.email, debugPrint)
     .then(response => {
       if(response.ok){
         response.data.forEach(subscribe => {
@@ -86,15 +80,12 @@ export async function updateDataSet(dataList, data){
           data.push.pushStartTime = subscribe.pushStartTime;
           data.push.pushEndTime = subscribe.pushEndTime;
         })
-      }else{
-        if(testUpdateDataSet) console.log(' > ERROR : updateSubscribeData: ', response.message);
       }
     });
 
-  await updateDiaryData(userData.token, userData.email)
+  await updateDiaryData(userData.token, userData.email, debugPrint)
     .then(response => {
       if(response.ok){
-
         response.data.forEach(diary => {
           userData.myDiaryList.push({id:diary.id, pos:diary.pos, color:diary.color});
           let data = dataList[dataList.findIndex(obj => obj.id===diary.id)];
@@ -105,12 +96,10 @@ export async function updateDataSet(dataList, data){
           data.diary.diarymessageList = diary.diarymessageList;
           diarySortByDate(data.diary.diarymessageList);
         })
-      }else{
-        if(testUpdateDataSet) console.log(' > ERROR : updateDiaryData: ', response.message);
       }
     })
 
-  await updateChatData(userData.token, userData.email)
+  await updateChatData(userData.token, userData.email, debugPrint)
     .then(response => {
       if(response.ok){
         response.data.forEach(chat => {
@@ -119,28 +108,18 @@ export async function updateDataSet(dataList, data){
           data.chatroom = chat.chatroom;
           data.chatroom.noMessage = false;
         })
-      }else{
-        if(testUpdateDataSet) console.log(' > ERROR : updateChatData: ', response.message);
       }
     });
 
-  if(testUpdateDataSet){
-    console.log(' > 업데이트 userData\n', userData);
-    console.log(' > 업데이트 dataList\n');
-    dataList.forEach(data => {
-      console.log(`\tid: ${data.id}\n`);
-      console.log(`\tisAvailable: ${data.isAvailable}, hasDiary: ${data.hasDiary}, hasChatroom: ${data.hasChatroom}, isSubscribe: ${data.isSubscribe}\n`);
-      console.log(`\tproduct: ${data.product.title}\n`);
-      console.log(`\tdiary: ${data.diary.id}, totalUpdateCount: ${data.diary.totalUpdateCount}\n`, data.diary.diarymessageList);
-      console.log('\n\n');
-    })
+  if(debugPrint){
+    printUserData(userData);
+    printDataList(dataList);
   }
-
 
   return userData;
 }
-export async function updateProductData(){
-  if(testUpdateProductData) console.log('\n\n@ 기능체크 시작, 경로: StorageControll > updateProductData\n');
+export async function updateProductData(debugPrint=false){
+  if(debugPrint) printUnitTest('StorageControll > updateProductData');
 
   let reply = {ok: false, data: [], message: ''};
   let response = await loadProductData();
@@ -199,15 +178,17 @@ export async function updateProductData(){
     reply.message = Message.FAIL_LOAD_DATA_ERROR;
   }
 
+  if(debugPrint) printStatus('updateProductData', reply);
+
   return reply;
 }
-export async function updateCacheData(){
-  if(testUpdateCacheData) console.log('\n\n@ 기능체크 시작, 경로: StorageControll > updateCacheData\n');
+export async function updateCacheData(debugPrint=false){
+  if(debugPrint) printUnitTest('StorageControll > updateCacheData');
 
   let reply = {ok:false, data:null, message:''};
   let cache = await AsyncStorage.getItem('cacheData');
 
-  if(testUpdateCacheData) console.log(' > loadCacheData : ', cache);
+
 
   if(cache === null){
     reply.data = {token: null, isFirstLogin:true};
@@ -219,10 +200,11 @@ export async function updateCacheData(){
       reply.data = {token: null, isFirstLogin:false};
     }
   }
+  if(debugPrint) printStatus('updateCacheData', reply);
 
   return reply;
 }
-async function updateSubscribeData(token, email){
+async function updateSubscribeData(token, email, debugPrint=false){
   let reply = {ok: false, data: [], message: ''};
   let localResponse = await loadSubscribeData(email);
 
@@ -238,23 +220,24 @@ async function updateSubscribeData(token, email){
       });
     }else reply.message = serverResponse.message;
   }
-  // console.log('updateSubscribeData : ', reply);
+  if(debugPrint) printStatus('updateSubscribeData', reply);
 
   return reply;
 }
-async function updateChatData(token, email){
+async function updateChatData(token, email, debugPrint=false){
   let reply = {ok: false, data: [], message: ''};
   let localResponse = await loadChatData(email);
 
   if(localResponse.ok){
     reply.ok = true;
     reply.data = localResponse.data;
-  }
-  //console.log('updateChatData: ', reply);
+  }else reply.message =  localResponse.message;
+
+  if(debugPrint) printStatus('updateChatData', reply);
 
   return reply;
 }
-async function updateUserData(token, email){
+async function updateUserData(token, email, debugPrint=false){
   let reply = {ok: false, data: [], message: ''};
   let localResponse = await loadUserData(email);
 
@@ -264,11 +247,11 @@ async function updateUserData(token, email){
   }else{
     reply.message = localResponse.message;
   }
-  //console.log('updateUserData: ', reply);
+  if(debugPrint) printStatus('updateUserData', reply);
 
   return reply;
 }
-async function updateDiaryData(token, email){
+async function updateDiaryData(token, email, debugPrint=false){
   let reply = {ok: false, data: [], message: ''};
   let localResponse = await loadDiaryData(email);
 
@@ -293,11 +276,11 @@ async function updateDiaryData(token, email){
       })
     }
   }
-  //console.log('updateDiaryData : ', reply);
+  if(debugPrint) printStatus('updateDiaryData', reply);
 
   return reply;
 }
-async function loadProductData(){
+async function loadProductData(debugPrint=false){
   let reply = {ok: false, data: null, message: ''};
   let dataVersion = await AsyncStorage.getItem('productDataVersion');
   let response = await Connect.httpConnection(PRODUCT_LOOKUP, {version: dataVersion}, 'POST');
@@ -320,11 +303,11 @@ async function loadProductData(){
   }else{
     reply.message = Message.NO_CONNECT_ERROR;
   }
-  console.log('loadProductData: ', reply.ok, reply.message);
+  if(debugPrint) printStatus('loadProductData', reply);
 
   return reply;
 }
-async function loadDiaryData(email){
+async function loadDiaryData(email, debugPrint=false){
   let reply = {ok:false, data:null, message:''};
   let diary = await AsyncStorage.getItem('diaryData%' + email);
   //console.log('load local DiaryData: ', diary);
@@ -334,23 +317,25 @@ async function loadDiaryData(email){
     reply.ok = true;
     reply.data = diary;
   }
+  if(debugPrint) printStatus('loadDiaryData', reply);
 
   return reply;
 }
-async function loadChatData(email){
+async function loadChatData(email, debugPrint=false){
   let reply = {ok:false, data:null, message:''};
   let chat = await AsyncStorage.getItem('chatData%' + email);
-  //console.log('load local ChatData: ', chat);
-  if(chat === null){
-    reply.message = Message.NO_DATA_ERROR;
-  }else{
+
+  if(chat){
     reply.ok = true;
     reply.data = chat;
+  }else{
+    reply.message = Message.NO_DATA_ERROR;
   }
+  if(debugPrint) printStatus('loadChatData', reply);
 
   return reply;
 }
-async function loadSubscribeData(email){
+async function loadSubscribeData(email, debugPrint=false){
   let reply = {ok:false, data:null, message:''};
   let subscribe = await AsyncStorage.getItem('subscribeData%'+email);
   //console.log('load local SubscribeData: ', subscribe);
@@ -360,10 +345,11 @@ async function loadSubscribeData(email){
     reply.ok = true;
     reply.data = subscribe;
   }
+  if(debugPrint) printStatus('loadSubscribeData', reply);
 
   return reply;
 }
-async function loadUserData(email){
+async function loadUserData(email, debugPrint=false){
   let reply = {ok:false, data:null, message:''};
   let user = await AsyncStorage.getItem('userData%' + email);
   //console.log('load local UserData: ', user);
@@ -373,6 +359,7 @@ async function loadUserData(email){
     reply.ok = true;
     reply.data = user;
   }
+  if(debugPrint) printStatus('loadUserData', reply);
 
   return reply;
 }
