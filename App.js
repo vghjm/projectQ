@@ -42,6 +42,11 @@ import IntroNavigation from './component/IntroForm';
 import * as Connection from './component/ServerConnect';
 import * as Storage from './component/StorageControll';
 import {DynamicDiaryScreen, DraggableDiary, BasicDiary} from './component/Diary';
+import * as MyPage from './component/MyPage';
+import ChatroomScreen from './component/Chatroom';
+import Subscribe from './component/Subsciribe';
+import * as PushNotification from './component/PushNotification';
+
 
 
 
@@ -81,6 +86,7 @@ var informData = {
 };
 var pushList = [];
 var userData;
+var pushCount = 0;
 import * as TestData from './testData';
 
 
@@ -102,41 +108,6 @@ function chooseRandomly(a){
   return a[Math.floor(Math.random() * a.length)];
 }
 
-// 다이어리 html
-function buildHtml(id) {
-    let name = userData.username;
-    //let data = dataList[id-1];
-    let data = dataList[dataList.findIndex(obj => obj.id===id)];
-    let header = '';
-    let body = '';
-
-    header += (name + ' 님의 다이어리');
-    // for (let i = 0; i < contents.length; i++) {
-    //     body += ('<p>' + contents[i] + '</p>')
-    // }
-
-    body += '<table>';
-    for (let i = 0; i < contents.length; i++) {
-        body += '<tr>';
-        body += '<td id="date">' + dateToHtml(dates[i]) + '</td>';
-        body += '<td id="contents">' + contents[i] +
-            '<br><div id = "time">' + timeToHtml(times[i]) + '</div></td>';
-        body += '</tr>';
-    }
-    body += '</table>';
-
-    var fullHTML = '<!DOCTYPE html>' +
-        '<html><head>' +
-        '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-        '<link rel="stylesheet" href="http://dc9822522482.ngrok.io/css/link.css" />' +
-        '<link rel="stylesheet" media="(max-width: 768px)" href="http://dc9822522482.ngrok.io/css/mobilelink.css" /><h1>' +
-        header +
-        '</h1></head><body>' +
-        body +
-        '</body></html>';
-
-    return fullHTML;
-}
 
 function getReply(data, popupPushMessage, navigation, updateF){
   console.log('getReply', data);
@@ -391,10 +362,7 @@ function ChatroomContentLayout(props){
   const id = props.id;
   const data = dataList[dataList.findIndex(obj => obj.id===id)];
   const theme = useContext(ThemeContext);
-  //const data = props.data;
 
-  //console.log('ChatroomContentLayout\n', data);
-  //const data = dataList[id-1];
   const productInfo  = data.product;
   const [lastMessageTime, setLastMessageTime] = useState(data.chatroom.lastMessageTime);  // 최신 메세지 업데이트 시간
   const [newItemCount, setNewItemCount] = useState(data.chatroom.newItemCount);   // 최신 알림 수
@@ -549,7 +517,6 @@ function MyDiaryScreen({route, navigation}){
     let size = Math.ceil(userData.myDiaryList.length/2)*300;
     if(size <= screenHeight-90) setBackgroundWidth(screenHeight-90);
     else setBackgroundWidth(size);
-    //console.log('update backgroundWidth: ', size);
   }
 
   const updateDiary = (erasePos) => {
@@ -562,8 +529,6 @@ function MyDiaryScreen({route, navigation}){
   };
 
   useFocusEffect(()=>{
-    //console.log('diary Count: ', numberOfDiary, userData.myDiaryList.length);
-    //console.log(userData.myDiaryList);
     if(editMode != pressDiaryEditButton) setEditMode(pressDiaryEditButton);
     if(numberOfDiary != userData.myDiaryList.length){
       setNumberOfDiary(userData.myDiaryList.length);
@@ -586,9 +551,7 @@ function MyDiaryScreen({route, navigation}){
 }
 
 // 메인스택
-import * as MyPage from './component/MyPage';
-import ChatroomScreen from './component/Chatroom';
-import Subscribe from './component/Subsciribe';
+
 function getHeaderTitle(route, initialName) {
   // If the focused route is not found, we need to assume it's the initial screen
   // This can happen during if there hasn't been any navigation inside the screen
@@ -606,10 +569,8 @@ function getHeaderTitle(route, initialName) {
 
   return routeName;
 }
-// 우측상단 메뉴
-//let pressDiaryEditButton = false;  // diary 편집버튼 누름 상태값
 
-let pushCount = 0;
+
 
 function mainHeaderRightHandler(route, navigation){
   var handler = ()=>myButtonHandler();
@@ -797,7 +758,7 @@ function MainStackHomePage({navigation}) {
   );
 }
 
-import * as PushNotification from './component/PushNotification';
+
 // app . json
 function CustomDrawerContent({navigation}) {
 
