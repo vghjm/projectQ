@@ -115,7 +115,7 @@ function AnimatableDiaryComponent(props){
   const id = props.id;
   const Context = useContext(SystemContext);
   let data = Context.getProductData(id);
-  let userData = Context.getUserData(id);
+  let userData = Context.getUserData();
   const [makeTime, setMakeTime] = useState(data.diary.makeTime);
   const [totalUpdateCount, setTotalUpdateCount] = useState(data.diary.totalUpdateCount);
   const [nowTime, setNowTime] = useState(Moment());

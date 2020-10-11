@@ -46,6 +46,7 @@ import * as MyPage from './component/MyPage';
 import ChatroomScreen from './component/Chatroom';
 import Subscribe from './component/Subsciribe';
 import * as PushNotification from './component/PushNotification';
+import CustomDrawerContent from './component/CustomDrawerContent';
 
 
 
@@ -760,41 +761,7 @@ function MainStackHomePage({navigation}) {
 
 
 // app . json
-function CustomDrawerContent({navigation}) {
 
-  const unSubscribe = (id) => {
-    userData.mySubscribeList.splice(userData.mySubscribeList.findIndex(obj => obj.id===id), 1);
-    //dataList[id-1].isSubscribe = false;
-    const data = dataList[dataList.findIndex(obj => obj.id===id)];
-    data.isSubscribe = false;
-
-  }
-  const deleteChatroom = (id) => {
-    userData.myChatroomList.splice(userData.myChatroomList.findIndex(obj => obj.id===id), 1);
-    //dataList[id-1].hasChatroom = false;
-    const data = dataList[dataList.findIndex(obj => obj.id===id)];
-    data.hasChatroom = false;
-  }
-
-  const getOutChatroom = () => {
-    unSubscribe(global_p_id);
-    deleteChatroom(global_p_id);
-    navigation.navigate('MainPage');
-  }
-
-  return (
-    <DrawerContentScrollView style={{backgroundColor: '#FFF'}}>
-      <TouchableOpacity onPress={()=>navigation.closeDrawer()}>
-        <Octicons name="three-bars" style={{marginLeft:20, marginTop:10, marginBottom: 20}} size={20} color="black" />
-      </TouchableOpacity>
-      <DrawerItem label="다이어리 보기"  icon={()=><Image source={bookOn} resizeMode={'cover'} style={{width:20, height:20}}/>} onPress={() => {navigation.navigate('MyDiaryScreen'); navigation.navigate('Diary', {id:global_p_id, goToEnd: true})}} />
-      <DrawerItem label="푸시 메세지 설정" icon={()=><Ionicons name="md-time" style={{marginLeft: 3}} size={20} color="black" />} onPress={() => {navigation.navigate('SubscribeListScreen'); navigation.navigate('contentScreen', {id:global_p_id, goToEnd: true})}} />
-      <DrawerItem label="채팅방 나가기" icon={()=><MaterialIcons name="exit-to-app" style={{marginLeft: 1}} size={20} color="black" />}
-        onPress={() => {
-          Alert.alert('정말 채팅방을 나가시겠습니까?', '채팅방을 나가면 채팅 내용과 채팅 목록은 사라지고 다이어리에서만 기록을 확인할 수 있습니다.', [{text: '나가기', onPress: getOutChatroom}, {text:'취소'}]);}} />
-    </DrawerContentScrollView>
-  );
-}
 async function getPermission(){
   let reply = {ok:false, data: '', message:''};
   const {status} = await Permissions.askAsync(Permissions.NOTIFICATIONS);
@@ -1007,6 +974,7 @@ export default function App() {
       getInformData: () => {return informData},
       getPushData: () => {return pushData},
       getGlobalY: () => {return global_y},
+      getGlobalP: () => {return global_p_id},
       updateUserData: data => userData = data,
       updateProductData: data => {
         let index = dataList.findIndex(obj => obj.id === data.id);
