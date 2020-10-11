@@ -10,6 +10,7 @@ import DateTimePicker from '@react-native-community/datetimepicker'; // https://
 
 import * as TestData from '../testData';
 import {SystemContext} from './Context';
+import {diaryDelete} from './ServerConnect';
 let userData = TestData.userTestData;
 let dataList = TestData.productTestData;
 const diaryImgList = [
@@ -127,7 +128,7 @@ function AnimatableDiaryComponent(props){
     if(!nowTime.isSameOrAfter(nowTime, 'day')) setNowTime(Moment());
   });
 
-  const eraseDiaryHandler = () => { // 다이어리 삭제 기능
+  const eraseDiaryHandler = async () => { // 다이어리 삭제 기능
     let thisPos = userData.myDiaryList[userData.myDiaryList.findIndex(obj => obj.id === id)].pos;  // 현재 위치 확인
     userData.mySubscribeList.splice(userData.mySubscribeList.findIndex(obj => obj.id === id), 1);  // 구독 제거
     userData.myChatroomList.splice(userData.myChatroomList.findIndex(obj => obj.id === id), 1);    // 채팅창 제거
@@ -136,6 +137,8 @@ function AnimatableDiaryComponent(props){
     data.hasChatroom = false;     // 채팅창 없음 셋팅
     data.isSubscribe = false;     // 구독 없음 셋팅
     data.diary.totalUpdateCount = 0;
+    let response = await diaryDelete(userData.token, data.diary.id);
+    if(!response.ok) console.log('다이어리 삭제 오류 : ', response.message);
     props.updateDiary(thisPos);    // 화면 렌더링 & 현재 다이어리보다 높은 위치의 다이어리를 모두 한 칸 아래로 압축
   }
 
