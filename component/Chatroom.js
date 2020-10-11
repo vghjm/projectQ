@@ -96,30 +96,6 @@ export default function MyChatRoomScreen({route, navigation}) {  // 채팅방 �
     }
     console.log('\n@메세지 정상 저장 테스트 : chatroom > onSend\n', data.diary);
 
-    // 답변해결
-    // if(!data.chatroom.lastPushed.solved){
-    //   data.chatroom.lastPushed.solved = true;
-    //   setTimeout(() => {
-    //     let ansMessage = {
-    //       _id: uuid.v4(), text: data.product.ansList[data.chatroom.lastPushed.questIndex], createdAt: Moment(),
-    //       user: { _id:2, avatar: data.product.imageSet.avatarImg.uri?? data.product.imageSet.avatarImg},
-    //     };
-    //     data.chatroom.newItemCount += 1;
-    //     data.chatroom.lastMessageTime = Moment();
-    //     data.chatroom.chatmessageList.unshift(_.cloneDeep(ansMessage));
-    //     data.chatroom.lastMessage = ansMessage.text;
-    //     data.chatroom.lastPushed.ansMessage = _.cloneDeep(ansMessage);
-    //     // Context.popupPushMessage({
-    //     //   image: data.product.imageSet.thumbnailImg,
-    //     //   title: data.product.title,
-    //     //   text: ansMessage.text,
-    //     //   onPress: ()=>navigation.navigate('chatroom', {id: data.id, data:data}),
-    //     //   lastPushed: Moment(),
-    //     //   isPushShowed: true,
-    //     // }, 0);
-    //     setMessages(previousMessages => GiftedChat.append(previousMessages, ansMessage));
-    //   }, 1900);
-    // }
     if(!data.chatroom.lastPushed.solved){
       let ansInfo = data.product.ansList[data.chatroom.lastPushed.questIndex];
       console.log('ansInfo: ', ansInfo);
