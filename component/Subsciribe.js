@@ -4,7 +4,7 @@ import DateTimePicker from '@react-native-community/datetimepicker'; // https://
 import {ProductContext} from './Context';
 import Moment from 'moment';
 import _ from 'lodash'; // https://lodash.com/docs
-import uuid from 'uuid';
+import uuid from 'react-native-uuid'; // https://www.npmjs.com/package/react-native-uuid
 import * as Permissions from 'expo-permissions';
 
 import {SystemContext} from './Context';
