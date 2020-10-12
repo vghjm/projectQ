@@ -14,7 +14,6 @@ import * as Connect from './ServerConnect';
 import {printStatus, printUserData, printDataList, printUnitTest} from './utils/Print';
 
 
-
 function diarySortByDate(myDiaryMessageList){
   myDiaryMessageList.sort((a, b) => {
     return a.createdAt > b.createdAt;

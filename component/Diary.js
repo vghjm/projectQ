@@ -11,22 +11,10 @@ import DateTimePicker from '@react-native-community/datetimepicker'; // https://
 import * as TestData from '../testData';
 import {SystemContext} from './Context';
 import {diaryDelete} from './ServerConnect';
-let userData = TestData.userTestData;
-let dataList = TestData.productTestData;
-const diaryImgList = [
-  require('../assets/icon/diary_1.png'),
-  require('../assets/icon/diary_2.png'),
-  require('../assets/icon/diary_3.png'),
-  require('../assets/icon/diary_4.png'),
-  require('../assets/icon/diary_5.png'),
-  require('../assets/icon/diary_6.png'),
-  require('../assets/icon/diary_7.png'),
-  require('../assets/icon/diary_8.png'),
-  require('../assets/icon/diary_9.png'),
-  require('../assets/icon/diary_10.png'),
-];
-const upArrow = require('../assets/icon/up_arrow.png');
-const downArrow = require('../assets/icon/down_arrow.png');
+import { diaryImgList, downArrow } from './utils/loadAssets';
+// let userData = TestData.userTestData;
+// let dataList = TestData.productTestData;
+
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
 
