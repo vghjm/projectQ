@@ -11,15 +11,16 @@ import * as FileSystem from 'expo-file-system';
 import uuid from 'react-native-uuid'; // https://www.npmjs.com/package/react-native-uuid
 import Moment from 'moment';
 import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npmjs.com/package/react-native-swipe-list-view
+import _ from 'lodash'; // https://lodash.com/docs
 
-
-import {SystemContext, ThemeContext, TestdataContext} from './Context';
+import {SystemContext, ThemeContext, ChatroomDataContext, SubscribeDataContext, ProductDataContext} from './Context';
 import {priceTag, priceTagB} from './utils/loadAssets';
 import * as Connection from './ServerConnect';
 import {DynamicDiaryScreen, DraggableDiary, BasicDiary} from './Diary';
 import ChatroomScreen from './Chatroom';
-import Subscribe from './Subsciribe';
+import SubscribeScreen from './Subsciribe';
 import * as MyPage from './MyPage';
+import { chooseRandomIndex, chooseRandomly } from './utils/utils';
 
 const Stack = createStackNavigator();
 const Tab = createMaterialTopTabNavigator();
@@ -81,20 +82,12 @@ function mainHeaderRightHandler(route, navigation){
     </TouchableOpacity>
   );
 }
-function getAllNewMessageCount(dataList){
+function getAllNewMessageCount(chatroomList){
   let newCount = 0;
-  dataList.forEach(data => {
-    newCount += data.chatroom.newItemCount;
+  chatroomList.forEach(chatroom => {
+    newCount += chatroom.newItemCount;
   });
   return newCount;
-}
-
-// 유용한 함수
-function chooseRandomIndex(a){
-  return Math.floor(Math.random() * a.length);
-}
-function chooseRandomly(a){
-  return a[Math.floor(Math.random() * a.length)];
 }
 
 // 테스트
@@ -176,44 +169,43 @@ function TestScreen({navigation}){
 
 // 메인 페이지
 function SubscribeContentLayout(props){
-  let data = props.data;
-  let productInfo = data.product;
-
+  const product = props.product;
+  const subscribe = props.subscribe;
 
   return (
-    <TouchableOpacity onPress={()=>props.nav.navigate('contentScreen', {id: data.id})}>
+    <TouchableOpacity onPress={()=>props.nav.navigate('contentScreen', {product: product, subscribe: subscribe})}>
     <View style={{flexDirection: 'row', height: 56, margin: 3, marginBottom: 10}}>
-      <Image resizeMode='cover' source={productInfo.imageSet.thumbnailImg} style={{height: 46, borderWidth: 1, borderColor: '#f7f7f7', width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
+      <Image resizeMode='cover' source={product.thumbnailImg} style={{height: 46, borderWidth: 1, borderColor: '#f7f7f7', width: 46, margin: 5, borderRadius: 23, backgroundColor: '#DDD'}}/>
       <View style={{flexDirection: 'column'}}>
-        <Text style={{fontFamily: 'NanumMyeongjo', marginLeft: 10, marginTop: 6, fontSize: 17,fontWeight: '400', width: 220}}>{productInfo.title}</Text>
-        <Text numberOfLines={1} style={{fontFamily: 'NanumMyeongjo', color: '#AAA', fontSize: 12, marginLeft: 13, marginTop:3, width: 230}}>{productInfo.text}</Text>
+        <Text style={{fontFamily: 'NanumMyeongjo', marginLeft: 10, marginTop: 6, fontSize: 17,fontWeight: '400', width: 220}}>{product.title}</Text>
+        <Text numberOfLines={1} style={{fontFamily: 'NanumMyeongjo', color: '#AAA', fontSize: 12, marginLeft: 13, marginTop:3, width: 230}}>{product.text}</Text>
       </View>
     </View>
     </TouchableOpacity>
   );
 }
 function SubscribeListScreen({navigation}){
-  const Context = useContext(SystemContext);
-  let userData = Context.getUserData();
-  let dataList = Context.getProductDataList();
-  const [numberOfSubscribe, setNumberOfSubscribe] = useState(userData.mySubscribeList.length);
+  const subscribeList = useContext(SubscribeDataContext);
+  const productList = useContext(ProductDataContext);
+  let subscribeContent = [], unsubscribeContent = [];
 
-  useFocusEffect(()=>{
-    if(numberOfSubscribe != userData.mySubscribeList.length) setNumberOfSubscribe(userData.mySubscribeList.length);
-  }, []);
+  productList.forEach(product => {
+    if(!subscribeList.some(subscribe => {
+      if(product.p_id == subscribe.p_id){
+        subscribeContent.push({product:product, subscribe: subscribe})
+        return true;
+      }
+    })) unsubscribeContent.push({product:product, subscribe: null});
+  })
 
   return (
     <View style={{flex:1, flexDirection: 'column', backgroundColor: 'white', alignItems: 'flex-start'}}>
       <ScrollView styles={{marginHorizontal: 20}} >
         <Text style={{fontFamily: 'NanumMyeongjo', margin:10, fontSize: 17}}>내 구독 상품</Text>
-          {dataList.map(data => {
-            if(data.isSubscribe) return <SubscribeContentLayout key={uuid.v4()} data={data} nav={navigation}/>
-          })}
+          {subscribeContent.map(content => <SubscribeContentLayout key={uuid.v4()} product={content.product} subscribe={content.subscribe} nav={navigation}/>)}
         <View style={{left:10, right:10, backgroundColor: '#f0f0f0', height:1, marginVertical:7, width: screenWidth*0.98}}/>
         <Text style={{fontFamily: 'NanumMyeongjo', margin:10, marginTop:5, borderTopWidth: 1, fontSize: 17, borderColor: '#CCC'}}>구독 가능한 상품</Text>
-          {dataList.map(data => {
-            if(!data.isSubscribe) return <SubscribeContentLayout key={uuid.v4()} data={data} nav={navigation}/>
-          })}
+          {unsubscribeContent.map(obj => <SubscribeContentLayout key={uuid.v4()} product={content.product} subscribe={content.subscribe} nav={navigation}/>)}
         <View style={{height:200}}/>
       </ScrollView>
     </View>
@@ -446,17 +438,9 @@ function MyDiaryScreen({route, navigation}){
 }
 
 function MainPageScreen({navigation, route}){
-  const [newChatMessageCount, setNewChatMessageCount] = useState(0);
+  const chatroomList = useContext(ChatroomDataContext);
+  const [newChatMessageCount, setNewChatMessageCount] = useState(getAllNewMessageCount(chatroomList));
   const theme = useContext(ThemeContext);
-  const Context = useContext(SystemContext);
-  let dataList = Context.getProductDataList();
-
-  useFocusEffect(() => {
-    let newCount = getAllNewMessageCount(dataList);
-    if(newChatMessageCount != newCount){
-      setNewChatMessageCount(newCount);
-    }
-  });
 
   return (
     <Tab.Navigator
@@ -561,7 +545,7 @@ export default function MainStackHomePage({navigation}) {
           headerTintColor: 'black',
           headerTransparent: true,
         }}
-        component={Subscribe}
+        component={SubscribeScreen}
       />
       <Stack.Screen
         name="Diary"

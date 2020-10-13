@@ -570,37 +570,39 @@ export default function App() {
   const showState = () => {
     console.log('\n @ showState');
     console.log(`------------- myUserDataContext --------------`);
-    console.log(`token: ${myUserDataContext.token}`);
-    console.log(`pushToken: ${myUserDataContext.pushToken}`);
-    console.log(`email: ${myUserDataContext.email}, password: ${myUserDataContext.password}`);
-    console.log(`username: ${myUserDataContext.username}, userImg: ${myUserDataContext.userImg}`);
+    console.log(` token: ${myUserDataContext.token}`);
+    console.log(` pushToken: ${myUserDataContext.pushToken}`);
+    console.log(` email: ${myUserDataContext.email}, password: ${myUserDataContext.password}`);
+    console.log(` username: ${myUserDataContext.username}, userImg: ${myUserDataContext.userImg}\n`);
     console.log(`------------- myProductDataContext --------------`);
     myProductDataContext.forEach((obj, i) => {
-      console.log(`id: ${obj.p_id}, isAvailable: ${obj.isAvailable}`);
-      console.log(`title: ${obj.title}, text: ${obj.text}`);
-      console.log(`imageLoad: ${obj.thumbnailImg !== null && obj.logoImg !== null && obj.mainImg !== null}, pushType: ${obj.pushType}`);
-      console.log(`pushtime: ${obj.defaultStartTime.format('LTS')} ~ ${obj.defaultEndTime.format('LTS')}`);
-      console.log(`questionListCount: ${obj.questionList.length}, ansListCount: ${obj.ansList.length}`);
+      console.log(` id: ${obj.p_id}, isAvailable: ${obj.isAvailable}`);
+      console.log(` title: ${obj.title}, text: ${obj.text}`);
+      console.log(` thumbnailImg: ${obj.thumbnailImg.uri}`);
+      console.log(` logoImg: ${obj.logoImg.uri}`);
+      console.log(` mainImg: ${obj.mainImg.uri}`);
+      console.log(` pushType: ${obj.pushType}, pushtime: ${obj.defaultStartTime.format('LTS')} ~ ${obj.defaultEndTime.format('LTS')}`);
+      console.log(` questionListCount: ${obj.questionList.length}, ansListCount: ${obj.ansList.length}\n`);
     });
     console.log(`------------- mySubscribeDataContext --------------`);
     mySubscribeDataContext.forEach((obj, i) => {
-      console.log(`p_id: ${obj.p_id}, pushTime: ${obj.pushStartTime.format('LTS')} ~ ${obj.pushEndTime.format('LTS')}`);
+      console.log(` p_id: ${obj.p_id}, pushTime: ${obj.pushStartTime.format('LTS')} ~ ${obj.pushEndTime.format('LTS')}`);
     });
     console.log(`------------- myChatroomDataContext --------------`);
     myChatroomDataContext.forEach((obj, i) => {
-      console.log(`p_id: ${obj.p_id}, getPushAlarm: ${obj.getPushAlarm}, lastCheckedTime: ${obj.lastCheckedTime.format('LTS')}, newItemCount: ${obj.newItemCount}`);
-      console.log(`lastPushed -> time: ${obj.lastPushed.pushTime.format('LTS')}, index: ${obj.lastPushed.questIndex}, solved: ${obj.lastPushed.solved}`);
-      console.log(`chatMessageListCount: ${obj.chatMessageList.length}`);
+      console.log(` p_id: ${obj.p_id}, getPushAlarm: ${obj.getPushAlarm}, lastCheckedTime: ${obj.lastCheckedTime.format('LTS')}, newItemCount: ${obj.newItemCount}`);
+      console.log(` lastPushed -> time: ${obj.lastPushed.pushTime.format('LTS')}, index: ${obj.lastPushed.questIndex}, solved: ${obj.lastPushed.solved}`);
+      console.log(` chatMessageListCount: ${obj.chatMessageList.length}\n`);
     });
     console.log(`------------- myDiaryDataContext --------------`);
     myDiaryDataContext.forEach((obj, i) => {
-      console.log(`p_id: ${obj.p_id}, d_id: ${obj.d_id}, color: ${obj.color}, pos: ${obj.pos}, makeTime: ${obj.makeTime.format('LTS')}, totalUpdateCount: ${obj.totalUpdateCount}`);
-      console.log(`diarymessageListCount: ${obj.diarymessageList.length}`);
+      console.log(` p_id: ${obj.p_id}, d_id: ${obj.d_id}, color: ${obj.color}, pos: ${obj.pos}, makeTime: ${obj.makeTime.format('LTS')}, totalUpdateCount: ${obj.totalUpdateCount}`);
+      console.log(` diarymessageListCount: ${obj.diarymessageList.length}\n`);
     });
     console.log(`------------- myInformDataContext --------------`);
-    console.log(`introduction - count: ${myInformDataContext.introduction.length}`);
-    console.log(`help - count: ${myInformDataContext.help.length}`);
-    console.log(`notice - count: ${myInformDataContext.notice.length}`);
+    console.log(` introduction - count: ${myInformDataContext.introduction.length}`);
+    console.log(` help - count: ${myInformDataContext.help.length}`);
+    console.log(` notice - count: ${myInformDataContext.notice.length}\n`);
   };
 
   const updateUserDataContext = async (email, password) => {
@@ -624,14 +626,13 @@ export default function App() {
     }
   }
   const updateSubscribeContext = async (token) => {
-    console.log('token : ', token);
     let response = await downloadSubscribeData({jwt: token, debug:true});
     if(response.ok){
       setMySubscribeDataContext(response.data);
     }
   }
   const updateChatroomDataContext = async () => {
-
+    setMyChatroomDataContext([]);
   }
   const updateDiaryDataContext = async (token) => {
     let response = await downloadDiaryData({jwt:token, debug:true});

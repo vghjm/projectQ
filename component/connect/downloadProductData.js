@@ -22,9 +22,9 @@ async function convertProductType(serverType){
     return {
       p_id: product.p_ID, isAvailable: true,
       title: product.p_name, text: product.p_intro,
-      thumbnailImg: {uri: ADDRESS.FILE + product.thumbnailImg},
-      logoImg: {uri: ADDRESS.FILE + product.logoImg},
-      mainImg: {uri: ADDRESS.FILE + product.mainImg},
+      thumbnailImg: {uri: ADDRESS.FILE + product.img_logo},
+      logoImg: {uri: ADDRESS.FILE + product.img_background},
+      mainImg: {uri: ADDRESS.FILE + product.img_explain},
       pushType: product.pushType,
       defaultStartTime: Moment('20200812 ' + product.start_time),
       defaultEndTime: Moment('20200812 ' + product.end_time),

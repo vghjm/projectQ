@@ -36,6 +36,7 @@ export default async function downloadDiaryData({jwt, debug=false}){
     else {
       reply.ok = true;
       reply.data = await convertDiaryType(json.diary);
+      console.log(' >>> diaryData\n', json.diary);
     }
   }else{
     reply.message = MESSAGE.NO_CONNECT_ERROR;
