@@ -33,7 +33,7 @@ import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npm
 // my component
 import InlineTextInput from './component/InlineTextInput';
 import LoginNavigation from './component/LoginForm';
-import {ThemeContext, AuthContext, SystemContext} from './component/Context';
+import {ThemeContext, AuthContext, ControllContext, SystemContext, UserDataContext, ProductDataContext, SubscribeDataContext, ChatroomDataContext, DiaryDataContext, InformDataContext} from './component/Context';
 import {HTTP, PUSH_REGISTRATION_ENDPOINT} from './component/utils/constants';
 import IntroNavigation from './component/IntroForm';
 import * as Connection from './component/ServerConnect';
@@ -43,6 +43,7 @@ import CustomDrawerContent from './component/CustomDrawerContent';
 import MainStackHomePage from './component/MainStackHomePage';
 import * as TestData from './testData';
 import { logo, subOn, subOff } from './component/utils/loadAssets';
+import * as DefaultDataType from './component/utils/DefaultDataType';
 
 const Drawer = createDrawerNavigator();
 
@@ -56,6 +57,12 @@ var pushList = [];
 var userData;
 var pushCount = 0;
 
+const testAccount = {
+  use: true,
+  email: '77eric@naver.com',
+  password: '!!gmltjd',
+}
+
 // 기기 화면 사이즈
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
@@ -64,13 +71,13 @@ const screenWidth = Dimensions.get('window').width;
 var global_p_id = 0;               // 채팅창 사이드 메뉴에서 다른 상품정보로 보내기 위한 상품 id 값
 var global_y = 0;         // 다이어리리스트 스크린의 스크롤 값
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
+// Notifications.setNotificationHandler({
+//   handleNotification: async () => ({
+//     shouldShowAlert: true,
+//     shouldPlaySound: false,
+//     shouldSetBadge: false,
+//   }),
+// });
 
 
 function getReply(data, popupPushMessage, navigation, updateF){
@@ -101,30 +108,17 @@ function getReply(data, popupPushMessage, navigation, updateF){
   return 'aa';
 }
 
-// app . json
-
-async function getPermission(){
-  let reply = {ok:false, data: '', message:''};
-  const {status} = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+async function warningPermission(){
+  const push = await Permissions.askAsync(Permissions.NOTIFICATIONS);
   const camera = await Permissions.askAsync(Permissions.CAMERA_ROLL);
-  let errorCount = 0;
 
-
-  if (status !== 'granted') {
-    Alert.alert('푸시 권한이 필요합니다.', `status: ${status}`);
-    errorCount++;
+  if(push.status !== 'granted' && camera.status !== 'granted'){
+    Alert.alert('원활한 앱 진행을 위하여 다음 권한이 필요합니다.', ' - 카메라 권환\n - 푸시알림 권한');
+  }else if(push.status !== 'granted'){
+    Alert.alert('원활한 앱 진행을 위하여 다음 권한이 필요합니다.', ' - 푸시알림 권한');
+  }else if(camera.status !== 'granted'){
+    Alert.alert('원활한 앱 진행을 위하여 다음 권한이 필요합니다.', ' - 카메라 권한');
   }
-
-  if(camera.status !== 'granted'){
-    Alert.alert('카메라 권한이 필요합니다.');
-    errorCount++;
-  }
-
-  if(errorCount === 0){
-    reply.ok = true;
-  }
-
-  return reply;
 }
 
 async function diaryBackup(){
@@ -177,6 +171,13 @@ async function diaryBackup(){
     console.log('ERROR : 다이어리 백업 실패 , ', response.message);
   }
 }
+
+// 태스트 모듈
+import loginTest from './component/connect/login';
+import downloadProductDataTest from './component/connect/downloadProductData';
+import downloadSubscribeData from './component/connect/downloadSubscribeData';
+import downloadDiaryData from './component/connect/downloadDiaryData';
+
 
 export default function App() {
   const [state, dispatch] = React.useReducer(
@@ -236,12 +237,6 @@ export default function App() {
             noAuth: true,
             nowLoading: false,
           };
-        case 'UPDATE':
-          // 유저정보 갱신용
-          return {
-            ...prevState,
-            update: state.update + 1,
-          };
       }
     },
     {
@@ -251,7 +246,6 @@ export default function App() {
       intro: true,
       login: false,
       token: '',
-      update: 1,
     }
   );  // 유저 인증 정보
   const authContext = React.useMemo(
@@ -331,11 +325,24 @@ export default function App() {
 
   // 푸시등록
   const handleNotification1 = ({request}) => {
-    let content = request.content
-    let q_id = content.data.q_ID[0];
-    let message = content.body;
+    const content = request.content;
+    const diaryID = content.data.diary_ID;
+    const productID = content.data.product_ID;
+    const question = content.data.question;
+    const questionID = content.data.question_ID;
+    const title = content.title;
+    let data = dataList[dataList.findIndex(obj => obj.id===productID)];
+
+
     console.log(`\n notify receive  content\n`, content);
-    popupPushMessage();
+    popupPushMessage({
+      image: data.product.imageSet.mainImg,
+      title: title,
+      text: question,
+      onPress: ()=>navigation.navigate('chatroom', {id: productID, data:data}),
+      lastPushed: Moment(),
+      isPushShowed: true,
+    });
   };
   const handleNotification2 = (notify) => {
     setNotification(notify);
@@ -397,22 +404,18 @@ export default function App() {
     isReady: false,
   });
   const bootstrapAsync = async () => {
-    console.log('\nbootstrapAsync\n시작시간 : ', Moment().toDate());
+    console.log('\n @ bootstrapAsync\n\t시작시간 : ', Moment().format('LTS'));
 
-    let permission = await getPermission();
-
-    //if(!permission.ok) return dispatch({ type: 'NO_AUTH' });
-
-    //await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory+'image/', { intermediates: true });
-
+    warningPermission();
     Storage.updateProductData()
       .then(response => {
         if(response.ok) {
           //console.log('updateProductData: success\n', response.data);
           dataList = response.data;
+          console.log('\tupdateProductData: true');
           setLoadProductData(true);
         }else{
-          console.log('updateProductData: false');
+          console.log('\tupdateProductData: false');
         }
       });
 
@@ -431,6 +434,7 @@ export default function App() {
           let isFirstLogin = cache.data.isFirstLogin;
           //isFirstLogin ? dispatch({type: 'END_LOADING_FIRST_LOGIN', action: token}) : dispatch({type: 'END_LOADING_LOGIN_PAGE', action: token});
         }
+        console.log(`\temail: ${email}, password: ${password}\n\tautoLogin: ${autoLogin}, isFirstLogin: ${isFirstLogin}`);
         setUpdateCacheData({
           autoLogin: autoLogin,
           email: email,
@@ -440,11 +444,7 @@ export default function App() {
         });
       });
   };
-  let testAccount = {
-    use: true,
-    email: '77eric@naver.com',
-    password: '!!gmltjd',
-  }
+
   useEffect(() => {
     let move = null;
     let cache = null;
@@ -499,7 +499,6 @@ export default function App() {
   const updateFunction = async () => {
     console.log('update Start');
     bootstrapAsync();
-    console.log('update End');
   };
   const defaultLogin = async (email, password) => {
     console.log('자동 로그인 ~');
@@ -552,6 +551,117 @@ export default function App() {
     }, timer);
   }
 
+
+  // 새로운 데이터 타입 state
+  const [myUserDataContext, setMyUserDataContext] = useState(DefaultDataType.userDataType);
+  const [myProductDataContext, setMyProductDataContext] = useState(DefaultDataType.productDataType);
+  const [mySubscribeDataContext, setMySubscribeDataContext] = useState(DefaultDataType.subscribeDataType);
+  const [myChatroomDataContext, setMyChatroomDataContext] = useState(DefaultDataType.chatroomDataType);
+  const [myDiaryDataContext, setMyDiaryDataContext] = useState(DefaultDataType.diaryDataType);
+  const [myInformDataContext, setMyInformDataContext] = useState(DefaultDataType.informDataType);
+
+  const controllContext = React.useMemo(
+    () => ({
+      function: () => {},
+    }),
+    []
+  );
+
+  const showState = () => {
+    console.log('\n @ showState');
+    console.log(`------------- myUserDataContext --------------`);
+    console.log(`token: ${myUserDataContext.token}`);
+    console.log(`pushToken: ${myUserDataContext.pushToken}`);
+    console.log(`email: ${myUserDataContext.email}, password: ${myUserDataContext.password}`);
+    console.log(`username: ${myUserDataContext.username}, userImg: ${myUserDataContext.userImg}`);
+    console.log(`------------- myProductDataContext --------------`);
+    myProductDataContext.forEach((obj, i) => {
+      console.log(`id: ${obj.p_id}, isAvailable: ${obj.isAvailable}`);
+      console.log(`title: ${obj.title}, text: ${obj.text}`);
+      console.log(`imageLoad: ${obj.thumbnailImg !== null && obj.logoImg !== null && obj.mainImg !== null}, pushType: ${obj.pushType}`);
+      console.log(`pushtime: ${obj.defaultStartTime.format('LTS')} ~ ${obj.defaultEndTime.format('LTS')}`);
+      console.log(`questionListCount: ${obj.questionList.length}, ansListCount: ${obj.ansList.length}`);
+    });
+    console.log(`------------- mySubscribeDataContext --------------`);
+    mySubscribeDataContext.forEach((obj, i) => {
+      console.log(`p_id: ${obj.p_id}, pushTime: ${obj.pushStartTime.format('LTS')} ~ ${obj.pushEndTime.format('LTS')}`);
+    });
+    console.log(`------------- myChatroomDataContext --------------`);
+    myChatroomDataContext.forEach((obj, i) => {
+      console.log(`p_id: ${obj.p_id}, getPushAlarm: ${obj.getPushAlarm}, lastCheckedTime: ${obj.lastCheckedTime.format('LTS')}, newItemCount: ${obj.newItemCount}`);
+      console.log(`lastPushed -> time: ${obj.lastPushed.pushTime.format('LTS')}, index: ${obj.lastPushed.questIndex}, solved: ${obj.lastPushed.solved}`);
+      console.log(`chatMessageListCount: ${obj.chatMessageList.length}`);
+    });
+    console.log(`------------- myDiaryDataContext --------------`);
+    myDiaryDataContext.forEach((obj, i) => {
+      console.log(`p_id: ${obj.p_id}, d_id: ${obj.d_id}, color: ${obj.color}, pos: ${obj.pos}, makeTime: ${obj.makeTime.format('LTS')}, totalUpdateCount: ${obj.totalUpdateCount}`);
+      console.log(`diarymessageListCount: ${obj.diarymessageList.length}`);
+    });
+    console.log(`------------- myInformDataContext --------------`);
+    console.log(`introduction - count: ${myInformDataContext.introduction.length}`);
+    console.log(`help - count: ${myInformDataContext.help.length}`);
+    console.log(`notice - count: ${myInformDataContext.notice.length}`);
+  };
+
+  const updateUserDataContext = async (email, password) => {
+    let response = await loginTest({email:email, password:password, debug:true});
+    if(response.ok){
+      setMyUserDataContext({
+        token: response.data.token,
+        pushToken: 'EXP[TempPushToken]',
+        email: email,
+        password: password,
+        username: response.data.username,
+        userImg: 0,
+      })
+    }
+    return response.data.token;
+  }
+  const updateProductDataContext = async () => {
+    let response = await downloadProductDataTest({debug:true});
+    if(response.ok){
+      setMyProductDataContext(response.data);
+    }
+  }
+  const updateSubscribeContext = async (token) => {
+    console.log('token : ', token);
+    let response = await downloadSubscribeData({jwt: token, debug:true});
+    if(response.ok){
+      setMySubscribeDataContext(response.data);
+    }
+  }
+  const updateChatroomDataContext = async () => {
+
+  }
+  const updateDiaryDataContext = async (token) => {
+    let response = await downloadDiaryData({jwt:token, debug:true});
+    if(response.ok){
+      setMyDiaryDataContext(response.data);
+    }
+  }
+  const updateInformDataContext = async () => {
+
+  }
+  const stateUpdateList = async () => {
+    let email = testAccount.email, password = testAccount.password;
+    let token = await updateUserDataContext(email, password);
+    await updateProductDataContext();
+    await updateSubscribeContext(token);
+    await updateChatroomDataContext();
+    await updateDiaryDataContext(token);
+    await updateInformDataContext();
+  };
+
+  const resetState = async () => {
+    console.log('\n @ 상태 초기화');
+    setMyUserDataContext(DefaultDataType.userDataType);
+    setMyProductDataContext(DefaultDataType.productDataType);
+    setMySubscribeDataContext(DefaultDataType.subscribeDataType);
+    setMyChatroomDataContext(DefaultDataType.chatroomDataType);
+    setMyDiaryDataContext(DefaultDataType.diaryDataType);
+    setMyInformDataContext(DefaultDataType.informDataType);
+  };
+
   return (
     <ThemeContext.Provider value={theme}>
     <AuthContext.Provider value={authContext}>
@@ -574,7 +684,16 @@ export default function App() {
             <Text>업데이트 상품정보</Text>
           </TouchableOpacity>
           <TouchableOpacity style={{margin: 10}} onPress={() => popupPushMessage(null)}>
-            <Text>푸시 뛰우기</Text>
+            <Text style={{color: 'green'}}>푸시 테스트</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{margin: 10}} onPress={() => showState()}>
+            <Text style={{color: 'green'}}>state display</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{margin: 10}} onPress={() => stateUpdateList()}>
+            <Text style={{color: 'green'}}>state update</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{margin: 10}} onPress={() => resetState()}>
+            <Text style={{color: 'green'}}>state reset</Text>
           </TouchableOpacity>
         </View>
       ) : state.nowLoading === true ? (
@@ -589,13 +708,27 @@ export default function App() {
         <LoginNavigation/>
       )
       : (
+        <ControllContext.Provider value={controllContext}>
         <SystemContext.Provider value={systemContext}>
+        <UserDataContext.Provider value={myUserDataContext}>
+        <ProductDataContext.Provider value={myProductDataContext}>
+        <SubscribeDataContext.Provider value={mySubscribeDataContext}>
+        <ChatroomDataContext.Provider value={myChatroomDataContext}>
+        <DiaryDataContext.Provider value={myDiaryDataContext}>
+        <InformDataContext.Provider value={myInformDataContext}>
         <NavigationContainer>
           <Drawer.Navigator drawerPosition='right' drawerStyle={{backgroundColor: '#CCC'}} drawerContent={props => <CustomDrawerContent {...props}/>}>
             <Drawer.Screen name='sidebar' component={MainStackHomePage} options={{swipeEnabled: false}}/>
           </Drawer.Navigator>
         </NavigationContainer>
+        </InformDataContext.Provider>
+        </DiaryDataContext.Provider>
+        </ChatroomDataContext.Provider>
+        </SubscribeDataContext.Provider>
+        </ProductDataContext.Provider>
+        </UserDataContext.Provider>
         </SystemContext.Provider>
+        </ControllContext.Provider>
       )}
       {pushContext.isPushShowed && <PushNotification.PushMessage pushData={pushContext}/>}
     </AuthContext.Provider>

@@ -1,5 +1,5 @@
 import React, {useContext, useEffect, useState} from 'react';
-import {TouchableOpacity, View, Text, Alert, Clipboard, ScrollView, Image, TouchableHighlight, Dimensions} from 'react-native';
+import {TouchableOpacity, View, Text, Alert, Clipboard, ScrollView, Image, TouchableHighlight, Dimensions, TextInput} from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer, getFocusedRouteNameFromRoute, useFocusEffect } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
@@ -13,7 +13,7 @@ import Moment from 'moment';
 import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npmjs.com/package/react-native-swipe-list-view
 
 
-import {SystemContext, ThemeContext} from './Context';
+import {SystemContext, ThemeContext, TestdataContext} from './Context';
 import {priceTag, priceTagB} from './utils/loadAssets';
 import * as Connection from './ServerConnect';
 import {DynamicDiaryScreen, DraggableDiary, BasicDiary} from './Diary';
@@ -99,7 +99,6 @@ function chooseRandomly(a){
 
 // 테스트
 function TestScreen({navigation}){
-  const [mytext, setMytext] = useState('빈 텍스트 칸');
   let url;
 
   const printToPdf = async () => {

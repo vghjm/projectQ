@@ -16,10 +16,6 @@ const screenWidth = Dimensions.get('window').width;
 const subOn = require('../assets/icon/subOn.png');
 const subOff = require('../assets/icon/subOff.png');
 
-//import * as TestData from '../testData';
-//let userData = TestData.userTestData;
-//let dataList = TestData.productTestData;
-
 // 구독 상품 화면
 export default function SubscribeContentScreen({route, navigation}){
   const Context = useContext(SystemContext);
@@ -98,7 +94,7 @@ export default function SubscribeContentScreen({route, navigation}){
 
       // 다이어리 초기 데이터 구성
       let makeDiaryData = {
-        makeTime: Moment(), totalUpdateCount: 0, diarymessageList: [],
+        makeTime: Moment(), totalUpdateCount: 0, diarymessageList: [], id:uuid.v4(),
       };
 
       data.diary = _.cloneDeep(makeDiaryData); // 다이어리 데이터 연결
