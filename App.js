@@ -470,8 +470,7 @@ export default function App() {
         move = 'END_LOADING_LOGIN_PAGE';
         dispatch({ type: move});
       }
-    }
-  }, [loadProductData, updateCacheData, loaded]);
+    }}, [loadProductData, updateCacheData, loaded]);
 
   // 백그라운드 및 Inactive 감지 함수
   const appState = useRef(AppState.currentState);
@@ -551,7 +550,6 @@ export default function App() {
     }, timer);
   }
 
-
   // 새로운 데이터 타입 state
   const [myUserDataContext, setMyUserDataContext] = useState(DefaultDataType.userDataType);
   const [myProductDataContext, setMyProductDataContext] = useState(DefaultDataType.productDataType);
@@ -563,8 +561,34 @@ export default function App() {
   const controllContext = React.useMemo(
     () => ({
       function: () => {},
+      alarmSettingChanger: (p_id) => {
+        setMyChatroomDataContext(myChatroomDataContext.map(chatroom => {
+          if(chatroom.p_id === p_id) chatroom.getPushAlarm = !chatroom.getPushAlarm;
+          return chatroom;
+        }))
+        console.log('alarmSettingChanger : ', p_id);
+      },
+      showState: () => showState(),
+      changeDiaryPos: (start, end) => {
+        let endPos = myDiaryDataContext.length;
+        if(end > endPos){
+          setMyDiaryDataContext(myDiaryDataContext.map(diary => {
+            if(diary.pos > start) diary.pos -= 1;
+            else if(diary.pos === start) diary.pos = endPos;
+            return diary;
+          }));
+        }else{
+          setMyDiaryDataContext(myDiaryDataContext.map(diary => {
+            if(diary.pos === start) diary.pos = end;
+            else if(diary.pos === end) diary.pos = start;
+            return diary;
+          }));
+        }
+        console.log(` > controllContext/changeDiaryPos ${start} -> ${end}`);
+      },
+      eraseDiary: () => {}
     }),
-    []
+    [myUserDataContext, myProductDataContext, mySubscribeDataContext, myChatroomDataContext, myDiaryDataContext, myInformDataContext]
   );
 
   const showState = () => {
@@ -630,11 +654,26 @@ export default function App() {
     if(response.ok){
       setMySubscribeDataContext(response.data);
     }
+    return response.data.map(obj => obj.p_id);
   }
-  const updateChatroomDataContext = async () => {
-    setMyChatroomDataContext([]);
+  const updateChatroomDataContext = async (subList) => {
+    let protoChatroomData = subList.map(id => {
+      return {
+        p_id: id, getPushAlarm: true, lastCheckedTime: Moment(), newItemCount: 0, chatMessageList: [],
+        lastPushed: {pushTime: Moment(), questIndex: 1, solved:true}
+      }
+    });
+    setMyChatroomDataContext(protoChatroomData);
   }
-  const updateDiaryDataContext = async (token) => {
+  const updateDiaryDataContext = async (subList, token) => {
+    let _pos = -1;
+    let protoDiaryData = subList.map(id => {
+      _pos += 1;
+      return {
+        p_id: id, d_id: id, color: _pos%10, pos: _pos, makeTime: Moment(), totalUpdateCount: 0,
+        diarymessageList: []
+      };
+    })
     let response = await downloadDiaryData({jwt:token, debug:true});
     if(response.ok){
       setMyDiaryDataContext(response.data);
@@ -647,10 +686,11 @@ export default function App() {
     let email = testAccount.email, password = testAccount.password;
     let token = await updateUserDataContext(email, password);
     await updateProductDataContext();
-    await updateSubscribeContext(token);
-    await updateChatroomDataContext();
-    await updateDiaryDataContext(token);
+    let subList = await updateSubscribeContext(token);
+    await updateChatroomDataContext(subList);
+    await updateDiaryDataContext(subList, token);
     await updateInformDataContext();
+    alert('업데이트 완료');
   };
 
   const resetState = async () => {

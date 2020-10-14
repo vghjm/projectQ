@@ -13,9 +13,9 @@ import Moment from 'moment';
 import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npmjs.com/package/react-native-swipe-list-view
 import _ from 'lodash'; // https://lodash.com/docs
 
-import {SystemContext, ThemeContext, ChatroomDataContext, SubscribeDataContext, ProductDataContext} from './Context';
-import {priceTag, priceTagB} from './utils/loadAssets';
+import {SystemContext, ThemeContext, UserDataContext, ChatroomDataContext, SubscribeDataContext, ProductDataContext, ControllContext, DiaryDataContext} from './Context';
 import * as Connection from './ServerConnect';
+import {priceTag, priceTagB} from './utils/loadAssets';
 import {DynamicDiaryScreen, DraggableDiary, BasicDiary} from './Diary';
 import ChatroomScreen from './Chatroom';
 import SubscribeScreen from './Subsciribe';
@@ -92,6 +92,7 @@ function getAllNewMessageCount(chatroomList){
 
 // 테스트
 function TestScreen({navigation}){
+  const { showState } = useContext(ControllContext);
   let url;
 
   const printToPdf = async () => {
@@ -161,6 +162,9 @@ function TestScreen({navigation}){
       <TouchableOpacity onPress={showDataList} style={{margin:20}}>
         <Text style={{fontFamily: 'NanumMyeongjo'}}>dataList show</Text>
       </TouchableOpacity>
+      <TouchableOpacity onPress={showState} style={{margin:20}}>
+        <Text style={{fontFamily: 'NanumMyeongjo'}}>state show</Text>
+      </TouchableOpacity>
     </View>
     </ScrollView>
   );
@@ -211,25 +215,13 @@ function SubscribeListScreen({navigation}){
     </View>
   );
 }
-function HiddenLayer({alarmData}){
-  const [alarm, setAlarm] = useState(alarmData);
-
-  const alarmOnOffhandler = () => {
-    if(alarm) {
-      // 알람 끄기
-      alarmData = false;
-      setAlarm(false);
-    } else {
-      // 알람 켜기
-      alarmData = true;
-      setAlarm(true);
-    }
-  }
-
+function HiddenLayer({chatroom, alarmSettingChanger}){
+  const p_id = chatroom.p_id;
+  const alarmData = chatroom.getPushAlarm;
   return (
-    <TouchableOpacity onPress={alarmOnOffhandler}>
+    <TouchableOpacity onPress={() => alarmSettingChanger(p_id)}>
       <View style={{backgroundColor: '#cffffe', padding:11, paddingLeft: 30, justifyContent: 'center'}}>
-          {alarm
+          {alarmData
             ? <Feather name="bell-off" size={34} color="black" />
             : <Feather name="bell" size={34} color="black" />
           }
@@ -238,40 +230,21 @@ function HiddenLayer({alarmData}){
   );
 }
 function ChatroomContentLayout(props){
-  const id = props.id;
-  const Context = useContext(SystemContext);
+  const chatroom = props.chatroom;
+  const product = props.product;
+  const nav = props.nav;
   const theme = useContext(ThemeContext);
-  let dataList = Context.getProductDataList();
-  const data = dataList[dataList.findIndex(obj => obj.id===id)];
-
-
-  const productInfo  = data.product;
-  const [lastMessageTime, setLastMessageTime] = useState(data.chatroom.lastMessageTime);  // 최신 메세지 업데이트 시간
-  const [newItemCount, setNewItemCount] = useState(data.chatroom.newItemCount);   // 최신 알림 수
-  const [fromNowTime, setFromNowTime] = useState(lastMessageTime.fromNow());  // 최신 메세지 업데이트 시간, 자연적인 설명버전
-  const [topMessage, setTopMessage] = useState(data.chatroom.lastMessage);
-
-  useFocusEffect(()=>{
-    if(newItemCount !== data.chatroom.newItemCount){
-      setNewItemCount(data.chatroom.newItemCount);
-    }
-    if(lastMessageTime !== data.chatroom.lastMessageTime){
-      setLastMessageTime(data.chatroom.lastMessageTime);
-    }
-    if(fromNowTime !== lastMessageTime.fromNow()){
-      setFromNowTime(lastMessageTime.fromNow());
-    }
-    if(topMessage !== data.chatroom.lastMessage){
-      setTopMessage(data.chatroom.lastMessage);
-    }
-  });
+  const [lastCheckedTime, setLastCheckedTime] = useState(chatroom.lastCheckedTime);  // 최신 메세지 업데이트 시간
+  const [newItemCount, setNewItemCount] = useState(chatroom.newItemCount);   // 최신 알림 수
+  const [fromNowTime, setFromNowTime] = useState(lastCheckedTime.fromNow());  // 최신 메세지 업데이트 시간, 자연적인 설명버전
+  const [topMessage, setTopMessage] = useState(chatroom.chatMessageList.length===0?'':chatroom.chatMessageList[0].text);
 
   return (
-    <TouchableHighlight style={{marginBottom: 10}} onPress={()=>props.nav.navigate('chatroom', {id: id})}>
+    <TouchableHighlight style={{marginBottom: 10}} onPress={()=>nav.navigate('chatroom', {chatroom: chatroom, product: product})}>
     <View style={{flexDirection: 'row', height: 60, backgroundColor: 'white'}}>
-      <Image source={productInfo.imageSet.thumbnailImg} style={{height: 46, width: 46, margin: 5,borderWidth: 1, borderColor: '#f7f7f7', marginLeft: 10, borderRadius: 23, backgroundColor: '#DDD'}}/>
+      <Image source={product.thumbnailImg} style={{height: 46, width: 46, margin: 5,borderWidth: 1, borderColor: '#f7f7f7', marginLeft: 10, borderRadius: 23, backgroundColor: '#DDD'}}/>
       <View style={{flexDirection: 'column'}}>
-        <Text style={{fontFamily: 'NanumMyeongjo', marginLeft: 10, marginTop: 6, fontSize: 17,fontWeight: '400', width: 220}}>{productInfo.title}</Text>
+        <Text style={{fontFamily: 'NanumMyeongjo', marginLeft: 10, marginTop: 6, fontSize: 17,fontWeight: '400', width: 220}}>{product.title}</Text>
         <Text numberOfLines={1} style={{fontFamily: 'NanumMyeongjo', color: '#AAA', fontSize: 12, marginLeft: 13, marginTop:3, width: 230}}>{topMessage}</Text>
       </View>
       <View style={{flex:1, flexDirection: 'column', alignItems: 'flex-end'}}>
@@ -283,18 +256,18 @@ function ChatroomContentLayout(props){
   );
 }
 function MyChatListScreen({navigation, route}){
-  const Context = useContext(SystemContext);
-  let userData = Context.getUserData();
-  let dataList = Context.getProductDataList();
-  const [noSubscribe, setNoSubscribe] = useState(true);
-  const [numberOfChatroom, setNumberOfChatroom] = useState(userData.myChatroomList.length);
-  const [listViewData, setListViewData] = useState(userData.myChatroomList);
-  const [updateChatListScreen, setUpdateChatListScreen] = useState(0);
+  const chatroomList = useContext(ChatroomDataContext);
+  const productList = useContext(ProductDataContext);
+  const { alarmSettingChanger } = useContext(ControllContext);
+  const numberOfChatroom = chatroomList.length;
+  const [listViewData, setListViewData] = useState(chatroomList.map(chatroom => {
+    return {
+      key: chatroom.p_id.toString(),
+      chatroom: chatroom,
+      product: productList[productList.findIndex(product => product.p_id===chatroom.p_id)]
+    };
+  }));
   const {popupPushMessage} = useContext(SystemContext);
-
-  const getPushMessage = () => {
-    setUpdateChatListScreen(updateChatListScreen + 1);
-  }
 
   const NoSubscribeInform = (navigation) => {
     return (
@@ -307,130 +280,121 @@ function MyChatListScreen({navigation, route}){
     );
   }
 
-  useFocusEffect(()=>{
-    if(userData.mySubscribeList.length === 0 && noSubscribe===false || userData.mySubscribeList.length != 0 && noSubscribe===true) setNoSubscribe(!noSubscribe);
-    if(numberOfChatroom != userData.myChatroomList.length) {
-      setNumberOfChatroom(userData.myChatroomList.length);
-      setListViewData(userData.myChatroomList);
-    }
-  });
-
-  // 푸시
-  const pushMessage = (id) => {
-    // 랜덤한 질문 메시지를 만들어 채팅방에 추가함
-    let data = dataList[dataList.findIndex(obj => obj.id===id)];
-    let product = data.product;
-    let chatroom = data.chatroom;
-    let avatar = product.imageSet.avatarImg.uri?? product.imageSet.avatarImg;
-    let randomIndex = chooseRandomIndex(product.questionList);
-    let newMessage = { _id: uuid.v4(), text: product.questionList[randomIndex].content, createdAt: Moment(),
-      user: { _id:2, avatar: avatar}
-    };
-    chatroom.newItemCount += 1;
-    chatroom.chatmessageList.unshift(_.cloneDeep(newMessage));
-    chatroom.lastMessageTime = Moment();
-    chatroom.lastMessage = newMessage.text;
-    chatroom.lastPushed = {pushTime: Moment(), questIndex: randomIndex, solved:false};
-    popupPushMessage({
-      image: product.imageSet.thumbnailImg,
-      title: product.title,
-      text: newMessage.text,
-      onPress: ()=>navigation.navigate('chatroom', {id: id, data:data}),
-      lastPushed: Moment(),
-      isPushShowed: true,
-    });
-  }
-  const pushTestHandler = (updateScreenHandler) => {  // 간단한 푸시 테스트함수
-    let pushTestId = chooseRandomly(userData.mySubscribeList).id;
+  // // 푸시
+  // const pushMessage = (p_id) => {
+  //   // 랜덤한 질문 메시지를 만들어 채팅방에 추가함
+  //   let data = dataList[dataList.findIndex(obj => obj.id===id)];
+  //   let product = data.product;
+  //   let chatroom = data.chatroom;
+  //   let avatar = product.imageSet.avatarImg.uri?? product.imageSet.avatarImg;
+  //   let randomIndex = chooseRandomIndex(product.questionList);
+  //   let newMessage = { _id: uuid.v4(), text: product.questionList[randomIndex].content, createdAt: Moment(),
+  //     user: { _id:2, avatar: avatar}
+  //   };
+  //   chatroom.newItemCount += 1;
+  //   chatroom.chatmessageList.unshift(_.cloneDeep(newMessage));
+  //   chatroom.lastMessageTime = Moment();
+  //   chatroom.lastMessage = newMessage.text;
+  //   chatroom.lastPushed = {pushTime: Moment(), questIndex: randomIndex, solved:false};
+  //   popupPushMessage({
+  //     image: product.imageSet.thumbnailImg,
+  //     title: product.title,
+  //     text: newMessage.text,
+  //     onPress: ()=>navigation.navigate('chatroom', {id: id, data:data}),
+  //     lastPushed: Moment(),
+  //     isPushShowed: true,
+  //   });
+  // }
+  const pushTestHandler = () => {  // 간단한 푸시 테스트함수
+    let pushTestId = chooseRandomly(chatroomList).p_id;
     if(pushTestId != null){
-      pushMessage(pushTestId);
-      updateScreenHandler();  // 화면 강제 업데이트
+      // pushMessage(pushTestId);
     }
   }
 
   return (
     <View style={{flex:1, flexDirection: 'column', backgroundColor: 'white'}}>
-      {noSubscribe ? NoSubscribeInform(navigation) : <Text/>}
+      {numberOfChatroom===0 ? NoSubscribeInform(navigation) : <Text/>}
       <SwipeListView
         data={listViewData}
-        renderHiddenItem={(data, rowMap)=>(<HiddenLayer key={data.item.id.toString()} alarmData={data.item.getPushAlarm}/>)}
+        renderHiddenItem={(data, rowMap)=>(<HiddenLayer key={data.item.key} chatroom={data.item.chatroom} alarmSettingChanger={alarmSettingChanger}/>)}
         renderItem={(data, rowMap)=>(
-          <ChatroomContentLayout key={data.item.id.toString()} id={data.item.id} nav={navigation}/>
+          <ChatroomContentLayout key={data.item.key} chatroom={data.item.chatroom} product={data.item.product} nav={navigation}/>
         )}
         onRowOpen={(rowKey, rowMap, toValue)=>setTimeout(()=>rowMap[rowKey].closeRow(), 2000)}
         leftOpenValue={90}
         closeOnRowPress={true}
         closeOnScroll={true}
       />
-      <TouchableHighlight onPress={()=>pushTestHandler(getPushMessage)} style={{position:'absolute', width:60, height: 60, right:15, bottom: 15, borderWidth: 1, borderRadius: 30, backgroundColor: 'gray', alignItems: 'center', justifyContent: 'center'}}>
+      <TouchableHighlight onPress={()=>pushTestHandler()} style={{position:'absolute', width:60, height: 60, right:15, bottom: 15, borderWidth: 1, borderRadius: 30, backgroundColor: 'gray', alignItems: 'center', justifyContent: 'center'}}>
         <Text style={{color: 'white', fontSize: 24}}>푸시</Text>
       </TouchableHighlight>
     </View>
   );
 }
 function MyDiaryScreen({route, navigation}){
-  const Context = useContext(SystemContext);
-  let userData = Context.getUserData();
+  const diaryList = useContext(DiaryDataContext);
+  const { changeDiaryPos, eraseDiary } = useContext(ControllContext);
   const [editMode, setEditMode] = useState(false);    // 편집모드 중인경우 애니메이션 기능
-  const [numberOfDiary, setNumberOfDiary] = useState(-1); // 다이어리의 수
-  const [updated, setUpdated] = useState(1);      // 강제 스크린 업데이트
-  const [backgroundWidth, setBackgroundWidth] = useState(0); // 배경의 크기
+  const [numberOfDiary, setNumberOfDiary] = useState(diaryList.length); // 다이어리의 수
+  const [backgroundWidth, setBackgroundWidth] = useState(
+    Math.ceil(numberOfDiary/2)*300 <= screenHeight-90 ? screenHeight-90 : Math.ceil(numberOfDiary/2)*300
+  ); // 배경의 크기
   const [cancelScroll, setCancelScroll] = useState(true);
+  const [globalY, setGlobalY] = useState(0);
 
   const changeCnacelScrollHandler = (value) => {
     if(value !== cancelScroll) setCancelScroll(value);
   }
 
   const changePosHandler = (start, end) => {
-    if(end > userData.myDiaryList.length){
-      userData.myDiaryList.forEach((obj) => {
-        if(obj.pos > start){
-          obj.pos -= 1;
-        }else if(obj.pos === start){
-          obj.pos = userData.myDiaryList.length;
-        }
-      })
-    }else {
-      let startIndex = userData.myDiaryList.findIndex(obj => obj.pos === start);
-      let endIndex = userData.myDiaryList.findIndex(obj => obj.pos === end);
-      console.log('start, end : ', start, end);
-      userData.myDiaryList[startIndex].pos = end;
-      userData.myDiaryList[endIndex].pos = start;
-    }
-    setUpdated(updated+1);
+    // if(end > numberOfDiary){
+    //   userData.myDiaryList.forEach((obj) => {
+    //     if(obj.pos > start){
+    //       obj.pos -= 1;
+    //     }else if(obj.pos === start){
+    //       obj.pos = userData.myDiaryList.length;
+    //     }
+    //   })
+    // }else {
+    //   let startIndex = userData.myDiaryList.findIndex(obj => obj.pos === start);
+    //   let endIndex = userData.myDiaryList.findIndex(obj => obj.pos === end);
+    //   console.log('start, end : ', start, end);
+    //   userData.myDiaryList[startIndex].pos = end;
+    //   userData.myDiaryList[endIndex].pos = start;
+    // }
   }; // 다이어리간의 위치를 바꿔주는 기능
 
   const setBackgroundWidthFunc = () => {
-    let size = Math.ceil(userData.myDiaryList.length/2)*300;
-    if(size <= screenHeight-90) setBackgroundWidth(screenHeight-90);
-    else setBackgroundWidth(size);
+    // let size = Math.ceil(numberOfDiary/2)*300;
+    // if(size <= screenHeight-90) setBackgroundWidth(screenHeight-90);
+    // else setBackgroundWidth(size);
   }
 
   const updateDiary = (erasePos) => {
-    userData.myDiaryList.forEach(obj => {
-      if(obj.pos > erasePos) obj.pos -= 1;
-    });
-    setBackgroundWidthFunc();
-    setNumberOfDiary(userData.myDiaryList.length);
-    setUpdated(updated+1);
+    // userData.myDiaryList.forEach(obj => {
+    //   if(obj.pos > erasePos) obj.pos -= 1;
+    // });
+    // setBackgroundWidthFunc();
+    // setNumberOfDiary(userData.myDiaryList.length);
   };
 
   useFocusEffect(()=>{
-    if(editMode != pressDiaryEditButton) setEditMode(pressDiaryEditButton);
-    if(numberOfDiary != userData.myDiaryList.length){
-      setNumberOfDiary(userData.myDiaryList.length);
-      setBackgroundWidthFunc();
-    }
+    // if(editMode != pressDiaryEditButton) setEditMode(pressDiaryEditButton);
+    // if(numberOfDiary != userData.myDiaryList.length){
+    //   setNumberOfDiary(userData.myDiaryList.length);
+    //   setBackgroundWidthFunc();
+    // }
   });
 
   return (
-    <ScrollView canCancelContentTouches={cancelScroll} bounces={false} onScroll={(event) => {global_y = event.nativeEvent.contentOffset.y}}>
+    <ScrollView canCancelContentTouches={cancelScroll} bounces={false} onScroll={(event) => {globalY = event.nativeEvent.contentOffset.y}}>
       <View style={{width: screenWidth, height: backgroundWidth, backgroundColor: 'white'}}>
         {numberOfDiary < 1 && <View style={{fontFamily: 'NanumMyeongjo', flex:1, flexDirection: 'column',  justifyContent: 'center', alignItems: 'center'}}><Text style={{fontFamily: 'NanumMyeongjo'}}>생성된 다이어리가 없습니다.</Text></View>}
-        {userData.myDiaryList.map((obj) => {
+        {diaryList.map(diary => {
           return editMode ?
-            <DraggableDiary key={obj.id} id={obj.id} nav={navigation} changePosHandler={changePosHandler} updateDiary={updateDiary} cancelDrag={changeCnacelScrollHandler}/> :
-            <BasicDiary key={obj.id} id={obj.id} nav={navigation} changePosHandler={changePosHandler}/>
+            <DraggableDiary key={diary.d_id} id={diary.d_id} nav={navigation} changePosHandler={changeDiaryPos} updateDiary={updateDiary} cancelDrag={changeCnacelScrollHandler}/> :
+            <BasicDiary key={diary.d_id} id={diary.d_id} nav={navigation} changePosHandler={changeDiaryPos}/>
         })}
       </View>
     </ScrollView>

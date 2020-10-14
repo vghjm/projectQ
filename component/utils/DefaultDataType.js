@@ -34,7 +34,7 @@ export const subscribeDataType = [
 ];
 export const chatroomDataType = [
   {
-    p_id: 0, getPushAlarm: false, lastCheckedTime: Moment(), newItemCount: 0, lastPushed: {pushTime: Moment(), questIndex: 1, solved:true},
+    p_id: 0, getPushAlarm: true, lastCheckedTime: Moment(), newItemCount: 0, lastPushed: {pushTime: Moment(), questIndex: 1, solved:true},
     chatMessageList: [
       {
         _id: 3, text: '나랑 함께 일하는 사람들에게 감사해. 나 혼자였다면 하지', createdAt: Moment('20200703 0802'),
