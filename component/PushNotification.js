@@ -4,37 +4,36 @@ import * as Haptics from 'expo-haptics';
 import Moment from 'moment';
 import * as Animatable from 'react-native-animatable'; // https://github.com/oblador/react-native-animatable
 
-import {ThemeContext} from './Context';
-import {WIDTH} from './utils/constants';
+import { ThemeContext } from './Context';
+import { WIDTH } from './utils/constants';
 
 const defaultImg = {uri: "https://mblogthumb-phinf.pstatic.net/20120919_14/goom5473_1348041165177dg5mj_JPEG/hdmix1318.jpg?type=w2"};
-const defaultAlarm = () => {
-  //Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  Vibration.vibrate();
-  //Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  alert('누름!');
-}
 
-export function PushMessage({pushData}){
+export function PushMessage({pushData, onPressPushNotification}){
   const image = pushData.image??defaultImg;
-  const title = pushData.title??'상품제목';
+  let title = pushData.title??'상품제목';
   let text = pushData.text??'전달받은 메세지';
-  const onPress = pushData.onPress??defaultAlarm;
   const time = pushData.lastPushed??Moment();
 
+  if(title.length > 10){
+    title = title.substr(0, 9) + '...';
+  }
+  if(text.length > 17){
+    text = text.substr(0, 15) + '...';
+  }
+
+
   if(text.length > 28) text = text.substr(0, 28) + '...';
-  console.log(pushData);
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
+    <TouchableOpacity style={styles.container} onPress={onPressPushNotification}>
       <Image source={image} style={styles.image} resizeMode={'cover'}/>
       <View style={styles.textArea}>
         <Text style={styles.title}>{title}</Text>
-        <Text style={styles.text}>{text}</Text>
+        <Text style={styles.text} numberOfLines={1}>{text}</Text>
       </View>
     </TouchableOpacity>
   );
 }
-// <Text style={styles.time}>{time.format('LT')}</Text>
 
 const styles = StyleSheet.create({
   container: {

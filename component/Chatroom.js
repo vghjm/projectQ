@@ -11,7 +11,7 @@ import uuid from 'react-native-uuid'; // https://www.npmjs.com/package/react-nat
 
 // 내가 컨트롤하는 파일
 import * as TestData from '../testData';
-import {ThemeContext, SystemContext} from './Context';
+import {ThemeContext, ControllContext, ChatroomDataContext} from './Context';
 import {chatReply} from './ServerConnect';
 const bookOn = require('../assets/icon/book_on.png');
 const bookOff = require('../assets/icon/book_off.png');
@@ -20,88 +20,26 @@ const downArrow = require('../assets/icon/down_arrow.png');
 
 // 채팅방 함수
 export default function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면
-  const Context = useContext(SystemContext);
-  const id = route.params.id;
-  let data = Context.getProductData(id);
-  let userData = Context.getUserData();
-  const [messages, setMessages] = useState(data.chatroom.chatmessageList);
+  const p_id = route.params.p_id;
+  const title = route.params.title;
+  const chatroomList = useContext(ChatroomDataContext);
   const theme = useContext(ThemeContext);
-
-  //다이어리에 새로운 메세지 생성한다.
-  const makeDiaryMessage = (id, message) => {
-    let diaryForm = { _id: uuid.v4(), text: '', createdAt: message.createdAt, islagacy: false, linkedMessageList: [{id: message._id, text:message.text}]};
-    data.diary.diarymessageList.push(_.cloneDeep(diaryForm));
-    data.diary.totalUpdateCount += 1;
-  }
-
-  // 다이어리와 연동중인 메시지를 찾아 지운다.
-  const deleteMessage = (id, messageId) => {
-    data.diary.diarymessageList.some(message => {
-      if(!message.islagacy){
-        // 연동중이면
-        let deleteIndex = message.linkedMessageList.findIndex(obj => obj.id === messageId);
-        if(deleteIndex !== -1){
-          message.linkedMessageList.splice(deleteIndex, 1);
-          return true;
-        }
-      }
-    });
-  }
+  const { setFocusChatroomPID, deleteChatmessage, addChatmessage } = useContext(ControllContext);
+  const chatroom = chatroomList[chatroomList.findIndex(chatroom => chatroom.p_id === p_id)];
+  const messages = chatroom ? chatroom.chatMessageList : [];
 
   // 로딩 후 채팅방 제목 설정함
   useEffect(() => {
-    navigation.setOptions({ headerTitle: data.product.title });
-    Context.setGlobalP(id);
-
-    // 채팅방 확인
-    data.chatroom.newItemCount = 0;
+    navigation.setOptions({ headerTitle: title });
+    setFocusChatroomPID(p_id);
   }, []);
-
-  // 메세지 삭제 함수
-  const onDelete = useCallback((messageIdToDelete) => {
-    //console.log('delete message Id: ', messageIdToDelete);
-    data.chatroom.chatmessageList.splice(data.chatroom.chatmessageList.findIndex(chatmessage => chatmessage._id === messageIdToDelete), 1); // 데이터에서 지우기
-    setMessages(previousMessages => previousMessages.filter(message => message._id !== messageIdToDelete)); // 채팅방에서 지우기
-    deleteMessage(id, messageIdToDelete); // 다이어리에서 지우기
-  },[]);
 
   // 메세지 생성 함수
   const onSend = useCallback((messages = []) => {
-    // 메세지 화면 표시
-    setMessages(previousMessages => GiftedChat.append(previousMessages, messages));
-
     // 메세지 가공
-    let message = _.cloneDeep(messages[0]);   // 메세지 복사
+    let message = messages[0];   // 메세지 복사
     message.createdAt = Moment(message.createdAt);  // 시간정보를 Moment로 커버
-
-    // 채팅방에 저장
-    data.chatroom.lastMessageTime = Moment();
-    data.chatroom.chatmessageList.unshift(_.cloneDeep(message));
-    data.chatroom.lastMessage = message.text;
-
-    // 다이어리에 저장
-    if(data.diary.diarymessageList.length === 0) {
-      // 첫 메세지
-      makeDiaryMessage(id, message);
-    }else{
-      let topMessage = data.diary.diarymessageList[data.diary.diarymessageList.length-1];
-      let checkTime = Moment.duration(topMessage.createdAt.diff(message.createdAt)).asMinutes();
-      if(-1 <= checkTime && checkTime <= 0 && !topMessage.islagacy){
-        // 같은 메세지로 인정 15분 간격
-        topMessage.linkedMessageList.push({id: message._id, text: message.text});
-      }else{
-        // 새로운 메세지 생성
-        makeDiaryMessage(id, message);
-      }
-    }
-    console.log('\n@메세지 정상 저장 테스트 : chatroom > onSend\n', data.diary);
-
-    if(!data.chatroom.lastPushed.solved){
-      let ansInfo = data.product.ansList[data.chatroom.lastPushed.questIndex];
-      console.log('ansInfo: ', ansInfo);
-      chatReply(userData.pushToken, ansInfo.q_ID, ansInfo.content);
-    }
-
+    addChatmessage(p_id, message);
   }, []);
 
   // 메세지 길게 터치시 기능
@@ -114,7 +52,7 @@ export default function MyChatRoomScreen({route, navigation}) {  // 채팅방 �
       }else{
         alertMessage = message.text + ' 메시지를 삭제하시겠습니까?';
       }
-      Alert.alert('메시지 삭제 확인', alertMessage, [{text: '취소'}, {text:'삭제', onPress:() => onDelete(message._id)}]);
+      Alert.alert('메시지 삭제 확인', alertMessage, [{text: '취소'}, {text:'삭제', onPress:() => deleteChatmessage(p_id, message._id)}]);
     }
   }
 
