@@ -12,3 +12,4 @@ export const SubscribeDataContext = React.createContext();
 export const ChatroomDataContext = React.createContext();
 export const DiaryDataContext = React.createContext();
 export const InformDataContext = React.createContext();
+export const GlobalDataContext = React.createContext();

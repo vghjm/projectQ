@@ -30,11 +30,12 @@ export const productDataType = [
   },
 ];
 export const subscribeDataType = [
-  {p_id: 0, pushStartTime: Moment(), pushEndTime: Moment()},
+  {p_id: 0, s_id: 0, pushStartTime: Moment(), pushEndTime: Moment()},
 ];
 export const chatroomDataType = [
   {
-    p_id: 0, getPushAlarm: true, lastCheckedTime: Moment(), newItemCount: 0, lastPushed: {pushTime: Moment(), questIndex: 1, solved:true},
+    p_id: 0, getPushAlarm: true, lastCheckedTime: Moment(), newItemCount: 0,
+    lastPushed: {pushTime: Moment(), q_id: 1, solved:true},
     chatMessageList: [
       {
         _id: 3, text: '나랑 함께 일하는 사람들에게 감사해. 나 혼자였다면 하지', createdAt: Moment('20200703 0802'),
@@ -52,7 +53,7 @@ export const chatroomDataType = [
 ];
 export const diaryDataType = [
   {
-    p_id: 0, d_id: 0, color: 0, pos: 1, makeTime: Moment(), totalUpdateCount: 0,
+    p_id: 0, d_id: 0, title: '~~~', color: 0, pos: 1, makeTime: Moment(), totalUpdateCount: 0,
     diarymessageList: [
       { _id: 1, text: '오늘은 바빠서 점심에 후딱 샐러드를 먹긴 했는데,', createdAt: Moment('20200810 2110'), islagacy: true, linkedMessageList: []},
       { _id: 2, text: '오늘은 집에 왔는데', createdAt: Moment('20200811 2108'), islagacy: false, linkedMessageList: [{id: 1, text: '~~~~'}]},
@@ -64,3 +65,8 @@ export const informDataType = {
   help: [],
   notice: [],
 };
+export const globalDataType = {
+  focusChatroomPID: 0, // 보고있는 채팅방 상품명
+  diaryPositionEditMode: false, // 다이어리 위치 편집모드
+  diaryScreenHeight: 0,
+}

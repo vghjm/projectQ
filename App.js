@@ -2,7 +2,7 @@ import React, { useRef, useState, useCallback, useEffect, useContext} from 'reac
 import { AppState, Vibration, Dimensions , ActivityIndicator, Platform,TouchableHighlight, TouchableWithoutFeedback, AsyncStorage, ImageBackground, Text, View, StyleSheet, TouchableOpacity, TextInput, CheckBox, KeyboardAvoidingView, Alert, Button, ScrollView, SafeAreaView, Image }
 from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer, getFocusedRouteNameFromRoute, useFocusEffect } from '@react-navigation/native';
+import { NavigationContainer, getFocusedRouteNameFromRoute, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { createDrawerNavigator, createNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem, } from '@react-navigation/drawer';  //  https://reactnavigation.org/docs/drawer-based-navigation/
 import { GiftedChat, Bubble , Send, InputToolbar, Time, Day, Composer } from 'react-native-gifted-chat' // https://github.com/FaridSafi/react-native-gifted-chat
 import { Ionicons, MaterialCommunityIcons, Feather, FontAwesome, EvilIcons, AntDesign, MaterialIcons, Octicons }
@@ -33,7 +33,7 @@ import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npm
 // my component
 import InlineTextInput from './component/InlineTextInput';
 import LoginNavigation from './component/LoginForm';
-import {ThemeContext, AuthContext, ControllContext, SystemContext, UserDataContext, ProductDataContext, SubscribeDataContext, ChatroomDataContext, DiaryDataContext, InformDataContext} from './component/Context';
+import {ThemeContext, AuthContext, ControllContext, SystemContext, UserDataContext, ProductDataContext, SubscribeDataContext, ChatroomDataContext, DiaryDataContext, InformDataContext, GlobalDataContext} from './component/Context';
 import {HTTP, PUSH_REGISTRATION_ENDPOINT} from './component/utils/constants';
 import IntroNavigation from './component/IntroForm';
 import * as Connection from './component/ServerConnect';
@@ -44,6 +44,7 @@ import MainStackHomePage from './component/MainStackHomePage';
 import * as TestData from './testData';
 import { logo, subOn, subOff } from './component/utils/loadAssets';
 import * as DefaultDataType from './component/utils/DefaultDataType';
+import { chooseRandomly } from './component/utils/utils';
 
 const Drawer = createDrawerNavigator();
 
@@ -66,7 +67,8 @@ const testAccount = {
 // 기기 화면 사이즈
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
-
+const ASSUME_SAME_CHAT_TIME = 1; // 채팅 시 같은 메세지로 판정하는 시간간격 (단위 분)
+const DEBUG_PRINT = true;
 // 컨트롤 변수
 var global_p_id = 0;               // 채팅창 사이드 메뉴에서 다른 상품정보로 보내기 위한 상품 id 값
 var global_y = 0;         // 다이어리리스트 스크린의 스크롤 값
@@ -81,31 +83,31 @@ var global_y = 0;         // 다이어리리스트 스크린의 스크롤 값
 
 
 function getReply(data, popupPushMessage, navigation, updateF){
-  console.log('getReply', data);
-  setTimeout(() => {
-    let ansMessage = {
-      _id: uuid.v4(), text: data.product.ansList[data.chatroom.lastPushed.questIndex].content, createdAt: Moment(),
-      user: { _id:2, avatar: data.product.imageSet.avatarImg.uri?? data.product.imageSet.avatarImg},
-    };
-    data.chatroom.newItemCount += 1;
-    data.chatroom.lastMessageTime = Moment();
-    data.chatroom.chatmessageList.unshift(_.cloneDeep(ansMessage));
-    data.chatroom.lastMessage = ansMessage.text;
-    data.chatroom.lastPushed.ansMessage = _.cloneDeep(ansMessage);
-    popupPushMessage({
-      image: data.product.imageSet.thumbnailImg,
-      title: data.product.title,
-      text: ansMessage.text,
-      onPress: ()=>navigation.navigate('chatroom', {id: data.id, data:data}),
-      lastPushed: Moment(),
-      isPushShowed: true,
-    });
-    console.log('getReply ansMessage', ansMessage);
-    updateF();
-    return ansMessage;
-    //setMessages(previousMessages => GiftedChat.append(previousMessages, ansMessage));
-  }, 5 * 1000);
-  return 'aa';
+  // console.log('getReply', data);
+  // setTimeout(() => {
+  //   let ansMessage = {
+  //     _id: uuid.v4(), text: data.product.ansList[data.chatroom.lastPushed.questIndex].content, createdAt: Moment(),
+  //     user: { _id:2, avatar: data.product.imageSet.avatarImg.uri?? data.product.imageSet.avatarImg},
+  //   };
+  //   data.chatroom.newItemCount += 1;
+  //   data.chatroom.lastMessageTime = Moment();
+  //   data.chatroom.chatmessageList.unshift(_.cloneDeep(ansMessage));
+  //   data.chatroom.lastMessage = ansMessage.text;
+  //   data.chatroom.lastPushed.ansMessage = _.cloneDeep(ansMessage);
+  //   popupPushMessage({
+  //     image: data.product.imageSet.thumbnailImg,
+  //     title: data.product.title,
+  //     text: ansMessage.text,
+  //     onPress: ()=>navigation.navigate('chatroom', {id: data.id, data:data}),
+  //     lastPushed: Moment(),
+  //     isPushShowed: true,
+  //   });
+  //   console.log('getReply ansMessage', ansMessage);
+  //   updateF();
+  //   return ansMessage;
+  //   //setMessages(previousMessages => GiftedChat.append(previousMessages, ansMessage));
+  // }, 5 * 1000);
+  // return 'aa';
 }
 
 async function warningPermission(){
@@ -121,63 +123,16 @@ async function warningPermission(){
   }
 }
 
-async function diaryBackup(){
-  if(!userData){
-    console.log('ERROR : 로그인 없는 diary backup 탐지');
-    return -1;
-  }
-  let backupDiary = [];
-  dataList.forEach( data => {
-    if(data.hasDiary){
-      let diaryData = data.diary;
-      let productData = data.product;
-      let myDiary = userData.myDiaryList[userData.myDiaryList.findIndex(obj => obj.id === data.id)];
-      let diaryMessage = diaryData.diarymessageList.map(message => {
-        let content = '';
-        if(message.islagacy){
-          content = message.text;
-        }else{
-          message.linkedMessageList.forEach(linkedMessage => {
-            if(content === '') content = linkedMessage.text;
-            else content += ' ' + linkedMessage.text;
-          })
-        }
-        return {
-          dm_ID: message._id,
-          chatcontent: content,
-          chatedtime: message.createdAt,
-        }
-      });
-      let diaryBackupData = {
-        d_ID: diaryData.id,
-        p_ID: data.id,
-        p_name: productData.title,
-        chatedperiod_start: diaryData.makeTime.format('YYYYMMDD'),
-        chatedperiod_end: Moment().format('YYYYMMDD'),
-        chatedamount: diaryData.totalUpdateCount,
-        linkname: 'temp',
-        color: myDiary.color,
-        position: myDiary.pos,
-        diaryMessage: diaryMessage,
-      }
-      backupDiary.push(_.cloneDeep(diaryBackupData));
-    }
-  });
-  console.log('diary backup', backupDiary);
-  let response = await Connection.diaryBackUp(userData.token, backupDiary);
-  if(response.ok){
-    console.log('다이어리 백업 성공!');
-  }else{
-    console.log('ERROR : 다이어리 백업 실패 , ', response.message);
-  }
-}
-
 // 태스트 모듈
 import loginTest from './component/connect/login';
 import downloadProductDataTest from './component/connect/downloadProductData';
 import downloadSubscribeData from './component/connect/downloadSubscribeData';
 import downloadDiaryData from './component/connect/downloadDiaryData';
-
+import subscribeSetting from './component/connect/subscribeSetting';
+import deleteDiaryFromServer from './component/connect/deleteDiaryFromServer';
+import changePushTime from './component/connect/changePushTime';
+import diaryBackUp from './component/connect/diaryBackup';
+import requestChatReply from './component/connect/requestChatReply';
 
 export default function App() {
   const [state, dispatch] = React.useReducer(
@@ -296,7 +251,7 @@ export default function App() {
         await bootstrapAsync();
       }
     }),
-    []
+    [state]
   );  // 유저 인증 함수 등록
   const systemContext = React.useMemo(
     () => ({
@@ -323,7 +278,7 @@ export default function App() {
     []
   );
 
-  // 푸시등록
+  // foreground 푸시 처리
   const handleNotification1 = ({request}) => {
     const content = request.content;
     const diaryID = content.data.diary_ID;
@@ -331,19 +286,38 @@ export default function App() {
     const question = content.data.question;
     const questionID = content.data.question_ID;
     const title = content.title;
-    let data = dataList[dataList.findIndex(obj => obj.id===productID)];
-
-
     console.log(`\n notify receive  content\n`, content);
-    popupPushMessage({
-      image: data.product.imageSet.mainImg,
-      title: title,
-      text: question,
-      onPress: ()=>navigation.navigate('chatroom', {id: productID, data:data}),
-      lastPushed: Moment(),
-      isPushShowed: true,
-    });
+
+    // 푸시알림 처리,
+    const productInfo = myProductDataContext[myProductDataContext.findIndex(product => product.p_id === productID)];
+    setMyChatroomDataContext(myChatroomDataContext.map(chatroom => {
+      if(chatroom.p_id === productID){
+        if(chatroomInfo.getPushAlarm){
+          popupPushMessage({
+            image: productInfo.thumbnailImg,
+            title: productInfo.title,
+            text: question,
+            lastPushed: Moment(),
+            isPushShowed: true,
+          });
+        }
+
+        chatroom.chatMessageList.unshift({ _id: uuid.v4(), text: question, createdAt: Moment(),
+          user: { _id:2, avatar: productInfo.thumbnailImg},
+        });
+        chatroom.newItemCount += 1;
+        chatroom.lastPushed = {
+          pushTime: Moment(),
+          q_id: questionID,
+          solved: true,
+        };
+      }
+
+      return chatroom;
+    }));
   };
+
+  // 푸시 알림 터치 시
   const handleNotification2 = (notify) => {
     setNotification(notify);
     console.log('notification2', notify);
@@ -472,6 +446,46 @@ export default function App() {
       }
     }}, [loadProductData, updateCacheData, loaded]);
 
+  // 다이얼 백업함수
+  const diaryBackupTrial = async () => {
+    if(!state.login){
+      console.log('\n\n 로그인 없는 다이어리 저장시도, 캔슬!\n');
+      return;
+    }
+
+    let response = await diaryBackUp({
+      debug: DEBUG_PRINT,
+      token: myUserDataContext.token,
+      backupDiaryList: myDiaryDataContext.map(diary => {
+        return {
+          d_ID: diary.d_id,
+          p_ID: diary.p_id,
+          p_name: diary.title,
+          chatedperiod_start: diary.makeTime.format('YYYYMMDD'),
+          chatedperiod_end: Moment().format('YYYYMMDD'),
+          chatedamount: diary.totalUpdateCount,
+          linkname: 'nolink',
+          color: diary.color,
+          position: diary.pos,
+          diaryMessage: diary.diarymessageList.map(diaryMessage => {
+            return {
+              dm_ID: diaryMessage._id,
+              chatedtime: diaryMessage.createdAt,
+              chatcontent: diaryMessage.islagacy
+                ? diaryMessage.text
+                : diaryMessage.linkedMessageList.reduce((prevText, nowText, i) => {
+                  return prevText + ' ' + nowText;
+                }),
+            };
+          }),
+        }
+      })
+    });
+
+    if(response.ok) console.log('  다이어리 백업 성공');
+    else console.log('  다이어리 백업 실패', response.message);
+  };
+
   // 백그라운드 및 Inactive 감지 함수
   const appState = useRef(AppState.currentState);
   const [appStateVisible, setAppStateVisible] = useState(appState.current);
@@ -482,11 +496,12 @@ export default function App() {
       AppState.removeEventListener("change", _handleAppStateChange);
     };
   }, []);
+  useEffect((appStateVisible) => { // 백그라운드 시 다이어리 서버에 저장함
+    if(appState.current === 'background') diaryBackupTrial();
+  }, [appStateVisible]);
   const _handleAppStateChange = (nextAppState) => {
     if(appState.current.match(/inactive|background/) && nextAppState === "active"){
       console.log("App has come to the foreground!");
-    }else{
-      diaryBackup();
     }
 
     appState.current = nextAppState;
@@ -528,7 +543,6 @@ export default function App() {
         image: null,
         title: null,
         text: null,
-        onPress: null,
         lastPushed: Moment(),
         isPushShowed: true,
       });
@@ -537,17 +551,24 @@ export default function App() {
       pushCount++;
       setTimeout(() => {
         pushCount--;
-        //console.log('push time out : ', pushCount);
-        if(pushCount===0) setPushContext({
+        if(pushCount <= 0) setPushContext({
           image: null,
           title: null,
           text: null,
-          onPress: null,
           lastPushed: Moment(),
           isPushShowed: false,
         });
       }, 4800);
     }, timer);
+  }
+  const onPressPushNotification = () => {
+    setPushContext({
+      image: null,
+      title: null,
+      text: null,
+      lastPushed: Moment(),
+      isPushShowed: false,
+    });
   }
 
   // 새로운 데이터 타입 state
@@ -557,19 +578,42 @@ export default function App() {
   const [myChatroomDataContext, setMyChatroomDataContext] = useState(DefaultDataType.chatroomDataType);
   const [myDiaryDataContext, setMyDiaryDataContext] = useState(DefaultDataType.diaryDataType);
   const [myInformDataContext, setMyInformDataContext] = useState(DefaultDataType.informDataType);
+  const [globalDataContext, setGlobalDataContext] = useState(DefaultDataType.globalDataType);
 
-  const controllContext = React.useMemo(
-    () => ({
-      function: () => {},
-      alarmSettingChanger: (p_id) => {
+  const controllContext = {
+      setFocusChatroomPID: (p_id) => { // 채팅방 확인 함수
+        setGlobalDataContext(prev => {
+          prev.focusChatroomPID = p_id;
+          return prev;
+        });
+        if(p_id===-1) return;
+        setMyChatroomDataContext(myChatroomDataContext.map(chatroom => {
+          if(chatroom.p_id === p_id) chatroom.newItemCount = 0;
+          return chatroom;
+        }));
+      },
+      setDiaryPositionEditMode: (mode) =>{ // 다이어리 위치편집 버튼
+        setGlobalDataContext(prev => {
+          prev.focusChatroomPID = 0;
+          prev.diaryPositionEditMode = mode;
+          return prev;
+        })
+      },
+      setDiaryScreenHeight: (height) => { // 다이어리 화면의 시작높이 등록
+        setGlobalDataContext(prev => {
+          prev.diaryScreenHeight = height;
+          return prev;
+        });
+      },
+      alarmSettingChanger: (p_id) => { // 푸시알람 수신설정 변경
+        //console.log('alarmSettingChanger : ', p_id);
         setMyChatroomDataContext(myChatroomDataContext.map(chatroom => {
           if(chatroom.p_id === p_id) chatroom.getPushAlarm = !chatroom.getPushAlarm;
           return chatroom;
         }))
-        console.log('alarmSettingChanger : ', p_id);
       },
       showState: () => showState(),
-      changeDiaryPos: (start, end) => {
+      changePosHandler: (start, end) => { // 다이어리 위치변경
         let endPos = myDiaryDataContext.length;
         if(end > endPos){
           setMyDiaryDataContext(myDiaryDataContext.map(diary => {
@@ -584,53 +628,344 @@ export default function App() {
             return diary;
           }));
         }
-        console.log(` > controllContext/changeDiaryPos ${start} -> ${end}`);
       },
-      eraseDiary: () => {}
-    }),
-    [myUserDataContext, myProductDataContext, mySubscribeDataContext, myChatroomDataContext, myDiaryDataContext, myInformDataContext]
-  );
+      eraseChatroom: (p_id) => { // 채팅방 제거함수
+        // 구독 제거
+        if(mySubscribeDataContext.some(subscribe => subscribe.p_id === p_id)){
+          const product = myProductDataContext[myProductDataContext.findIndex(product => product.p_id === p_id)];
+          const subscribe = mySubscribeDataContext[mySubscribeDataContext.findIndex(subscribe => subscribe.p_id === p_id)];
+          controllContext.subscribeOffHandler(product, subscribe);
+        }
+
+        // 채팅방 제거
+        setMyChatroomDataContext(myChatroomDataContext.filter(chatroom => chatroom.p_id !== p_id));
+      },
+      eraseDiary: async (diary) => { // 다이어리 제거함수
+        const nowPos = diary.pos;
+        const p_id = diary.p_id;
+
+        // 서버 다이어리 삭제 요청
+        let response = await deleteDiaryFromServer({
+          token: myUserDataContext.token,
+          d_id: diary.d_id,
+          debug: DEBUG_PRINT,
+        });
+        if(!response.ok){
+          Alert.alert('다이어리 삭제 에러', response.message);
+          return;
+        }
+
+        //채팅방 제거
+        controllContext.eraseChatroom(p_id);
+
+        // 다이어리 제거 & 위치 재조정
+        setMyDiaryDataContext(myDiaryDataContext
+          .filter(diary => diary.p_id !== p_id)
+          .map(diary => {
+            if(diary.pos > nowPos) diary.pos -= 1;
+            return diary;
+        }));
+      },
+      subscribeOffHandler: async (product, subscribe) => { // 구독 취소 함수
+        // 서버에 구독취소 신청
+        let response = await subscribeSetting({
+          token: myUserDataContext.token,
+          title: product.title,
+          p_id: product.p_id,
+          s_id: subscribe.s_id,
+          pushStartTime: subscribe.pushStartTime,
+          pushEndTime: subscribe.pushEndTime,
+          pushType: product.pushType,
+          isSubscribe: false,
+          debug: DEBUG_PRINT
+        });
+        console.log(' 푸시 해제 \n', subscribe);
+        if(!response.ok){
+          Alert.alert('구독취소에 실패하였습니다.', 'ERROR: 서버연결 실패');
+          return;
+        }
+
+        // 구독상태 제거
+        setMySubscribeDataContext(mySubscribeDataContext.filter(mySubscribe => mySubscribe.p_id!==subscribe.p_id));
+      },
+      subscribeOnHandler: async (product, startTime, endTime, navigation) => { // 구독 신청 함수
+        // 서버에 구독 신청
+        let s_id = uuid.v4();
+        let response = await subscribeSetting({
+          token: myUserDataContext.token,
+          title: product.title,
+          p_id: product.p_id,
+          s_id: s_id,
+          pushStartTime: startTime,
+          pushEndTime: endTime,
+          pushType: product.pushType,
+          isSubscribe: true,
+          debug: DEBUG_PRINT
+        });
+        if(!response.ok){
+          Alert.alert('구독 등록에 실패하였습니다.', 'ERROR: 서버연결 실패');
+          return;
+        }
+
+        // 구독상태 추가
+        setMySubscribeDataContext(mySubscribeDataContext.concat({p_id: product.p_id, s_id: s_id, pushStartTime: startTime, pushEndTime: endTime}));
+
+        // 채팅방 없으면 추가
+        if(!myChatroomDataContext.some(chatroom => chatroom.p_id === product.p_id)){
+          controllContext.makeNewChatroom(product, navigation);
+        }
+
+        // 다이어리 없으면 추가
+        if(!myDiaryDataContext.some(diary => diary.p_id === product.p_id)){
+          controllContext.makeNewDiary(product);
+        }
+      },
+      changePushTime: async (p_id, startTime, endTime, pushType) => { // 구독 시간 변경
+        // 서버에 푸시시간 변경요청
+        let response = await changePushTime({
+          token: myUserDataContext.token,
+          p_ID: p_id,
+          pushStartTime: startTime,
+          pushEndTime: endTime,
+          pushType: pushType,
+          debug: DEBUG_PRINT,
+        });
+        if(!response.ok) {
+          Alert.alert('푸시시간 변경 실패', response.message);
+          return ;
+        }
+
+        // 푸시시간데이터 변경
+        setMySubscribeDataContext(mySubscribeDataContext.map(subscribe => {
+          if(subscribe.p_id === p_id){
+            subscribe.pushStartTime = startTime;
+            subscribe.pushEndTime = endTime;
+          }
+          return subscribe;
+        }));
+      },
+      makeNewDiary: (product) => { // 기본형 다이어리 새로 만듦
+        // 기본형 다이어리 새로 만듦
+        setMyDiaryDataContext(myDiaryDataContext.concat({
+          p_id: product.p_id, d_id: uuid.v4(), title: product.title, color: Math.floor(Math.random() * 10), pos: myDiaryDataContext.length+1, makeTime: Moment(), totalUpdateCount: 0,
+          diarymessageList: []
+        }));
+      },
+      makeNewChatroom: (product, navigation) => { // 새로 채팅방 추가
+        // 기본 채팅방 추가
+        let questtion = chooseRandomly(product.questionList);
+        setMyChatroomDataContext(myChatroomDataContext.concat({
+          p_id: product.p_id, getPushAlarm: true, lastCheckedTime: Moment(), newItemCount: 2,
+          lastPushed: {pushTime: Moment(), q_id: questtion.q_ID, solved:false},
+          chatMessageList: [
+            { _id: uuid.v4(), text: questtion.content, createdAt: Moment(),
+              user: { _id:2, avatar: product.thumbnailImg},
+            },
+            { _id: uuid.v4(), text: product.title + ' 채팅방 입니다.', createdAt: Moment(),
+              user: { _id:2, avatar: product.thumbnailImg},
+            },
+        ]
+        }));
+
+        // 푸시알림 2개
+        popupPushMessage({
+          image: product.thumbnailImg,
+          title: product.title,
+          text: product.title + ' 채팅방 입니다.',
+          lastPushed: Moment(),
+          isPushShowed: true,
+        });
+        setTimeout(() => {
+          popupPushMessage({
+            image: product.thumbnailImg,
+            title: product.title,
+            text: questtion.content,
+            lastPushed: Moment(),
+            isPushShowed: true,
+          });
+          navigation.navigate('MyChatListScreen');
+        }, 1000);
+      },
+      makeNewDiaryMessage: (message) => { // 다이어리 메시지 추가
+        return {
+          _id: uuid.v4(),
+          text: '',
+          createdAt: Moment(message.createdAt),
+          islagacy: false,
+          linkedMessageList: [{id: message._id, text: message.text}],
+        };
+      },
+      deleteChatmessage: (p_id, deleteId) => { // 채팅방에서 메세지 지우기
+        // 채팅방에서 메세지 지우기
+        setMyChatroomDataContext(myChatroomDataContext.map(chatroom => {
+          if(chatroom.p_id === p_id) chatroom.chatMessageList = chatroom.chatMessageList.filter(chatmessage => chatmessage._id !== deleteId);
+          return chatroom;
+        }));
+
+        // 다이어리에서 채팅 메세지 있으면 제거
+        controllContext.deleteDiaryMessageFromChatroom(p_id, deleteId);
+      },
+      addChatmessage: (p_id, message) => { // 채팅방에 메세지 추가
+        setMyChatroomDataContext(myChatroomDataContext.map(chatroom => {
+          if(chatroom.p_id === p_id){
+            chatroom.lastCheckedTime = Moment();
+            chatroom.chatMessageList.unshift(message);
+          }
+          return chatroom;
+        }));
+
+        // 다이어리에 추가
+        controllContext.addDiaryMessageFromChatroom(p_id, message);
+
+        // 사용자 답변함 함수 발동
+        const productInfo = myProductDataContext[myProductDataContext.findIndex(product => product.p_id === p_id)];
+        const chatroomInfo = myChatroomDataContext[myChatroomDataContext.findIndex(chatroom => chatroom.p_id === p_id)];
+        const diaryInfo = myDiaryDataContext[myDiaryDataContext.findIndex(diary => diary.p_id === p_id)];
+        if(chatroomInfo.lastPushed.solved === false){
+          const ansMessage = productInfo.ansList[productInfo.ansList.findIndex(ans => ans.q_ID === chatroomInfo.lastPushed.q_id + 1)]
+          controllContext.userReplyed(productInfo.p_id, diaryInfo.d_id, ansMessage);
+        }
+      },
+      userReplyed: async (p_id, d_id, message) => { // 채팅방에 답변하면 서버에 응답요청 보냄
+        // 서버에 답변요청 보냄
+        let response = await requestChatReply({token:myUserDataContext.token, p_id:p_id, d_id:d_id, message:message, debug:DEBUG_PRINT});
+        if(!response.ok){
+          Alert.alert('답변 전송 실패', response.message);
+          console.log(' app/userReplyed : ', response.message);
+          return;
+        }
+      },
+      deleteDiaryMessageFromChatroom: (p_id, deleteId) => { // 채팅방에 메세지 삭제하면 다이어리에 해당하는 메세지 삭제
+        // 다이어리에 삭제메시지가 있다면 제거함
+        setMyDiaryDataContext(myDiaryDataContext.map(diary => {
+          if(diary.p_id === p_id){
+            let findMessage = false;
+            let needTrimming = false; // 비어있는 다이어리 메세지를 제거하는 용도
+            diary.diarymessageList = diary.diarymessageList.map(message => {
+              if(message.islagacy || findMessage) return message;
+
+              // 연동중인 메세지인 경우
+              let deleteIndex = message.linkedMessageList.findIndex(linkedMessage => linkedMessage.id === deleteId);
+              if(deleteIndex === -1) return message; // 못 찾음
+
+              // 메세지 찾음 & 제거
+              findMessage = true;
+              message.linkedMessageList.splice(deleteIndex, 1);
+              if(message.linkedMessageList.length === 0) needTrimming = true;
+
+              return message;
+            });
+
+            // 미사용 다이어리 메세지 정리
+            if(needTrimming) diary.diarymessageList = diary.diarymessageList.filter(message => message.linkedMessageList.length !== 0);
+          }
+
+          return diary;
+        }));
+      },
+      addDiaryMessageFromChatroom: (p_id, message) => { // 채팅창에 메세지  추가하면 다이어리에도 메세지 추가, 내 메세지만 반응
+        // 다이어리에 메세지 추가함
+        setMyDiaryDataContext(myDiaryDataContext.map(diary => {
+          if(diary.p_id === p_id){
+            // 메세지 없음
+            if(diary.diarymessageList.length === 0) diary.diarymessageList.push(controllContext.makeNewDiaryMessage(message));
+            else {
+              let topDiaryMessage = diary.diarymessageList[diary.diarymessageList.length-1];
+              let checkTime = Moment.duration(topDiaryMessage.createdAt.diff(message.createdAt)).asMinutes();
+                if(-ASSUME_SAME_CHAT_TIME <= checkTime && checkTime <= 0 && !topDiaryMessage.islagacy){
+                  // 같은 메세지로 인정 15분 간격
+                  topDiaryMessage.linkedMessageList.push({id: message._id, text: message.text});
+
+                }else{
+                  // 새로운 메세지 생성
+                  diary.diarymessageList.push(controllContext.makeNewDiaryMessage(message));
+                }
+            }
+
+            // 업데이트 수 1 증가
+            diary.totalUpdateCount += 1;
+          }
+          return diary;
+        }));
+      },
+      changeDiaryMessage: (p_id, message_id, message) => { // 다이어리 메세지 내용 변경
+        setMyDiaryDataContext(myDiaryDataContext.map(diary => {
+          if(diary.p_id === p_id){
+            diary.diarymessageList = diary.diarymessageList.map(diaryMessage => {
+              if(diaryMessage._id === message_id) return message;
+              else return diaryMessage;
+            });
+            diary.diarymessageList.sort((a, b) => {
+              return a.createdAt > b.createdAt;
+            });
+          }
+
+          return diary;
+        }));
+      },
+      deleteDiaryMessage: (p_id, message_id) => { // 다이어리 메세지 삭제, 빈 칸인 경우
+        setMyDiaryDataContext(myDiaryDataContext.map(diary => {
+          if(diary.p_id === p_id){
+            diary.diarymessageList = diary.diarymessageList.filter(diaryMessage => diaryMessage !== message_id);
+          }
+
+          return diary;
+        }));
+      }
+    };
 
   const showState = () => {
     console.log('\n @ showState');
-    console.log(`------------- myUserDataContext --------------`);
+    console.log(`\n------------- myUserDataContext --------------`);
     console.log(` token: ${myUserDataContext.token}`);
     console.log(` pushToken: ${myUserDataContext.pushToken}`);
     console.log(` email: ${myUserDataContext.email}, password: ${myUserDataContext.password}`);
-    console.log(` username: ${myUserDataContext.username}, userImg: ${myUserDataContext.userImg}\n`);
-    console.log(`------------- myProductDataContext --------------`);
-    myProductDataContext.forEach((obj, i) => {
-      console.log(` id: ${obj.p_id}, isAvailable: ${obj.isAvailable}`);
-      console.log(` title: ${obj.title}, text: ${obj.text}`);
-      console.log(` thumbnailImg: ${obj.thumbnailImg.uri}`);
-      console.log(` logoImg: ${obj.logoImg.uri}`);
-      console.log(` mainImg: ${obj.mainImg.uri}`);
-      console.log(` pushType: ${obj.pushType}, pushtime: ${obj.defaultStartTime.format('LTS')} ~ ${obj.defaultEndTime.format('LTS')}`);
-      console.log(` questionListCount: ${obj.questionList.length}, ansListCount: ${obj.ansList.length}\n`);
+    console.log(` username: ${myUserDataContext.username}, userImg: ${myUserDataContext.userImg}`);
+    console.log(`\n------------- myProductDataContext --------------`);
+    myProductDataContext.forEach(product => {
+      console.log(` id: ${product.p_id}, isAvailable: ${product.isAvailable}`);
+      console.log(` title: ${product.title}, text: ${product.text}`);
+      console.log(` thumbnailImg: ${product.thumbnailImg.uri}`);
+      console.log(` logoImg: ${product.logoImg.uri}`);
+      console.log(` mainImg: ${product.mainImg.uri}`);
+      console.log(` pushType: ${product.pushType}, pushtime: ${product.defaultStartTime.format('LTS')} ~ ${product.defaultEndTime.format('LTS')}`);
+      console.log(` questionListCount: ${product.questionList.length}, ansListCount: ${product.ansList.length}\n`);
     });
-    console.log(`------------- mySubscribeDataContext --------------`);
-    mySubscribeDataContext.forEach((obj, i) => {
-      console.log(` p_id: ${obj.p_id}, pushTime: ${obj.pushStartTime.format('LTS')} ~ ${obj.pushEndTime.format('LTS')}`);
+    console.log(`\n------------- mySubscribeDataContext --------------`);
+    mySubscribeDataContext.forEach(subscribe => {
+      console.log(` p_id: ${subscribe.p_id}, pushTime: ${subscribe.pushStartTime.format('LTS')} ~ ${subscribe.pushEndTime.format('LTS')}`);
     });
-    console.log(`------------- myChatroomDataContext --------------`);
-    myChatroomDataContext.forEach((obj, i) => {
-      console.log(` p_id: ${obj.p_id}, getPushAlarm: ${obj.getPushAlarm}, lastCheckedTime: ${obj.lastCheckedTime.format('LTS')}, newItemCount: ${obj.newItemCount}`);
-      console.log(` lastPushed -> time: ${obj.lastPushed.pushTime.format('LTS')}, index: ${obj.lastPushed.questIndex}, solved: ${obj.lastPushed.solved}`);
-      console.log(` chatMessageListCount: ${obj.chatMessageList.length}\n`);
+    console.log(`\n------------- myChatroomDataContext --------------`);
+    myChatroomDataContext.forEach(chatroom=> {
+      console.log(` p_id: ${chatroom.p_id}, getPushAlarm: ${chatroom.getPushAlarm}, lastCheckedTime: ${chatroom.lastCheckedTime.format('LTS')}, newItemCount: ${chatroom.newItemCount}`);
+      console.log(` lastPushed -> time: ${chatroom.lastPushed.pushTime.format('LTS')}, q_id: ${chatroom.lastPushed.q_id}, solved: ${chatroom.lastPushed.solved}`);
+      console.log(` chatMessageListCount: ${chatroom.chatMessageList.length}`);
+      chatroom.chatMessageList.forEach(chatmessage => {
+        console.log(`  >  _id: ${chatmessage._id}, text: ${chatmessage.text}, user: ${chatmessage.user._id}`);
+      });
     });
-    console.log(`------------- myDiaryDataContext --------------`);
-    myDiaryDataContext.forEach((obj, i) => {
-      console.log(` p_id: ${obj.p_id}, d_id: ${obj.d_id}, color: ${obj.color}, pos: ${obj.pos}, makeTime: ${obj.makeTime.format('LTS')}, totalUpdateCount: ${obj.totalUpdateCount}`);
-      console.log(` diarymessageListCount: ${obj.diarymessageList.length}\n`);
+    console.log(`\n------------- myDiaryDataContext --------------`);
+    myDiaryDataContext.forEach(diary => {
+      console.log(` diaryTitle: ${diary.title}`);
+      console.log(` p_id: ${diary.p_id}, d_id: ${diary.d_id}, color: ${diary.color}, pos: ${diary.pos}, makeTime: ${diary.makeTime.format('LTS')}, totalUpdateCount: ${diary.totalUpdateCount}`);
+      console.log(` diarymessageListCount: ${diary.diarymessageList.length}`);
+      diary.diarymessageList.forEach(diarymessage => {
+        console.log(`  >  _id: ${diarymessage._id}, text: ${diarymessage.text}, createdAt: ${diarymessage.createdAt.format('LTS')}, linkedMessageCount: ${diarymessage.linkedMessageList.length}`);
+        diarymessage.linkedMessageList.forEach(message => {
+          console.log(`         > id: ${message.id}, text: ${message.text}`);
+        });
+      });
     });
-    console.log(`------------- myInformDataContext --------------`);
+    console.log(`\n------------- myInformDataContext --------------`);
     console.log(` introduction - count: ${myInformDataContext.introduction.length}`);
     console.log(` help - count: ${myInformDataContext.help.length}`);
-    console.log(` notice - count: ${myInformDataContext.notice.length}\n`);
+    console.log(` notice - count: ${myInformDataContext.notice.length}`);
+    console.log(`\n------------- globalData --------------`);
+    console.log(`focusChatroomPID: ${globalDataContext.focusChatroomPID}, diaryPositionEditMode: ${globalDataContext.diaryPositionEditMode}, diaryScreenHeight: ${globalDataContext.diaryScreenHeight}`);
   };
 
   const updateUserDataContext = async (email, password) => {
-    let response = await loginTest({email:email, password:password, debug:true});
+    let response = await loginTest({email:email, password:password, debug:DEBUG_PRINT});
     if(response.ok){
       setMyUserDataContext({
         token: response.data.token,
@@ -644,39 +979,49 @@ export default function App() {
     return response.data.token;
   }
   const updateProductDataContext = async () => {
-    let response = await downloadProductDataTest({debug:true});
+    let response = await downloadProductDataTest({debug:DEBUG_PRINT});
     if(response.ok){
       setMyProductDataContext(response.data);
     }
+    return response.data.map(obj => {return {
+      p_id: obj.p_id,
+      title: obj.title,
+    }});
   }
   const updateSubscribeContext = async (token) => {
-    let response = await downloadSubscribeData({jwt: token, debug:true});
+    let response = await downloadSubscribeData({token: token, debug:DEBUG_PRINT});
     if(response.ok){
       setMySubscribeDataContext(response.data);
     }
     return response.data.map(obj => obj.p_id);
   }
   const updateChatroomDataContext = async (subList) => {
-    let protoChatroomData = subList.map(id => {
+    let protoChatroomData = subList.map(p_id => {
       return {
-        p_id: id, getPushAlarm: true, lastCheckedTime: Moment(), newItemCount: 0, chatMessageList: [],
-        lastPushed: {pushTime: Moment(), questIndex: 1, solved:true}
+        p_id: p_id, getPushAlarm: true, lastCheckedTime: Moment(), newItemCount: 0, chatMessageList: [],
+        lastPushed: {pushTime: Moment(), q_id: 1, solved:true}
       }
     });
     setMyChatroomDataContext(protoChatroomData);
   }
-  const updateDiaryDataContext = async (subList, token) => {
-    let _pos = -1;
-    let protoDiaryData = subList.map(id => {
+  const updateDiaryDataContext = async (subList, proList, token) => {
+    let _pos = 0;
+    let protoDiaryData = subList.map(p_id => {
       _pos += 1;
+      const title = proList[proList.findIndex(pro => pro.p_id === p_id)].title;
       return {
-        p_id: id, d_id: id, color: _pos%10, pos: _pos, makeTime: Moment(), totalUpdateCount: 0,
+        p_id: p_id, d_id: p_id, title: title, color: _pos%10, pos: _pos, makeTime: Moment(), totalUpdateCount: 0,
         diarymessageList: []
       };
     })
-    let response = await downloadDiaryData({jwt:token, debug:true});
-    if(response.ok){
+    let response = await downloadDiaryData({jwt:token, debug:DEBUG_PRINT});
+
+    if(response.ok && response.data.length === protoDiaryData.length){
       setMyDiaryDataContext(response.data);
+    }else{
+      console.log('\n 서버 저장 다이어리가 예상 다이어리와 크기가 다릅니다. server: ', response.data.length, ' expected: ', protoDiaryData.length, response.ok);
+      console.log(response.data);
+      setMyDiaryDataContext(protoDiaryData);
     }
   }
   const updateInformDataContext = async () => {
@@ -685,12 +1030,11 @@ export default function App() {
   const stateUpdateList = async () => {
     let email = testAccount.email, password = testAccount.password;
     let token = await updateUserDataContext(email, password);
-    await updateProductDataContext();
+    let proList = await updateProductDataContext();
     let subList = await updateSubscribeContext(token);
     await updateChatroomDataContext(subList);
-    await updateDiaryDataContext(subList, token);
+    await updateDiaryDataContext(subList, proList, token);
     await updateInformDataContext();
-    alert('업데이트 완료');
   };
 
   const resetState = async () => {
@@ -701,6 +1045,7 @@ export default function App() {
     setMyChatroomDataContext(DefaultDataType.chatroomDataType);
     setMyDiaryDataContext(DefaultDataType.diaryDataType);
     setMyInformDataContext(DefaultDataType.informDataType);
+    setGlobalDataContext(DefaultDataType.globalDataType);
   };
 
   return (
@@ -757,11 +1102,13 @@ export default function App() {
         <ChatroomDataContext.Provider value={myChatroomDataContext}>
         <DiaryDataContext.Provider value={myDiaryDataContext}>
         <InformDataContext.Provider value={myInformDataContext}>
+        <GlobalDataContext.Provider value={globalDataContext}>
         <NavigationContainer>
           <Drawer.Navigator drawerPosition='right' drawerStyle={{backgroundColor: '#CCC'}} drawerContent={props => <CustomDrawerContent {...props}/>}>
             <Drawer.Screen name='sidebar' component={MainStackHomePage} options={{swipeEnabled: false}}/>
           </Drawer.Navigator>
         </NavigationContainer>
+        </GlobalDataContext.Provider>
         </InformDataContext.Provider>
         </DiaryDataContext.Provider>
         </ChatroomDataContext.Provider>
@@ -771,7 +1118,8 @@ export default function App() {
         </SystemContext.Provider>
         </ControllContext.Provider>
       )}
-      {pushContext.isPushShowed && <PushNotification.PushMessage pushData={pushContext}/>}
+      {pushContext.isPushShowed && <PushNotification.PushMessage pushData={pushContext} onPressPushNotification={onPressPushNotification}/>}
+
     </AuthContext.Provider>
     </ThemeContext.Provider>
   );
