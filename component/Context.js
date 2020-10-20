@@ -3,8 +3,6 @@ import React from 'react';
 export const ThemeContext = React.createContext();
 export const AuthContext = React.createContext();
 
-export const SystemContext = React.createContext();
-
 export const ControllContext = React.createContext();
 export const UserDataContext = React.createContext();
 export const ProductDataContext = React.createContext();

@@ -1,22 +1,12 @@
-import React, {useContext, useState, useEffect, useCallback} from 'react';
-import {View, Text, Image, ActivityIndicator, TouchableOpacity, Alert, TouchableHighlight} from 'react-native';
+import React, {useContext, useEffect, useCallback} from 'react';
+import {View, Text, ActivityIndicator, Alert } from 'react-native';
 import { GiftedChat, Bubble , Send, InputToolbar, Time, Day, Composer, Avatar  } from 'react-native-gifted-chat' // https://github.com/FaridSafi/react-native-gifted-chat
 import Moment from 'moment';
-import DateTimePicker from '@react-native-community/datetimepicker'; // https://github.com/react-native-community/datetimepicker
-import { Octicons, Ionicons, MaterialIcons }
-from '@expo/vector-icons'; // https://icons.expo.fyi/
-import { createNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem, } from '@react-navigation/drawer';  //  https://reactnavigation.org/docs/drawer-based-navigation/
-import _ from 'lodash'; // https://lodash.com/docs
 import uuid from 'react-native-uuid'; // https://www.npmjs.com/package/react-native-uuid
 
 // 내가 컨트롤하는 파일
-import * as TestData from '../testData';
 import {ThemeContext, ControllContext, ChatroomDataContext} from './Context';
 import {chatReply} from './ServerConnect';
-const bookOn = require('../assets/icon/book_on.png');
-const bookOff = require('../assets/icon/book_off.png');
-const upArrow = require('../assets/icon/up_arrow.png');
-const downArrow = require('../assets/icon/down_arrow.png');
 
 // 채팅방 함수
 export default function MyChatRoomScreen({route, navigation}) {  // 채팅방 화면

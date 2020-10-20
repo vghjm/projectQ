@@ -1,9 +1,7 @@
 import React, {useContext, useState, useEffect} from 'react';
-import {View, TouchableOpacity, Text, Image, ScrollView, SafeAreaView, Alert, Dimensions} from 'react-native';
+import { View, TouchableOpacity, Text, Image, ScrollView, SafeAreaView, Alert, Dimensions } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker'; // https://github.com/react-native-community/datetimepicker
-import {ProductContext} from './Context';
 import Moment from 'moment';
-import _ from 'lodash'; // https://lodash.com/docs
 import uuid from 'react-native-uuid'; // https://www.npmjs.com/package/react-native-uuid
 import * as Permissions from 'expo-permissions';
 

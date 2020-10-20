@@ -60,6 +60,7 @@ export const diaryDataType = [
     ]
   },
 ];
+// id , title, message, date
 export const informDataType = {
   introduction: [],
   help: [],

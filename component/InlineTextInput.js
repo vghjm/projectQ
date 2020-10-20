@@ -1,5 +1,5 @@
-import {View, Text, TextInput, TouchableWithoutFeedback} from 'react-native';
-import React, {useState} from 'react';
+import { View, Text, TextInput, TouchableWithoutFeedback } from 'react-native';
+import React from 'react';
 
 function InlineTextInputForm(props){
   const color = {

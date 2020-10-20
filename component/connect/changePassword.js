@@ -4,9 +4,9 @@ import * as MESSAGE from '../constant/MESSAGE';
 import { printStatus } from '../utils/Print';
 import httpConnection from './httpConnection';
 
-export default async function changePassword({email, token, debug=false}){
+export default async function changePassword({password, token, debug=false}){
   let reply = {ok: false, data: null, message: ''};
-  let response = await httpConnection(ADDRESS.CHANGEPW, {email: email, jwt:token}, 'POST');
+  let response = await httpConnection(ADDRESS.CHANGEPW, {jwt: token, password:password}, 'POST');
 
   if(response.ok){ // HTTP 상태 코드가 200~299일 경우
     let json = await response.json();

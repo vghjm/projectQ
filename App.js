@@ -1,15 +1,9 @@
-import React, { useRef, useState, useCallback, useEffect, useContext} from 'react';
-import { AppState, Vibration, Dimensions , ActivityIndicator, Platform,TouchableHighlight, TouchableWithoutFeedback, AsyncStorage, ImageBackground, Text, View, StyleSheet, TouchableOpacity, TextInput, CheckBox, KeyboardAvoidingView, Alert, Button, ScrollView, SafeAreaView, Image }
+import React, { useRef, useState, useEffect, useContext } from 'react';
+import { AppState, Vibration, Dimensions, Text, View, TouchableOpacity, TextInput, Alert, Image }
 from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer, getFocusedRouteNameFromRoute, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { createDrawerNavigator, createNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem, } from '@react-navigation/drawer';  //  https://reactnavigation.org/docs/drawer-based-navigation/
-import { GiftedChat, Bubble , Send, InputToolbar, Time, Day, Composer } from 'react-native-gifted-chat' // https://github.com/FaridSafi/react-native-gifted-chat
-import { Ionicons, MaterialCommunityIcons, Feather, FontAwesome, EvilIcons, AntDesign, MaterialIcons, Octicons }
-from '@expo/vector-icons'; // https://icons.expo.fyi/
-import * as ImagePicker from 'expo-image-picker';      // https://docs.expo.io/versions/latest/sdk/imagepicker/
-// import Constants from 'expo-constants';
-import DateTimePicker from '@react-native-community/datetimepicker'; // https://github.com/react-native-community/datetimepicker
+import { NavigationContainer } from '@react-navigation/native';
+import { createDrawerNavigator } from '@react-navigation/drawer';  //  https://reactnavigation.org/docs/drawer-based-navigation/
 //import { Notifications } from 'expo'; // https://docs.expo.io/versions/latest/sdk/notifications/
 import * as Notifications from 'expo-notifications';
 import * as Permissions from 'expo-permissions';
@@ -17,24 +11,14 @@ import Moment from 'moment';
 import  "moment/locale/ko";
 require('dayjs/locale/ko');
 Moment.locale("ko");
-import _ from 'lodash'; // https://lodash.com/docs
 import * as Font from 'expo-font';          // https://docs.expo.io/versions/latest/sdk/font/
 import uuid from 'react-native-uuid';       // https://www.npmjs.com/package/react-native-uuid
-// import * as Random from 'expo-random';
-import Hyperlink from 'react-native-hyperlink'; // https://www.npmjs.com/package/react-native-hyperlink
-import * as WebBrowser from 'expo-web-browser';
-import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
-import Draggable from 'react-native-draggable'; // https://github.com/tongyy/react-native-draggable
-import * as Animatable from 'react-native-animatable'; // https://github.com/oblador/react-native-animatable
-import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npmjs.com/package/react-native-swipe-list-view
-//import * as Haptics from 'expo-haptics';
 
 // my component
 import InlineTextInput from './component/InlineTextInput';
 import LoginNavigation from './component/LoginForm';
-import {ThemeContext, AuthContext, ControllContext, SystemContext, UserDataContext, ProductDataContext, SubscribeDataContext, ChatroomDataContext, DiaryDataContext, InformDataContext, GlobalDataContext} from './component/Context';
-import {HTTP, PUSH_REGISTRATION_ENDPOINT} from './component/utils/constants';
+import { ThemeContext, AuthContext, ControllContext, UserDataContext, ProductDataContext, SubscribeDataContext, ChatroomDataContext, DiaryDataContext, InformDataContext, GlobalDataContext} from './component/Context';
+import { PUSH_REGISTRATION_ENDPOINT } from './component/utils/constants';
 import IntroNavigation from './component/IntroForm';
 import * as Connection from './component/ServerConnect';
 import * as Storage from './component/StorageControll';
@@ -42,7 +26,7 @@ import * as PushNotification from './component/PushNotification';
 import CustomDrawerContent from './component/CustomDrawerContent';
 import MainStackHomePage from './component/MainStackHomePage';
 import * as TestData from './testData';
-import { logo, subOn, subOff } from './component/utils/loadAssets';
+import { logo } from './component/utils/loadAssets';
 import * as DefaultDataType from './component/utils/DefaultDataType';
 import { chooseRandomly } from './component/utils/utils';
 
@@ -69,6 +53,8 @@ const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
 const ASSUME_SAME_CHAT_TIME = 1; // 채팅 시 같은 메세지로 판정하는 시간간격 (단위 분)
 const DEBUG_PRINT = true;
+const TEST_MODE = true;
+
 // 컨트롤 변수
 var global_p_id = 0;               // 채팅창 사이드 메뉴에서 다른 상품정보로 보내기 위한 상품 id 값
 var global_y = 0;         // 다이어리리스트 스크린의 스크롤 값
@@ -202,7 +188,7 @@ export default function App() {
       login: false,
       token: '',
     }
-  );  // 유저 인증 정보
+  );  // 앱 상태
   const authContext = React.useMemo(
     () => ({
       signIn: async data => {
@@ -252,34 +238,9 @@ export default function App() {
       }
     }),
     [state]
-  );  // 유저 인증 함수 등록
-  const systemContext = React.useMemo(
-    () => ({
-      function: () => {},
-      popupPushMessage: (data, time) => popupPushMessage(data, time),
-      getReply: (data, navigation) => getReply(data, systemContext.popupPushMessage, navigation, systemContext.doUpdate),
-      getUserData: () => {return userData},
-      getProductData: (id) => {return dataList[dataList.findIndex(obj => obj.id===id)]},
-      getProductDataList: () => {return dataList},
-      getInformData: () => {return informData},
-      getPushData: () => {return pushData},
-      getGlobalY: () => {return global_y},
-      getGlobalP: () => {return global_p_id},
-      updateUserData: data => userData = data,
-      updateProductData: data => {
-        let index = dataList.findIndex(obj => obj.id === data.id);
-        dataList[index] = data;
-      },
-      updateProductDataAll: data => dataList = data,
-      updataInformData: data => informData = data,
-      updatePushData: data => pushData = data,
-      setGlobalP: data => global_p_id = data,
-    }),
-    []
-  );
+  );  // 앱 상태변경 함수
 
-  // foreground 푸시 처리
-  const handleNotification1 = ({request}) => {
+  const handleNotification1 = ({request}) => { // foreground 시 푸시 처리 / 푸시알림 받음!
     const content = request.content;
     const diaryID = content.data.diary_ID;
     const productID = content.data.product_ID;
@@ -288,7 +249,7 @@ export default function App() {
     const title = content.title;
     console.log(`\n notify receive  content\n`, content);
 
-    // 푸시알림 처리,
+    // 푸시알림 받음 !
     const productInfo = myProductDataContext[myProductDataContext.findIndex(product => product.p_id === productID)];
     setMyChatroomDataContext(myChatroomDataContext.map(chatroom => {
       if(chatroom.p_id === productID){
@@ -316,28 +277,28 @@ export default function App() {
       return chatroom;
     }));
   };
-
-  // 푸시 알림 터치 시
-  const handleNotification2 = (notify) => {
-    setNotification(notify);
-    console.log('notification2', notify);
+  const handleNotification2 = (notify) => { // 푸시 알림 터치 시
+    console.log('푸시 알림 터치함', notify);
   };
-  const registerForPushNotificationsAsync = async (data) => {
+  const registerForPushNotificationsAsync = async ({email: email, username: username}) => { // 푸시알림 등록
     const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
 
     if (status !== 'granted') {
       const { _status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
-      alert(`${_status}`);
       if (_status !== 'granted') {
         return;
       }
     }
 
-    const token = await Notifications.getExpoPushTokenAsync();
+    const pushtoken = await Notifications.getExpoPushTokenAsync();
 
     Notifications.addNotificationReceivedListener(handleNotification1);
     Notifications.addNotificationResponseReceivedListener(handleNotification2);
-    console.log(`registerForPushNotificationsAsync\ntoken: ${token}\nemail: ${data.email}, username: ${data.username}`);
+    setMyUserDataContext(userData => {
+      userData.pushToken = pushtoken;
+      return userData;
+    });
+    // console.log(`registerForPushNotificationsAsync\ntoken: ${token}\nemail: ${data.email}, username: ${data.username}`);
 
     return fetch(PUSH_REGISTRATION_ENDPOINT, {
       method: 'POST',
@@ -347,11 +308,11 @@ export default function App() {
       },
       body: JSON.stringify({
         token: {
-          value: token,
+          value: pushtoken,
         },
         user: {
-          email: data.email,
-          username: data.username,
+          email: email,
+          username: username,
         },
       }),
     });
@@ -369,6 +330,13 @@ export default function App() {
     NanumMyeongjo: require('./assets/font/NanumMyeongjo.ttf'),
     NanumMyeongjo_bold: require('./assets/font/NanumMyeongjoExtraBold.ttf'),
   });
+
+  const [loadReady, setLoadReady] = useState({
+    loadProductData: false,
+    loadUserData: false,
+  });
+
+
   const [loadProductData, setLoadProductData] = useState(false);
   const [updateCacheData, setUpdateCacheData] = useState({
     autoLogin: false,
@@ -682,7 +650,7 @@ export default function App() {
         console.log(' 푸시 해제 \n', subscribe);
         if(!response.ok){
           Alert.alert('구독취소에 실패하였습니다.', 'ERROR: 서버연결 실패');
-          return;
+          // return;
         }
 
         // 구독상태 제거
@@ -911,6 +879,24 @@ export default function App() {
 
           return diary;
         }));
+      },
+      updatePassword: (newPassword) => {  // 패스워드 변경
+        setMyUserDataContext(userData => {
+          userData.password = newPassword;
+          return userData;
+        });
+      },
+      updateUserImg: (newImage) => { // 사용자 이미지 변경
+        setMyUserDataContext(userData => {
+          userData.userImg = newImage;
+          return userData;
+        });
+      },
+      updateUserName: (newUsername) => { // 사용자 이미지 변경
+        setMyUserDataContext(userData => {
+          userData.username = newUsername;
+          return userData;
+        });
       }
     };
 
@@ -1095,7 +1081,6 @@ export default function App() {
       )
       : (
         <ControllContext.Provider value={controllContext}>
-        <SystemContext.Provider value={systemContext}>
         <UserDataContext.Provider value={myUserDataContext}>
         <ProductDataContext.Provider value={myProductDataContext}>
         <SubscribeDataContext.Provider value={mySubscribeDataContext}>
@@ -1115,7 +1100,6 @@ export default function App() {
         </SubscribeDataContext.Provider>
         </ProductDataContext.Provider>
         </UserDataContext.Provider>
-        </SystemContext.Provider>
         </ControllContext.Provider>
       )}
       {pushContext.isPushShowed && <PushNotification.PushMessage pushData={pushContext} onPressPushNotification={onPressPushNotification}/>}
