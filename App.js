@@ -42,18 +42,14 @@ var pushList = [];
 var userData;
 var pushCount = 0;
 
-const testAccount = {
-  use: true,
-  email: '77eric@naver.com',
-  password: '!!gmltjd',
-}
+import { testAccount } from './component/constant/TEST';
 
 // 기기 화면 사이즈
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
 const ASSUME_SAME_CHAT_TIME = 1; // 채팅 시 같은 메세지로 판정하는 시간간격 (단위 분)
 const DEBUG_PRINT = true;
-const TEST_MODE = true;
+const TEST_MODE = false;
 
 // 컨트롤 변수
 var global_p_id = 0;               // 채팅창 사이드 메뉴에서 다른 상품정보로 보내기 위한 상품 id 값
@@ -99,6 +95,7 @@ function getReply(data, popupPushMessage, navigation, updateF){
 async function warningPermission(){
   const push = await Permissions.askAsync(Permissions.NOTIFICATIONS);
   const camera = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+  let isNeedWarn = true;
 
   if(push.status !== 'granted' && camera.status !== 'granted'){
     Alert.alert('원활한 앱 진행을 위하여 다음 권한이 필요합니다.', ' - 카메라 권환\n - 푸시알림 권한');
@@ -106,7 +103,11 @@ async function warningPermission(){
     Alert.alert('원활한 앱 진행을 위하여 다음 권한이 필요합니다.', ' - 푸시알림 권한');
   }else if(camera.status !== 'granted'){
     Alert.alert('원활한 앱 진행을 위하여 다음 권한이 필요합니다.', ' - 카메라 권한');
+  }else{
+    isNeedWarn = false;
   }
+
+  return isNeedWarn;
 }
 
 // 태스트 모듈
@@ -266,13 +267,13 @@ export default function App() {
   const handleNotification2 = (notify) => { // 푸시 알림 터치 시
     console.log('푸시 알림 터치함', notify);
   };
-  const registerForPushNotificationsAsync = async ({email: email, username: username}) => { // 푸시알림 등록
+  const registerForPushNotificationsAsync = async () => { // 푸시알림 등록
     const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
 
     if (status !== 'granted') {
       const { _status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
       if (_status !== 'granted') {
-        return;
+        return {ok:false};
       }
     }
 
@@ -284,7 +285,6 @@ export default function App() {
       userData.pushToken = pushtoken;
       return userData;
     });
-    // console.log(`registerForPushNotificationsAsync\ntoken: ${token}\nemail: ${data.email}, username: ${data.username}`);
 
     return fetch(PUSH_REGISTRATION_ENDPOINT, {
       method: 'POST',
@@ -297,8 +297,8 @@ export default function App() {
           value: pushtoken,
         },
         user: {
-          email: email,
-          username: username,
+          email: myUserDataContext.email,
+          username: myUserDataContext.password,
         },
       }),
     });
@@ -319,6 +319,7 @@ export default function App() {
 
   const [isProductDataReady, setIsProductDataReady] = useState(false);
   const [isUserLoadingFinished, setIsUserLoadingFinished] = useState(false);
+  const [isCheckedPermissionWarn, setIsCheckedPermissionWarn] = useState(false);
   const [prevUserData, setPrevUserData] = useState({
     isExist: false,
     isAutoLogin: false,
@@ -326,8 +327,7 @@ export default function App() {
     password: null,
   });
   useEffect(() => {
-    console.log(' 부팅 useEffect\n', prevUserData);
-    if(isProductDataReady && isUserLoadingFinished){
+    if(isProductDataReady && isUserLoadingFinished && isCheckedPermissionWarn){
       if(prevUserData.isExist === true){
         if(prevUserData.isAutoLogin === true) controllContext.login({email: prevUserData.email, password: prevUserData.password});
         else dispatch({ type: 'END_LOADING_LOGIN_PAGE'});
@@ -335,7 +335,7 @@ export default function App() {
         dispatch({ type: 'END_LOADING_FIRST_LOGIN'});
       }
     }
-  }, [isProductDataReady, isUserLoadingFinished]);
+  }, [isProductDataReady, isUserLoadingFinished, isCheckedPermissionWarn]);
 
   // 다이얼 백업함수
   const diaryBackupTrial = async () => {
@@ -563,6 +563,12 @@ export default function App() {
       },
       subscribeOnHandler: async (product, startTime, endTime, navigation) => { // 구독 신청 함수
         // 서버에 구독 신청
+        let pushSet = await registerForPushNotificationsAsync();
+        if(!pushSet.ok){
+          Alert.alert('푸시권한이 필요합니다.');
+          return;
+        }
+
         let s_id = uuid.v4();
         let response = await subscribeSetting({
           token: myUserDataContext.token,
@@ -814,11 +820,19 @@ export default function App() {
           setPrevUserData(prevUser);
           setIsUserLoadingFinished(true);
         });
+
+        warningPermission().then(isNeedWarn => {
+          if(isNeedWarn){
+            setTimeout(() => {
+              setIsCheckedPermissionWarn(true);
+            }, 2500);
+          }
+          setIsCheckedPermissionWarn(true);
+        })
       },
       login: async ({email, password}) => {
         let response = await stateUpdateList(email, password);
         if(response.ok){
-            console.log('dispatch login');
             dispatch({ type: 'LOGIN' });
         }else{
           Alert.alert('로그인에 실패하였습니다.', response.message);
@@ -922,15 +936,23 @@ export default function App() {
         diarymessageList: []
       };
     })
+
     let response = await downloadDiaryData({jwt:token, debug:DEBUG_PRINT});
 
-    if(response.ok && response.data.length === protoDiaryData.length){
+    if(response.ok){
       setMyDiaryDataContext(response.data);
     }else{
-      console.log('\n 서버 저장 다이어리가 예상 다이어리와 크기가 다릅니다. server: ', response.data.length, ' expected: ', protoDiaryData.length, response.ok);
-      console.log(response.data);
+      console.log('다이어리 로딩 에러');
       setMyDiaryDataContext(protoDiaryData);
     }
+
+    // if(response.ok && response.data.length === protoDiaryData.length){
+    //   setMyDiaryDataContext(response.data);
+    // }else{
+    //   console.log('\n 서버 저장 다이어리가 예상 다이어리와 크기가 다릅니다. server: ', response.data.length, ' expected: ', protoDiaryData.length, response.ok);
+    //   console.log(response.data);
+    //   setMyDiaryDataContext(protoDiaryData);
+    // }
   }
   const updateInformDataContext = async () => {
 
@@ -965,6 +987,7 @@ export default function App() {
   return (
     <ThemeContext.Provider value={theme}>
     <AuthContext.Provider value={authContext}>
+    <ControllContext.Provider value={controllContext}>
       {state.testMode ? (
         <View style={{flex:1, marginTop:30, alignItems: 'center', justifyContent: 'center'}}>
           <Text>테스트 화면</Text>
@@ -990,7 +1013,6 @@ export default function App() {
         <LoginNavigation/>
       )
       : (
-        <ControllContext.Provider value={controllContext}>
         <UserDataContext.Provider value={myUserDataContext}>
         <ProductDataContext.Provider value={myProductDataContext}>
         <SubscribeDataContext.Provider value={mySubscribeDataContext}>
@@ -1010,10 +1032,10 @@ export default function App() {
         </SubscribeDataContext.Provider>
         </ProductDataContext.Provider>
         </UserDataContext.Provider>
-        </ControllContext.Provider>
+
       )}
       {pushContext.isPushShowed && <PushNotification.PushMessage pushData={pushContext} onPressPushNotification={onPressPushNotification}/>}
-
+    </ControllContext.Provider>
     </AuthContext.Provider>
     </ThemeContext.Provider>
   );
@@ -1028,7 +1050,7 @@ function SplashScreen(){
 
   return (
     <View style={{flex:1, marginTop:30, alignItems: 'center', justifyContent: 'center'}}>
-      <Image source={logo} style={{height: screenWidth*0.25, width:screenWidth*0.25}} resizeMode={'cover'}/>
+      <Image source={logo} style={{height: screenWidth*0.45, width:screenWidth*0.45}} resizeMode={'cover'}/>
     </View>
   );
 }
