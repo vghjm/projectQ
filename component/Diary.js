@@ -1,19 +1,14 @@
 import React, {useContext, useState, useEffect} from 'react';
-import {View, TouchableOpacity, Image, KeyboardAvoidingView, ScrollView, Text, TextInput, Alert, Dimensions} from 'react-native';
+import { View, TouchableOpacity, Image, KeyboardAvoidingView, ScrollView, Text, TextInput, Alert, Dimensions} from 'react-native';
 import Draggable from 'react-native-draggable'; // https://github.com/tongyy/react-native-draggable
 import * as Animatable from 'react-native-animatable'; // https://github.com/oblador/react-native-animatable
 import Moment from 'moment';
-import { useFocusEffect } from '@react-navigation/native';
 import { FontAwesome, EvilIcons }
 from '@expo/vector-icons'; // https://icons.expo.fyi/
 import DateTimePicker from '@react-native-community/datetimepicker'; // https://github.com/react-native-community/datetimepicker
 
-import * as TestData from '../testData';
-import {SystemContext, ControllContext, GlobalDataContext, DiaryDataContext, ProductDataContext } from './Context';
-import {diaryDelete} from './ServerConnect';
+import { ControllContext, GlobalDataContext, DiaryDataContext } from './Context';
 import { diaryImgList, downArrow } from './utils/loadAssets';
-// let userData = TestData.userTestData;
-// let dataList = TestData.productTestData;
 
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
@@ -277,11 +272,9 @@ function DiaryTextWithDate(props){
   };
   const onEndEditingHandler = () => { // 글쓰기 끝냄 처리
     setEditMode(false);
-    //console.log('myMessage\n', myMessage);
+
     if(myMessage === ''){
-      // 메세지 빈칸 => 삭제
-      // props.diary.diarymessageList.splice(props.diaryId, 1);
-      // props.diarySort();
+      // 메세지 삭제
       deleteDiaryMessage(diaryMessage._id);
     }else if(originMessage != myMessage){
       // 메시지가 변함
@@ -326,120 +319,118 @@ function DiaryTextWithDate(props){
   );
 }
 function LastDiaryTextWithDate(props){// 마지막 다이어리만위 위해 만들었음, 나중에 통합 필요
-  // 옵션 셋팅 변수
-  const showYear = props.options.first || !props.options.sameYear;
-  const showDate = props.options.first || !props.options.sameDate;
-  const last = props.options.last;
-  const title = props.title;
-  const [myMessage, setMyMessage] = useState(props.message.text); // 표시되는 메시지
-  const [editMode, setEditMode] = useState(true);                 // 편집모드 확인
-  let handler = props.handler;                                    // 우상단 기능 구현함수
-  let minusHandler = props.minusHandler;                          // 마지막 항목의 크기를 측정해감
-  const [saveLastMessage, setSaveLastMessage] = useState('');     // 초기 메시지 저장 & 변경 확인용
-
-  // 시간 및 날짜 편집용 변수
-  const [showTimeChanger, setShowTimeChanger] = useState(false);
-  const [showDateChanger, setShowDateChanger] = useState(false);
-
-  const timeChangerHandler = (event, selectedDate) => {
-    setShowTimeChanger(false);
-    if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
-
-    props.message.createdAt = Moment(selectedDate);
-    props.diarySort();
-  }
-  const dateChangerHandler = (event, selectedDate) => {
-    setShowDateChanger(false);
-    if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
-
-    props.message.createdAt = Moment(selectedDate);
-    props.diarySort();
-  }
-
-  const onFocusHandler = () => {
-    props.nav.setOptions({
-      headerTitle: '내 기록편집',
-      headerTitleAlign: 'center',
-      headerRight: (props) => (
-        <TouchableOpacity onPress={onEndEditingHandler}>
-          <Text style={{fontSize:20, marginRight: 20, justifyContent: 'center'}}>완료</Text>
-        </TouchableOpacity>
-      )
-    });
-  };
-  const onEndEditingHandler = () => { // 글쓰기 끝냄 처리
-    setEditMode(false);
-    //console.log('myMessage\n', myMessage);
-    if(myMessage === ''){
-      props.diary.diarymessageList.splice(props.diaryId, 1);
-      props.diarySort();
-    }else if(props.message.islagacy){
-      // 연동 아님
-      if(saveLastMessage != myMessage){
-        //console.log('연동중 다름 발생! ', saveLastMessage, myMessage);
-        props.message.text = myMessage;
-      }
-    }else {
-      if(saveLastMessage != myMessage){
-        //console.log('비 연동중 다름 발생! ', saveLastMessage, myMessage);
-        props.message.islagacy = true;
-        props.message.text = myMessage;
-      }
-    }
-
-    props.nav.setOptions({
-      headerTitle: title,
-      headerTitleAlign: 'left',
-      headerRight: (props) => (
-        <TouchableOpacity onPress={handler}>
-          <Image source={downArrow} style={{width:30, height:30, marginRight:20}}/>
-        </TouchableOpacity>
-      )
-    });
-    setTimeout(()=>{
-      setEditMode(true);
-    }, 500);
-  };
-
-  useEffect(() => {
-    if(!props.message.islagacy){
-      // 연동중
-      let sumMessage = '';
-      props.message.linkedMessageList.forEach(message => {
-        if(sumMessage === '') sumMessage = message.text;
-        else sumMessage += ' ' + message.text;
-      })
-      setMyMessage(sumMessage);
-      setSaveLastMessage(sumMessage);
-    }else{
-      setSaveLastMessage(props.message.text);
-    }
-  }, []);
-
-
-
-
-  return (
-    <View onLayout={(event) => {
-        var {x, y, width, height} = event.nativeEvent.layout;
-        if(last) minusHandler(y);
-    }}>
-      {showYear && <DiaryYear year={props.message.createdAt.format('YYYY')} />}
-      {showDate && <DiaryDate date={props.message.createdAt.format('MMDD')} onPressHandler={() => setShowDateChanger(true)} />}
-      {showDateChanger && <DateTimePicker testID="DiaryDatePicker" value={props.message.createdAt.toDate()} mode={'date'}  display="default" onChange={dateChangerHandler}/>}
-      <View style={{paddingLeft: 90, flexWrap:'wrap'}}>
-        <TouchableOpacity onPress={()=>setEditMode(true)}>
-          <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{fontFamily: 'UhBeeSeulvely', textAlign: 'center', marginLeft: -15, fontSize: 14, padding:3, borderRadius: 5,width:screenWidth *0.76}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
-        </TouchableOpacity>
-      </View>
-      <View style={{marginBottom: 30, marginRight: 20, alignItems: 'flex-end'}}>
-        <TouchableOpacity onPress={()=>setShowTimeChanger(true)}>
-          <Text style={{fontSize:10, color: '#AAA'}}>{props.message.createdAt.format('LT')}</Text>
-        </TouchableOpacity>
-      </View>
-      {showTimeChanger && <DateTimePicker testID="DiaryTimePicker" value={props.message.createdAt.toDate()} mode={'time'} is24Hour={true} display="default" onChange={timeChangerHandler}/>}
-    </View>
-  );
+  // // 옵션 셋팅 변수
+  // const showYear = props.options.first || !props.options.sameYear;
+  // const showDate = props.options.first || !props.options.sameDate;
+  // const last = props.options.last;
+  // const title = props.title;
+  // const [myMessage, setMyMessage] = useState(props.message.text); // 표시되는 메시지
+  // const [editMode, setEditMode] = useState(true);                 // 편집모드 확인
+  // let handler = props.handler;                                    // 우상단 기능 구현함수
+  // let minusHandler = props.minusHandler;                          // 마지막 항목의 크기를 측정해감
+  // const [saveLastMessage, setSaveLastMessage] = useState('');     // 초기 메시지 저장 & 변경 확인용
+  //
+  // // 시간 및 날짜 편집용 변수
+  // const [showTimeChanger, setShowTimeChanger] = useState(false);
+  // const [showDateChanger, setShowDateChanger] = useState(false);
+  //
+  // const timeChangerHandler = (event, selectedDate) => {
+  //   setShowTimeChanger(false);
+  //   if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
+  //
+  //   props.message.createdAt = Moment(selectedDate);
+  //   props.diarySort();
+  // }
+  // const dateChangerHandler = (event, selectedDate) => {
+  //   setShowDateChanger(false);
+  //   if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
+  //
+  //   props.message.createdAt = Moment(selectedDate);
+  //   props.diarySort();
+  // }
+  //
+  // const onFocusHandler = () => {
+  //   props.nav.setOptions({
+  //     headerTitle: '내 기록편집',
+  //     headerTitleAlign: 'center',
+  //     headerRight: (props) => (
+  //       <TouchableOpacity onPress={onEndEditingHandler}>
+  //         <Text style={{fontSize:20, marginRight: 20, justifyContent: 'center'}}>완료</Text>
+  //       </TouchableOpacity>
+  //     )
+  //   });
+  // };
+  // const onEndEditingHandler = () => { // 글쓰기 끝냄 처리
+  //   setEditMode(false);
+  //
+  //   if(myMessage === ''){
+  //     props.diary.diarymessageList.splice(props.diaryId, 1);
+  //     props.diarySort();
+  //   }else if(props.message.islagacy){
+  //     // 연동 아님
+  //     if(saveLastMessage != myMessage){
+  //       props.message.text = myMessage;
+  //     }
+  //   }else {
+  //     if(saveLastMessage != myMessage){
+  //       props.message.islagacy = true;
+  //       props.message.text = myMessage;
+  //     }
+  //   }
+  //
+  //   props.nav.setOptions({
+  //     headerTitle: title,
+  //     headerTitleAlign: 'left',
+  //     headerRight: (props) => (
+  //       <TouchableOpacity onPress={handler}>
+  //         <Image source={downArrow} style={{width:30, height:30, marginRight:20}}/>
+  //       </TouchableOpacity>
+  //     )
+  //   });
+  //   setTimeout(()=>{
+  //     setEditMode(true);
+  //   }, 500);
+  // };
+  //
+  // useEffect(() => {
+  //   if(!props.message.islagacy){
+  //     // 연동중
+  //     let sumMessage = '';
+  //     props.message.linkedMessageList.forEach(message => {
+  //       if(sumMessage === '') sumMessage = message.text;
+  //       else sumMessage += ' ' + message.text;
+  //     })
+  //     setMyMessage(sumMessage);
+  //     setSaveLastMessage(sumMessage);
+  //   }else{
+  //     setSaveLastMessage(props.message.text);
+  //   }
+  // }, []);
+  //
+  //
+  //
+  //
+  // return (
+  //   <View onLayout={(event) => {
+  //       var {x, y, width, height} = event.nativeEvent.layout;
+  //       if(last) minusHandler(y);
+  //   }}>
+  //     {showYear && <DiaryYear year={props.message.createdAt.format('YYYY')} />}
+  //     {showDate && <DiaryDate date={props.message.createdAt.format('MMDD')} onPressHandler={() => setShowDateChanger(true)} />}
+  //     {showDateChanger && <DateTimePicker testID="DiaryDatePicker" value={props.message.createdAt.toDate()} mode={'date'}  display="default" onChange={dateChangerHandler}/>}
+  //     <View style={{paddingLeft: 90, flexWrap:'wrap'}}>
+  //       <TouchableOpacity onPress={()=>setEditMode(true)}>
+  //         <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{fontFamily: 'UhBeeSeulvely', textAlign: 'center', marginLeft: -15, fontSize: 14, padding:3, borderRadius: 5,width:screenWidth *0.76}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
+  //       </TouchableOpacity>
+  //     </View>
+  //     <View style={{marginBottom: 30, marginRight: 20, alignItems: 'flex-end'}}>
+  //       <TouchableOpacity onPress={()=>setShowTimeChanger(true)}>
+  //         <Text style={{fontSize:10, color: '#AAA'}}>{props.message.createdAt.format('LT')}</Text>
+  //       </TouchableOpacity>
+  //     </View>
+  //     {showTimeChanger && <DateTimePicker testID="DiaryTimePicker" value={props.message.createdAt.toDate()} mode={'time'} is24Hour={true} display="default" onChange={timeChangerHandler}/>}
+  //   </View>
+  // );
 }
 export function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
   const p_id = route.params.p_id;
@@ -501,17 +492,6 @@ export function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 
     if(value != minusPos) setMinusPos(value);
   }
 
-  // 다이어리 시간순 정렬
-  const diarySort = () => {
-    // //console.log('sorting -------------------------------------- ');
-    // diarySortByDate(diary.diarymessageList);
-    // lastDate = data.diary.diarymessageList.length>0 ? data.diary.diarymessageList[data.diary.diarymessageList.length-1].createdAt : null;
-    // //console.log('lastDate: ', lastDate.format('LL'));
-    // //setUpdated(updated+1);
-    // setNumberOfMessage(data.diary.diarymessageList.length);
-    // //navigation.navigate('Diary', {id:id});
-  }
-
   const changeDiaryMessageFunction = (message_id, diaryMessage) => {
     changeDiaryMessage(p_id, message_id, diaryMessage);
   }
@@ -545,7 +525,6 @@ export function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 
                 }
                 if(diaryMessage.createdAt.isSameOrAfter(lastDate, 'day') && !options.sameDate) {
                   options.last = true;
-                  //console.log('last Message: ', message.text);
                   // return <DiaryTextWithDate diary={diary} diaryId={i} changeDiaryDateHandler={changeDiaryDateHandler} diarySort={diarySort} options={options} key={i.toString()}  nav={navigation} p_id={p_id} message={message} title={diary.title} handler={diaryOptionFocusHandler} minusHandler={getMinusContentPositionHandler}/>;
                 }
 

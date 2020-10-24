@@ -1,13 +1,13 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, { useContext } from 'react';
 import {TouchableOpacity, View, Text, Alert, Clipboard, ScrollView, Image, TouchableHighlight, Dimensions, TextInput} from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { getFocusedRouteNameFromRoute, useFocusEffect } from '@react-navigation/native';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { Octicons }
 from '@expo/vector-icons'; // https://icons.expo.fyi/
 import uuid from 'react-native-uuid'; // https://www.npmjs.com/package/react-native-uuid
 import Moment from 'moment';
 
-import { SystemContext, ThemeContext, UserDataContext, ChatroomDataContext, SubscribeDataContext, ProductDataContext, ControllContext, DiaryDataContext, GlobalDataContext} from './Context';
+import { ThemeContext, UserDataContext, ChatroomDataContext, SubscribeDataContext, ProductDataContext, ControllContext, DiaryDataContext, GlobalDataContext} from './Context';
 import { DynamicDiaryScreen } from './Diary';
 import ChatroomScreen from './Chatroom';
 import SubscribeScreen from './Subsciribe';

@@ -9,21 +9,16 @@ import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npm
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
-import { useFocusEffect } from '@react-navigation/native';
 
-
-import { ThemeContext, SystemContext, ChatroomDataContext, ControllContext, ProductDataContext, SubscribeDataContext, DiaryDataContext, GlobalDataContext } from './Context';
+import { ThemeContext, ChatroomDataContext, ControllContext, ProductDataContext, SubscribeDataContext, DiaryDataContext } from './Context';
 import { chooseRandomIndex, chooseRandomly } from './utils/utils';
-import * as Connection from './ServerConnect';
 import {priceTag, priceTagB} from './utils/loadAssets';
 import { DraggableDiary, BasicDiary } from './Diary';
+import makeLink from './connect/makeLink';
 
 
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
-var pressDiaryEditButton = false;
-
-
 const Tab = createMaterialTopTabNavigator();
 
 function SubscribeContentLayout(props){
@@ -225,7 +220,12 @@ function TestScreen({navigation}){
   const printToPdf = async () => {
       let html;
 
-      let responsePDF = await Connection.makeLink(userData.token, dataList[1].diary.id, 1);
+      let responsePDF = await makeLink({
+        token: userData.token,
+        d_ID: dataList[1].diary.id,
+        pdfType: 1,
+        debug: true,
+      });
       if(responsePDF.ok){
         html = responsePDF.data.htmls;
         console.log('printToPdf: ', html);
@@ -254,7 +254,12 @@ function TestScreen({navigation}){
   }
 
   const shareWithLink = async () => {
-    let responseMakeLink = await Connection.makeLink(userData.token, dataList[1].diary.id, 0);
+    let responseMakeLink = await makeLink({
+      token: userData.token,
+      d_ID: dataList[1].diary.id,
+      pdfType: 0,
+      debug: true,
+    });
     if(responseMakeLink.ok){
       url = responseMakeLink.data.linkname;
       console.log('shareWithLink: ', responseMakeLink.data.linkname);

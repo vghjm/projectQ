@@ -1,8 +1,8 @@
-import React, {useContext} from 'react';
-import {ImageBackground, TouchableOpacity, Text, StyleSheet, View} from 'react-native';
-import {NavigationContainer, useFocusEffect} from '@react-navigation/native';
+import React, { useContext } from 'react';
+import { ImageBackground, TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import {ThemeContext, AuthContext} from './Context';
+import { AuthContext } from './Context';
 
 import { introImage1, introImage2, introImage3 } from './utils/loadAssets';
 

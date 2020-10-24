@@ -1,15 +1,9 @@
-import React, { useRef, useState, useCallback, useEffect, useContext} from 'react';
-import { AppState, Vibration, Dimensions , ActivityIndicator, Platform,TouchableHighlight, TouchableWithoutFeedback, AsyncStorage, ImageBackground, Text, View, StyleSheet, TouchableOpacity, TextInput, CheckBox, KeyboardAvoidingView, Alert, Button, ScrollView, SafeAreaView, Image }
+import React, { useRef, useState, useEffect, useContext } from 'react';
+import { AppState, Vibration, Dimensions, Text, View, TouchableOpacity, TextInput, Alert, Image }
 from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer, getFocusedRouteNameFromRoute, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { createDrawerNavigator, createNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem, } from '@react-navigation/drawer';  //  https://reactnavigation.org/docs/drawer-based-navigation/
-import { GiftedChat, Bubble , Send, InputToolbar, Time, Day, Composer } from 'react-native-gifted-chat' // https://github.com/FaridSafi/react-native-gifted-chat
-import { Ionicons, MaterialCommunityIcons, Feather, FontAwesome, EvilIcons, AntDesign, MaterialIcons, Octicons }
-from '@expo/vector-icons'; // https://icons.expo.fyi/
-import * as ImagePicker from 'expo-image-picker';      // https://docs.expo.io/versions/latest/sdk/imagepicker/
-// import Constants from 'expo-constants';
-import DateTimePicker from '@react-native-community/datetimepicker'; // https://github.com/react-native-community/datetimepicker
+import { NavigationContainer } from '@react-navigation/native';
+import { createDrawerNavigator } from '@react-navigation/drawer';  //  https://reactnavigation.org/docs/drawer-based-navigation/
 //import { Notifications } from 'expo'; // https://docs.expo.io/versions/latest/sdk/notifications/
 import * as Notifications from 'expo-notifications';
 import * as Permissions from 'expo-permissions';
@@ -17,24 +11,14 @@ import Moment from 'moment';
 import  "moment/locale/ko";
 require('dayjs/locale/ko');
 Moment.locale("ko");
-import _ from 'lodash'; // https://lodash.com/docs
 import * as Font from 'expo-font';          // https://docs.expo.io/versions/latest/sdk/font/
 import uuid from 'react-native-uuid';       // https://www.npmjs.com/package/react-native-uuid
-// import * as Random from 'expo-random';
-import Hyperlink from 'react-native-hyperlink'; // https://www.npmjs.com/package/react-native-hyperlink
-import * as WebBrowser from 'expo-web-browser';
-import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
-import Draggable from 'react-native-draggable'; // https://github.com/tongyy/react-native-draggable
-import * as Animatable from 'react-native-animatable'; // https://github.com/oblador/react-native-animatable
-import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npmjs.com/package/react-native-swipe-list-view
-//import * as Haptics from 'expo-haptics';
 
 // my component
 import InlineTextInput from './component/InlineTextInput';
 import LoginNavigation from './component/LoginForm';
-import {ThemeContext, AuthContext, ControllContext, SystemContext, UserDataContext, ProductDataContext, SubscribeDataContext, ChatroomDataContext, DiaryDataContext, InformDataContext, GlobalDataContext} from './component/Context';
-import {HTTP, PUSH_REGISTRATION_ENDPOINT} from './component/utils/constants';
+import { ThemeContext, AuthContext, ControllContext, UserDataContext, ProductDataContext, SubscribeDataContext, ChatroomDataContext, DiaryDataContext, InformDataContext, GlobalDataContext} from './component/Context';
+import { PUSH_REGISTRATION_ENDPOINT } from './component/utils/constants';
 import IntroNavigation from './component/IntroForm';
 import * as Connection from './component/ServerConnect';
 import * as Storage from './component/StorageControll';
@@ -42,7 +26,7 @@ import * as PushNotification from './component/PushNotification';
 import CustomDrawerContent from './component/CustomDrawerContent';
 import MainStackHomePage from './component/MainStackHomePage';
 import * as TestData from './testData';
-import { logo, subOn, subOff } from './component/utils/loadAssets';
+import { logo } from './component/utils/loadAssets';
 import * as DefaultDataType from './component/utils/DefaultDataType';
 import { chooseRandomly } from './component/utils/utils';
 
@@ -69,6 +53,8 @@ const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
 const ASSUME_SAME_CHAT_TIME = 1; // 채팅 시 같은 메세지로 판정하는 시간간격 (단위 분)
 const DEBUG_PRINT = true;
+const TEST_MODE = true;
+
 // 컨트롤 변수
 var global_p_id = 0;               // 채팅창 사이드 메뉴에서 다른 상품정보로 보내기 위한 상품 id 값
 var global_y = 0;         // 다이어리리스트 스크린의 스크롤 값
@@ -124,8 +110,8 @@ async function warningPermission(){
 }
 
 // 태스트 모듈
-import loginTest from './component/connect/login';
-import downloadProductDataTest from './component/connect/downloadProductData';
+import loginConnect from './component/connect/login';
+import downloadProductData from './component/connect/downloadProductData';
 import downloadSubscribeData from './component/connect/downloadSubscribeData';
 import downloadDiaryData from './component/connect/downloadDiaryData';
 import subscribeSetting from './component/connect/subscribeSetting';
@@ -133,6 +119,10 @@ import deleteDiaryFromServer from './component/connect/deleteDiaryFromServer';
 import changePushTime from './component/connect/changePushTime';
 import diaryBackUp from './component/connect/diaryBackup';
 import requestChatReply from './component/connect/requestChatReply';
+
+import loadUserImg from './component/storage/loadUserImg';
+import loadLastUserData from './component/storage/loadLastUserData';
+import loadChatroomData from './component/storage/loadChatroomData';
 
 export default function App() {
   const [state, dispatch] = React.useReducer(
@@ -142,36 +132,25 @@ export default function App() {
           // 첫 실행 -> 인트로 화면 띄움
           return {
             ...prevState,
-            devMode: false,
+            testMode: false,
             nowLoading: false,
           };
         case 'END_LOADING_LOGIN_PAGE':
           // 로그인 화면으로 이동
           return {
             ...prevState,
-            devMode: false,
+            testMode: false,
             nowLoading: false,
             intro: false,
-          };
-        case 'END_LOADING_RESTORE_DATA':
-          // 자동로그인, 데이터 로딩 후 바로 사용화면으로 이동
-          return {
-            ...prevState,
-            devMode: false,
-            nowLoading: false,
-            intro: false,
-            login: true,
-            token: action.token,
           };
         case 'LOGIN':
           // 유저정보 받아 사용자 화면으로 이동
           return {
             ...prevState,
-            devMode: false,
+            testMode: false,
             nowLoading: false,
             intro: false,
             login: true,
-            token: action.token,
           };
         case 'SIGN_OUT':
           // 로그인 화면으로 이동
@@ -195,16 +174,14 @@ export default function App() {
       }
     },
     {
-      devMode: true,
+      testMode: TEST_MODE,
       noAuth: false,
       nowLoading: true,
       intro: true,
       login: false,
-      token: '',
     }
-  );  // 유저 인증 정보
-  const authContext = React.useMemo(
-    () => ({
+  );  // 앱 상태
+  const authContext = {
       signIn: async data => {
         console.log(`SignIn email:${data.email}, password:${data.password}`);
         let reply = {ok: false, data: null, message: ''};
@@ -247,39 +224,9 @@ export default function App() {
         return await Connection.checkEmail(email);
       },
       introSkip: () => dispatch({type: 'INTRO_SKIP'}),
-      loading: async () => {
-        await bootstrapAsync();
-      }
-    }),
-    [state]
-  );  // 유저 인증 함수 등록
-  const systemContext = React.useMemo(
-    () => ({
-      function: () => {},
-      popupPushMessage: (data, time) => popupPushMessage(data, time),
-      getReply: (data, navigation) => getReply(data, systemContext.popupPushMessage, navigation, systemContext.doUpdate),
-      getUserData: () => {return userData},
-      getProductData: (id) => {return dataList[dataList.findIndex(obj => obj.id===id)]},
-      getProductDataList: () => {return dataList},
-      getInformData: () => {return informData},
-      getPushData: () => {return pushData},
-      getGlobalY: () => {return global_y},
-      getGlobalP: () => {return global_p_id},
-      updateUserData: data => userData = data,
-      updateProductData: data => {
-        let index = dataList.findIndex(obj => obj.id === data.id);
-        dataList[index] = data;
-      },
-      updateProductDataAll: data => dataList = data,
-      updataInformData: data => informData = data,
-      updatePushData: data => pushData = data,
-      setGlobalP: data => global_p_id = data,
-    }),
-    []
-  );
+    }; // 앱 상태변경 함수
 
-  // foreground 푸시 처리
-  const handleNotification1 = ({request}) => {
+  const handleNotification1 = ({request}) => { // foreground 시 푸시 처리 / 푸시알림 받음!
     const content = request.content;
     const diaryID = content.data.diary_ID;
     const productID = content.data.product_ID;
@@ -288,7 +235,7 @@ export default function App() {
     const title = content.title;
     console.log(`\n notify receive  content\n`, content);
 
-    // 푸시알림 처리,
+    // 푸시알림 받음 !
     const productInfo = myProductDataContext[myProductDataContext.findIndex(product => product.p_id === productID)];
     setMyChatroomDataContext(myChatroomDataContext.map(chatroom => {
       if(chatroom.p_id === productID){
@@ -316,28 +263,28 @@ export default function App() {
       return chatroom;
     }));
   };
-
-  // 푸시 알림 터치 시
-  const handleNotification2 = (notify) => {
-    setNotification(notify);
-    console.log('notification2', notify);
+  const handleNotification2 = (notify) => { // 푸시 알림 터치 시
+    console.log('푸시 알림 터치함', notify);
   };
-  const registerForPushNotificationsAsync = async (data) => {
+  const registerForPushNotificationsAsync = async ({email: email, username: username}) => { // 푸시알림 등록
     const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
 
     if (status !== 'granted') {
       const { _status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
-      alert(`${_status}`);
       if (_status !== 'granted') {
         return;
       }
     }
 
-    const token = await Notifications.getExpoPushTokenAsync();
+    const pushtoken = await Notifications.getExpoPushTokenAsync();
 
     Notifications.addNotificationReceivedListener(handleNotification1);
     Notifications.addNotificationResponseReceivedListener(handleNotification2);
-    console.log(`registerForPushNotificationsAsync\ntoken: ${token}\nemail: ${data.email}, username: ${data.username}`);
+    setMyUserDataContext(userData => {
+      userData.pushToken = pushtoken;
+      return userData;
+    });
+    // console.log(`registerForPushNotificationsAsync\ntoken: ${token}\nemail: ${data.email}, username: ${data.username}`);
 
     return fetch(PUSH_REGISTRATION_ENDPOINT, {
       method: 'POST',
@@ -347,11 +294,11 @@ export default function App() {
       },
       body: JSON.stringify({
         token: {
-          value: token,
+          value: pushtoken,
         },
         user: {
-          email: data.email,
-          username: data.username,
+          email: email,
+          username: username,
         },
       }),
     });
@@ -369,82 +316,26 @@ export default function App() {
     NanumMyeongjo: require('./assets/font/NanumMyeongjo.ttf'),
     NanumMyeongjo_bold: require('./assets/font/NanumMyeongjoExtraBold.ttf'),
   });
-  const [loadProductData, setLoadProductData] = useState(false);
-  const [updateCacheData, setUpdateCacheData] = useState({
-    autoLogin: false,
-    id: null,
+
+  const [isProductDataReady, setIsProductDataReady] = useState(false);
+  const [isUserLoadingFinished, setIsUserLoadingFinished] = useState(false);
+  const [prevUserData, setPrevUserData] = useState({
+    isExist: false,
+    isAutoLogin: false,
+    email: null,
     password: null,
-    isFirstLogin: null,
-    isReady: false,
   });
-  const bootstrapAsync = async () => {
-    console.log('\n @ bootstrapAsync\n\t시작시간 : ', Moment().format('LTS'));
-
-    warningPermission();
-    Storage.updateProductData()
-      .then(response => {
-        if(response.ok) {
-          //console.log('updateProductData: success\n', response.data);
-          dataList = response.data;
-          console.log('\tupdateProductData: true');
-          setLoadProductData(true);
-        }else{
-          console.log('\tupdateProductData: false');
-        }
-      });
-
-    Storage.updateCacheData()
-      .then(cache => {
-        let autoLogin = false;
-        let email = null;
-        let password = null;
-        let isFirstLogin = true;
-        if(cache.ok){
-          autoLogin = true;
-          email = cache.data.email;
-          password = cache.data.password;
-          //dispatch({type: 'END_LOADING_RESTORE_DATA', action: token});
-        }else{
-          let isFirstLogin = cache.data.isFirstLogin;
-          //isFirstLogin ? dispatch({type: 'END_LOADING_FIRST_LOGIN', action: token}) : dispatch({type: 'END_LOADING_LOGIN_PAGE', action: token});
-        }
-        console.log(`\temail: ${email}, password: ${password}\n\tautoLogin: ${autoLogin}, isFirstLogin: ${isFirstLogin}`);
-        setUpdateCacheData({
-          autoLogin: autoLogin,
-          email: email,
-          password: password,
-          isFirstLogin: isFirstLogin,
-          isReady: true,
-        });
-      });
-  };
-
   useEffect(() => {
-    let move = null;
-    let cache = null;
-    if(loadProductData && updateCacheData.isReady && loaded){
-      if(updateCacheData.autoLogin === true || testAccount.use){
-        move = 'END_LOADING_RESTORE_DATA';
-        if(testAccount.use){
-          cache = {
-            email: testAccount.email,
-            password: testAccount.password,
-          }
-        }else{
-          cache = {
-            email: updateCacheData.email,
-            password: updateCacheData.password,
-          }
-        }
-        defaultLogin(cache.email, cache.password);
-      }else if(updateCacheData.isFirstLogin === true){
-        move = 'END_LOADING_FIRST_LOGIN';
-        dispatch({ type: move});
+    console.log(' 부팅 useEffect\n', prevUserData);
+    if(isProductDataReady && isUserLoadingFinished){
+      if(prevUserData.isExist === true){
+        if(prevUserData.isAutoLogin === true) controllContext.login({email: prevUserData.email, password: prevUserData.password});
+        else dispatch({ type: 'END_LOADING_LOGIN_PAGE'});
       }else{
-        move = 'END_LOADING_LOGIN_PAGE';
-        dispatch({ type: move});
+        dispatch({ type: 'END_LOADING_FIRST_LOGIN'});
       }
-    }}, [loadProductData, updateCacheData, loaded]);
+    }
+  }, [isProductDataReady, isUserLoadingFinished]);
 
   // 다이얼 백업함수
   const diaryBackupTrial = async () => {
@@ -489,7 +380,16 @@ export default function App() {
   // 백그라운드 및 Inactive 감지 함수
   const appState = useRef(AppState.currentState);
   const [appStateVisible, setAppStateVisible] = useState(appState.current);
-  useEffect(() => {
+  const _handleAppStateChange = (nextAppState) => { // 앱 상태 변화시 함수
+    if(appState.current.match(/inactive|background/) && nextAppState === "active"){
+      // console.log("App has come to the foreground!");
+    }
+
+    appState.current = nextAppState;
+    setAppStateVisible(appState.current);
+    // console.log("AppState", appState.current);
+  };
+  useEffect(() => { // 앱 상태변환감지 리스너
     AppState.addEventListener("change", _handleAppStateChange);
     //bootstrapAsync();
     return () => {
@@ -499,33 +399,6 @@ export default function App() {
   useEffect((appStateVisible) => { // 백그라운드 시 다이어리 서버에 저장함
     if(appState.current === 'background') diaryBackupTrial();
   }, [appStateVisible]);
-  const _handleAppStateChange = (nextAppState) => {
-    if(appState.current.match(/inactive|background/) && nextAppState === "active"){
-      console.log("App has come to the foreground!");
-    }
-
-    appState.current = nextAppState;
-    setAppStateVisible(appState.current);
-    console.log("AppState", appState.current);
-  };
-
-  // 자동 로그인 테스트 용
-  const updateFunction = async () => {
-    console.log('update Start');
-    bootstrapAsync();
-  };
-  const defaultLogin = async (email, password) => {
-    console.log('자동 로그인 ~');
-    const {signIn, login} = authContext;
-
-    let response = await signIn({email: email, password:password});
-    if(response.ok) {
-      login({token: response.data.token, username: response.data.username, email: email, password: password});
-    }else {
-      userData = _.cloneDeep(TestData.userTestData);
-      dispatch({ type: 'LOGIN', token:data.token });
-    }
-  };
 
   // 푸시메세지 띄우기
   const [pushContext, setPushContext] = useState({
@@ -536,7 +409,7 @@ export default function App() {
     lastPushed: Moment(),
     isPushShowed: false,
   });
-  const popupPushMessage = async (data, time) => {
+  const popupPushMessage = async (data, time) => { // time 초 만큼 이후에 푸시알림을 띄움
     let timer = time??800;
     setTimeout(() => {
       setPushContext(data??{
@@ -561,7 +434,7 @@ export default function App() {
       }, 4800);
     }, timer);
   }
-  const onPressPushNotification = () => {
+  const onPressPushNotification = () => { // 푸시 터치시 제거함수
     setPushContext({
       image: null,
       title: null,
@@ -682,7 +555,7 @@ export default function App() {
         console.log(' 푸시 해제 \n', subscribe);
         if(!response.ok){
           Alert.alert('구독취소에 실패하였습니다.', 'ERROR: 서버연결 실패');
-          return;
+          // return;
         }
 
         // 구독상태 제거
@@ -911,6 +784,45 @@ export default function App() {
 
           return diary;
         }));
+      },
+      updatePassword: (newPassword) => {  // 패스워드 변경
+        setMyUserDataContext(userData => {
+          userData.password = newPassword;
+          return userData;
+        });
+      },
+      updateUserImg: (newImage) => { // 사용자 이미지 변경
+        setMyUserDataContext(userData => {
+          userData.userImg = newImage;
+          return userData;
+        });
+      },
+      updateUserName: (newUsername) => { // 사용자 이미지 변경
+        setMyUserDataContext(userData => {
+          userData.username = newUsername;
+          return userData;
+        });
+      },
+      bootload: async () => {
+        downloadProductData({debug:DEBUG_PRINT}).then(response => {
+          if(!response.ok) return Alert.alert('상품정보 로딩에 문제가 생겼습니다.', response.message);
+          setMyProductDataContext(response.data);
+          setIsProductDataReady(true);
+        });
+
+        loadLastUserData().then(prevUser => {
+          setPrevUserData(prevUser);
+          setIsUserLoadingFinished(true);
+        });
+      },
+      login: async ({email, password}) => {
+        let response = await stateUpdateList(email, password);
+        if(response.ok){
+            console.log('dispatch login');
+            dispatch({ type: 'LOGIN' });
+        }else{
+          Alert.alert('로그인에 실패하였습니다.', response.message);
+        }
       }
     };
 
@@ -965,50 +877,46 @@ export default function App() {
   };
 
   const updateUserDataContext = async (email, password) => {
-    let response = await loginTest({email:email, password:password, debug:DEBUG_PRINT});
+    let prevUserImg = await loadUserImg(email);
+    let response = await loginConnect({email:email, password:password, debug:DEBUG_PRINT});
     if(response.ok){
       setMyUserDataContext({
         token: response.data.token,
-        pushToken: 'EXP[TempPushToken]',
+        pushToken: null,
         email: email,
         password: password,
         username: response.data.username,
-        userImg: 0,
-      })
+        userImg: prevUserImg,
+      });
+      return response.data.token;
+    }else{
+      return null;
     }
-    return response.data.token;
-  }
-  const updateProductDataContext = async () => {
-    let response = await downloadProductDataTest({debug:DEBUG_PRINT});
-    if(response.ok){
-      setMyProductDataContext(response.data);
-    }
-    return response.data.map(obj => {return {
-      p_id: obj.p_id,
-      title: obj.title,
-    }});
   }
   const updateSubscribeContext = async (token) => {
     let response = await downloadSubscribeData({token: token, debug:DEBUG_PRINT});
     if(response.ok){
       setMySubscribeDataContext(response.data);
     }
+
     return response.data.map(obj => obj.p_id);
   }
-  const updateChatroomDataContext = async (subList) => {
-    let protoChatroomData = subList.map(p_id => {
+  const updateChatroomDataContext = async (email, subList) => {
+    let loadChatroom = await loadChatroomData(email);
+    let chatroomList = subList.map(p_id => {
+      if(loadChatroom.some(chatroom => chatroom.p_id === p_id)) return loadChatroom[loadChatroom.findIndex(chatroom => chatroom.p_id === p_id)];
       return {
         p_id: p_id, getPushAlarm: true, lastCheckedTime: Moment(), newItemCount: 0, chatMessageList: [],
         lastPushed: {pushTime: Moment(), q_id: 1, solved:true}
       }
     });
-    setMyChatroomDataContext(protoChatroomData);
+    setMyChatroomDataContext(chatroomList);
   }
-  const updateDiaryDataContext = async (subList, proList, token) => {
+  const updateDiaryDataContext = async (subList, token) => {
     let _pos = 0;
     let protoDiaryData = subList.map(p_id => {
       _pos += 1;
-      const title = proList[proList.findIndex(pro => pro.p_id === p_id)].title;
+      const title = myProductDataContext[myProductDataContext.findIndex(pro => pro.p_id === p_id)].title;
       return {
         p_id: p_id, d_id: p_id, title: title, color: _pos%10, pos: _pos, makeTime: Moment(), totalUpdateCount: 0,
         diarymessageList: []
@@ -1027,14 +935,20 @@ export default function App() {
   const updateInformDataContext = async () => {
 
   }
-  const stateUpdateList = async () => {
-    let email = testAccount.email, password = testAccount.password;
+  const stateUpdateList = async (email, password) => {
+    let reply = {ok:false, data: null, message:''};
     let token = await updateUserDataContext(email, password);
-    let proList = await updateProductDataContext();
-    let subList = await updateSubscribeContext(token);
-    await updateChatroomDataContext(subList);
-    await updateDiaryDataContext(subList, proList, token);
-    await updateInformDataContext();
+    if(token != null){
+      let subList = await updateSubscribeContext(token);
+      await updateChatroomDataContext(email, subList);
+      await updateDiaryDataContext(subList, token);
+      await updateInformDataContext();
+      reply.ok = true;
+    }else{
+      reply.message = "no token error";
+    }
+
+    return reply;
   };
 
   const resetState = async () => {
@@ -1051,35 +965,17 @@ export default function App() {
   return (
     <ThemeContext.Provider value={theme}>
     <AuthContext.Provider value={authContext}>
-      {state.devMode === true ? (
+      {state.testMode ? (
         <View style={{flex:1, marginTop:30, alignItems: 'center', justifyContent: 'center'}}>
-          <Text>스플래쉬 화면</Text>
-          <Text> 유저 정보 여부에 따라 다음으로 분기 </Text>
-          <TouchableOpacity style={{margin: 10}} onPress={() => defaultLogin(testAccount.email, testAccount.password)}>
-            <Text> - 저장된 계정 있음(자동 로그인)</Text>
+          <Text>테스트 화면</Text>
+          <TouchableOpacity style={{margin: 10}} onPress={() => controllContext.bootload()}>
+            <Text style={{color: 'green'}}>부팅테스트</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'END_LOADING_FIRST_LOGIN'})}}>
-            <Text> - 저장된 계정 있음(자동 X)</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'END_LOADING_LOGIN_PAGE'})}}>
-            <Text> - 저장된 계정 없음</Text>
-          </TouchableOpacity>
-          <Text style={{ padding:5, color:loadProductData?'blue':'red'}}>{'상품정보 로딩: ' + loadProductData}</Text>
-          <Text style={{ padding:5, color:updateCacheData?'blue':'red'}}>{'캐쉬정보 로딩: ' + updateCacheData}</Text>
-          <TouchableOpacity style={{margin: 10}} onPress={updateFunction}>
-            <Text>업데이트 상품정보</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={() => popupPushMessage(null)}>
-            <Text style={{color: 'green'}}>푸시 테스트</Text>
+          <TouchableOpacity style={{margin: 10}} onPress={() => controllContext.login(testAccount)}>
+            <Text style={{color: 'green'}}>로그인</Text>
           </TouchableOpacity>
           <TouchableOpacity style={{margin: 10}} onPress={() => showState()}>
-            <Text style={{color: 'green'}}>state display</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={() => stateUpdateList()}>
-            <Text style={{color: 'green'}}>state update</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={() => resetState()}>
-            <Text style={{color: 'green'}}>state reset</Text>
+            <Text style={{color: 'green'}}>상태표시</Text>
           </TouchableOpacity>
         </View>
       ) : state.nowLoading === true ? (
@@ -1095,7 +991,6 @@ export default function App() {
       )
       : (
         <ControllContext.Provider value={controllContext}>
-        <SystemContext.Provider value={systemContext}>
         <UserDataContext.Provider value={myUserDataContext}>
         <ProductDataContext.Provider value={myProductDataContext}>
         <SubscribeDataContext.Provider value={mySubscribeDataContext}>
@@ -1115,7 +1010,6 @@ export default function App() {
         </SubscribeDataContext.Provider>
         </ProductDataContext.Provider>
         </UserDataContext.Provider>
-        </SystemContext.Provider>
         </ControllContext.Provider>
       )}
       {pushContext.isPushShowed && <PushNotification.PushMessage pushData={pushContext} onPressPushNotification={onPressPushNotification}/>}
@@ -1126,10 +1020,10 @@ export default function App() {
 }
 
 function SplashScreen(){
-  const {loading} = useContext(AuthContext);
+  const { bootload } = useContext(ControllContext);
 
   useEffect(() => {
-    loading();
+    bootload();
   }, []);
 
   return (

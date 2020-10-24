@@ -1,10 +1,10 @@
 import React, {useContext} from 'react';
-import {View, TouchableOpacity, Alert, Image} from 'react-native';
-import { createDrawerNavigator, createNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem, } from '@react-navigation/drawer';  //  https://reactnavigation.org/docs/drawer-based-navigation/
+import { View, TouchableOpacity, Alert, Image} from 'react-native';
+import { DrawerContentScrollView, DrawerItem, } from '@react-navigation/drawer';  //  https://reactnavigation.org/docs/drawer-based-navigation/
 import { Octicons, Ionicons, MaterialIcons }
 from '@expo/vector-icons'; // https://icons.expo.fyi/
 
-import { bookOn, bookOff } from './utils/loadAssets';
+import { bookOn } from './utils/loadAssets';
 import { GlobalDataContext, ControllContext } from './Context';
 
 export default function CustomDrawerContent({navigation}) {
@@ -20,7 +20,7 @@ export default function CustomDrawerContent({navigation}) {
       <DrawerItem label="푸시 메세지 설정" icon={()=><Ionicons name="md-time" style={{marginLeft: 3}} size={20} color="black" />} onPress={() => {navigation.navigate('SubscribeListScreen'); navigation.navigate('contentScreen', {p_id:focusChatroomPID, goToEnd: true})}} />
       <DrawerItem label="채팅방 나가기" icon={()=><MaterialIcons name="exit-to-app" style={{marginLeft: 1}} size={20} color="black" />}
         onPress={() => {
-          Alert.alert('정말 채팅방을 나가시겠습니까?', '채팅방을 나가면 채팅 내용과 채팅 목록은 사라지고 다이어리에서만 기록을 확인할 수 있습니다.', [{text: '나가기', onPress: ()=>{navigation.navigate('MyChatListScreen'); eraseChatroom(focusChatroomPID)}}, {text:'취소'}])}} />
+          Alert.alert('정말 채팅방을 나가시겠습니까?', '채팅방을 나가면 채팅 내용과 채팅 목록은 사라지고 다이어리에서만 기록을 확인할 수 있습니다.', [{text:'취소'}, {text: '나가기', onPress: ()=>{navigation.navigate('MyChatListScreen'); eraseChatroom(focusChatroomPID)}} ])}} />
     </DrawerContentScrollView>
   );
 }

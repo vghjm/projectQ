@@ -1,14 +1,14 @@
 import InlineTextInput from './InlineTextInput';
-import React, {useState, useEffect, useContext} from 'react';
-import {View, ScrollView, Image, Text, TouchableOpacity, KeyboardAvoidingView, Alert} from 'react-native';
-import {ThemeContext, AuthContext} from './Context';
-import {isEmailValid, isPasswordValid} from './utils/utils';
-import {HEIGHT} from './utils/constants';
-import {Ionicons } from '@expo/vector-icons';
+import React, { useState, useEffect, useContext } from 'react';
+import { View, ScrollView, Image, Text, TouchableOpacity, KeyboardAvoidingView, Alert } from 'react-native';
+import { ThemeContext, AuthContext } from './Context';
+import { isEmailValid, isPasswordValid } from './utils/utils';
+import { HEIGHT } from './utils/constants';
+import { Ionicons } from '@expo/vector-icons';
 import CheckBox from 'react-native-check-box';  // https://www.npmjs.com/package/react-native-check-box#installation
 import * as WebBrowser from 'expo-web-browser';
-import {createStackNavigator} from '@react-navigation/stack';
-import {NavigationContainer} from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { NavigationContainer } from '@react-navigation/native';
 
 const Stack = createStackNavigator();
 const LogoPosition = ({logo, height}) => {

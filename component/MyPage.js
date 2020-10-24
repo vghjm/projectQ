@@ -9,36 +9,27 @@ import { EvilIcons, AntDesign, Feather, MaterialCommunityIcons }
 from '@expo/vector-icons'; // https://icons.expo.fyi/
 import Moment from 'moment';
 
-import {AuthContext, SystemContext} from './Context';
-
+import { ThemeContext, AuthContext, UserDataContext, DiaryDataContext, ControllContext, InformDataContext } from './Context';
+import changepPassword from './connect/changePassword';
 const defaultUser = require('../assets/img/default_user.png');
 
 // 마이페이지
 export function MyPageScreen({navigation}) {
-  const Context = useContext(SystemContext);
-  let userData = Context.getUserData();
-  let dataList = Context.getProductDataList();
-  const [myDiaryCount, setMyDiaryCount] = useState(10);
-  const [totalCount, setTotalCount] = useState(256);
+  const userData = useContext(UserDataContext);
+  const diaryList = useContext(DiaryDataContext);
+  const diaryCount = diaryList.length;
+  const totalDiaryUpdateCount = diaryList.reduce((prev, curr, i) => {
+    return prev + curr.totalUpdateCount;
+  }, 0);
   const [image, setImage] = useState(userData.userImg);
+  const { updateUserImg, updateUserName } = useContext(ControllContext);
   const [username, setUsername] = useState(userData.username);
   const [editMode, setEditMode] = useState(false);
   const { signOut } = useContext(AuthContext);
 
-  const [tempText, setTempText] = useState('aaaa');
-
-  const getPermissionAsync = async () => {
-    //if (Constants.platform.ios) {
-      const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
-      if (status !== 'granted') {
-        alert('카메라기능 사용자권한이 필요합니다.');
-      }
-    //}
-  };
-
   const onEndEditingHandler = () => {
     if(username !== ''){
-      userData.username = username;
+      updateUserName(username)
     }else{
       setUsername(userData.username);
     }
@@ -46,23 +37,18 @@ export function MyPageScreen({navigation}) {
   };
 
   const startEditModeHandler = () => {
-    if(!editMode){
+    if(editMode === false){
       setEditMode(true);
     }
   };
 
-  useFocusEffect(() => {
-    if(!editMode) setEditMode(false);
-    setMyDiaryCount(userData.myDiaryList.length);
-    let total = 0;
-    userData.myDiaryList.forEach(obj => {
-      total += dataList[dataList.findIndex(data => data.id === obj.id)].diary.totalUpdateCount;
-      //total += dataList[obj.id-1].diary.totalUpdateCount;
-    })
-    setTotalCount(total);
-  });
+  const pickImage = async () => {
+    const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+    if (status !== 'granted') {
+      alert('카메라기능 사용자권한이 필요합니다.');
+      return ;
+    }
 
-  const _pickImage = async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.All,
@@ -71,7 +57,7 @@ export function MyPageScreen({navigation}) {
         quality: 1,
       });
       if (!result.cancelled) {
-        userData.userImg = result;
+        updateUserImg(result);
         setImage(result);
       }
 
@@ -84,7 +70,7 @@ export function MyPageScreen({navigation}) {
   return (
     <View style={{flex:1, flexDirection: 'column'}}>
       <View style={{margin:15, marginBottom: 0, alignItems: 'center', borderBottomWidth: 1, height: 170, justifyContent: 'center'}}>
-        <TouchableOpacity onPress={()=>getPermissionAsync().then(_pickImage()).catch(e => console.log('getPermissionAsync error: ', e))}>
+        <TouchableOpacity onPress={pickImage}>
           {image
             ? <Image source={image} style={{height: 80, width: 80, borderRadius: 40, backgroundColor: '#EEE', marginTop: 20, marginBottom: 12}}/>
             : <Image source={defaultUser} style={{height: 80, width: 80, borderRadius: 40, backgroundColor: '#EEE', marginTop: 20, marginBottom: 12}}/>
@@ -121,7 +107,7 @@ export function MyPageScreen({navigation}) {
             </TouchableOpacity>
           </View>
           <View style={{marginLeft: 45, marginRight: 5, marginHorizontal: 10, marginBottom: 20, borderWidth: 1, borderRadius: 10, alignItems: 'center'}}>
-            <Text style={{fontSize: 15, margin: 10}}>내 기록: {totalCount}         내 다이어리: {myDiaryCount}</Text>
+            <Text style={{fontSize: 15, margin: 10}}>내 기록: {totalDiaryUpdateCount}         내 다이어리: {diaryCount}</Text>
           </View>
         </View>
         <View style={{marginHorizontal: 15, flexDirection: 'row', alignItems: 'center'}}>
@@ -135,8 +121,9 @@ export function MyPageScreen({navigation}) {
   );
 }
 export function MyChangePasswordPage({navigation}) {
-  const Context = useContext(SystemContext);
-  let userData = Context.getUserData();
+  const userData = useContext(UserDataContext);
+  const { updatePassword } = useContext(ControllContext);
+
   const [prevPassword, setPrevPassword] = useState('');
   const [nextPassword, setNextPassword] = useState('');
   const [nextAdditionalPassword, setAdditionalNextPassword] = useState('');
@@ -144,7 +131,7 @@ export function MyChangePasswordPage({navigation}) {
   const [warnNextPasswordError, setWarnNextPasswordError] = useState(false);
   const [warnNotCorrectPasswordError, setWarnNotCorrectPasswordError] = useState(false);
 
-  const changePasswordHandler = () => {
+  const changePasswordHandler = async () => {
     let errorCout = 0;
     if(prevPassword !== userData.password){
       if(warnPrevPasswordError === false) setWarnPrevPasswordError(true);
@@ -164,10 +151,21 @@ export function MyChangePasswordPage({navigation}) {
     }else{
       if(warnNextPasswordError === true) setWarnNextPasswordError(false);
     }
+
     if(errorCout === 0){
       userData.password = nextPassword;
-      // navigation.navigate('MyServicePage');
-      Alert.alert('비밀번호가 변경되었습니다.');
+      let response = await changepPassword({
+        token: userData.token,
+        password: nextPassword,
+      });
+
+      if(response.ok){
+        Alert.alert('비밀번호가 변경되었습니다.');
+        updatePassword(nextPassword);
+      }else{
+        Alert.alert('비밀번호 변경에 실패하였습니다.', response.message);
+      }
+
     }
   }
 
@@ -215,15 +213,13 @@ class SubscribeContentBoxComponent extends React.Component{
   }
 }
 export function UserHistoryPage({navigation}) {
-  const Context = useContext(SystemContext);
-  let userData = Context.getUserData();
-  let dataList = Context.getProductDataList();
+  const diaryList = useContext(DiaryDataContext);
+
   return (
     <ScrollView style={{flex:1, flexDirection: 'column', backgroundColor: '#fff'}}>
       <Text style={{margin:20, fontWeight:'bold', fontSize: 20}}>나의 구독 내역</Text>
-      {userData.myDiaryList.map(diary => {
-        let data = dataList[dataList.findIndex(obj => obj.id === diary.id)];
-        return <SubscribeContentBoxComponent key={diary.id} title={data.product.title} count={data.diary.totalUpdateCount} startDate={data.diary.makeTime}/>;
+      {diaryList.map(diary => {
+        return <SubscribeContentBoxComponent key={diary.p_id} title={diary.title} count={diary.totalUpdateCount} startDate={diary.makeTime}/>;
       })}
     </ScrollView>
   );
@@ -278,8 +274,8 @@ class HelpContentComponent extends React.Component{
   }
 }
 export function HelpPage({navigation}) {
-  const Context = useContext(SystemContext);
-  let informData = Context.getInformData();
+  const informData = useContext(InformDataContext);
+
   return (
     <ScrollView style={{flex:1, flexDirection: 'column', marginTop: 10}}>
       {informData.help.map( message => {
@@ -314,9 +310,8 @@ class NoticeContentComponent extends React.Component{
   }
 }
 export function NoticePage({navigation}) {
-  const Context = useContext(SystemContext);
+  const informData = useContext(InformDataContext);
 
-  let informData = Context.getInformData();
   return (
     <ScrollView style={{flex:1, flexDirection: 'column', marginTop: 10}}>
       {informData.notice.map( message => {

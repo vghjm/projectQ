@@ -1,10 +1,7 @@
-import React, {useState, useContext} from 'react';
-import {View, Text, StyleSheet, Image, TouchableOpacity, Vibration} from 'react-native';
-import * as Haptics from 'expo-haptics';
+import React from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import Moment from 'moment';
-import * as Animatable from 'react-native-animatable'; // https://github.com/oblador/react-native-animatable
 
-import { ThemeContext } from './Context';
 import { WIDTH } from './utils/constants';
 
 const defaultImg = {uri: "https://mblogthumb-phinf.pstatic.net/20120919_14/goom5473_1348041165177dg5mj_JPEG/hdmix1318.jpg?type=w2"};
@@ -15,15 +12,9 @@ export function PushMessage({pushData, onPressPushNotification}){
   let text = pushData.text??'전달받은 메세지';
   const time = pushData.lastPushed??Moment();
 
-  if(title.length > 10){
-    title = title.substr(0, 9) + '...';
-  }
-  if(text.length > 17){
-    text = text.substr(0, 15) + '...';
-  }
+  if(title.length > 10) title = title.substr(0, 9) + '...';
+  if(text.length > 17) text = text.substr(0, 15) + '...';
 
-
-  if(text.length > 28) text = text.substr(0, 28) + '...';
   return (
     <TouchableOpacity style={styles.container} onPress={onPressPushNotification}>
       <Image source={image} style={styles.image} resizeMode={'cover'}/>
