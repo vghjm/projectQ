@@ -110,8 +110,8 @@ async function warningPermission(){
 }
 
 // 태스트 모듈
-import loginTest from './component/connect/login';
-import downloadProductDataTest from './component/connect/downloadProductData';
+import loginConnect from './component/connect/login';
+import downloadProductData from './component/connect/downloadProductData';
 import downloadSubscribeData from './component/connect/downloadSubscribeData';
 import downloadDiaryData from './component/connect/downloadDiaryData';
 import subscribeSetting from './component/connect/subscribeSetting';
@@ -119,6 +119,10 @@ import deleteDiaryFromServer from './component/connect/deleteDiaryFromServer';
 import changePushTime from './component/connect/changePushTime';
 import diaryBackUp from './component/connect/diaryBackup';
 import requestChatReply from './component/connect/requestChatReply';
+
+import loadUserImg from './component/storage/loadUserImg';
+import loadLastUserData from './component/storage/loadLastUserData';
+import loadChatroomData from './component/storage/loadChatroomData';
 
 export default function App() {
   const [state, dispatch] = React.useReducer(
@@ -128,36 +132,25 @@ export default function App() {
           // 첫 실행 -> 인트로 화면 띄움
           return {
             ...prevState,
-            devMode: false,
+            testMode: false,
             nowLoading: false,
           };
         case 'END_LOADING_LOGIN_PAGE':
           // 로그인 화면으로 이동
           return {
             ...prevState,
-            devMode: false,
+            testMode: false,
             nowLoading: false,
             intro: false,
-          };
-        case 'END_LOADING_RESTORE_DATA':
-          // 자동로그인, 데이터 로딩 후 바로 사용화면으로 이동
-          return {
-            ...prevState,
-            devMode: false,
-            nowLoading: false,
-            intro: false,
-            login: true,
-            token: action.token,
           };
         case 'LOGIN':
           // 유저정보 받아 사용자 화면으로 이동
           return {
             ...prevState,
-            devMode: false,
+            testMode: false,
             nowLoading: false,
             intro: false,
             login: true,
-            token: action.token,
           };
         case 'SIGN_OUT':
           // 로그인 화면으로 이동
@@ -181,16 +174,14 @@ export default function App() {
       }
     },
     {
-      devMode: true,
+      testMode: TEST_MODE,
       noAuth: false,
       nowLoading: true,
       intro: true,
       login: false,
-      token: '',
     }
   );  // 앱 상태
-  const authContext = React.useMemo(
-    () => ({
+  const authContext = {
       signIn: async data => {
         console.log(`SignIn email:${data.email}, password:${data.password}`);
         let reply = {ok: false, data: null, message: ''};
@@ -233,12 +224,7 @@ export default function App() {
         return await Connection.checkEmail(email);
       },
       introSkip: () => dispatch({type: 'INTRO_SKIP'}),
-      loading: async () => {
-        await bootstrapAsync();
-      }
-    }),
-    [state]
-  );  // 앱 상태변경 함수
+    }; // 앱 상태변경 함수
 
   const handleNotification1 = ({request}) => { // foreground 시 푸시 처리 / 푸시알림 받음!
     const content = request.content;
@@ -331,88 +317,25 @@ export default function App() {
     NanumMyeongjo_bold: require('./assets/font/NanumMyeongjoExtraBold.ttf'),
   });
 
-  const [loadReady, setLoadReady] = useState({
-    loadProductData: false,
-    loadUserData: false,
-  });
-
-
-  const [loadProductData, setLoadProductData] = useState(false);
-  const [updateCacheData, setUpdateCacheData] = useState({
-    autoLogin: false,
-    id: null,
+  const [isProductDataReady, setIsProductDataReady] = useState(false);
+  const [isUserLoadingFinished, setIsUserLoadingFinished] = useState(false);
+  const [prevUserData, setPrevUserData] = useState({
+    isExist: false,
+    isAutoLogin: false,
+    email: null,
     password: null,
-    isFirstLogin: null,
-    isReady: false,
   });
-  const bootstrapAsync = async () => {
-    console.log('\n @ bootstrapAsync\n\t시작시간 : ', Moment().format('LTS'));
-
-    warningPermission();
-    Storage.updateProductData()
-      .then(response => {
-        if(response.ok) {
-          //console.log('updateProductData: success\n', response.data);
-          dataList = response.data;
-          console.log('\tupdateProductData: true');
-          setLoadProductData(true);
-        }else{
-          console.log('\tupdateProductData: false');
-        }
-      });
-
-    Storage.updateCacheData()
-      .then(cache => {
-        let autoLogin = false;
-        let email = null;
-        let password = null;
-        let isFirstLogin = true;
-        if(cache.ok){
-          autoLogin = true;
-          email = cache.data.email;
-          password = cache.data.password;
-          //dispatch({type: 'END_LOADING_RESTORE_DATA', action: token});
-        }else{
-          let isFirstLogin = cache.data.isFirstLogin;
-          //isFirstLogin ? dispatch({type: 'END_LOADING_FIRST_LOGIN', action: token}) : dispatch({type: 'END_LOADING_LOGIN_PAGE', action: token});
-        }
-        console.log(`\temail: ${email}, password: ${password}\n\tautoLogin: ${autoLogin}, isFirstLogin: ${isFirstLogin}`);
-        setUpdateCacheData({
-          autoLogin: autoLogin,
-          email: email,
-          password: password,
-          isFirstLogin: isFirstLogin,
-          isReady: true,
-        });
-      });
-  };
-
   useEffect(() => {
-    let move = null;
-    let cache = null;
-    if(loadProductData && updateCacheData.isReady && loaded){
-      if(updateCacheData.autoLogin === true || testAccount.use){
-        move = 'END_LOADING_RESTORE_DATA';
-        if(testAccount.use){
-          cache = {
-            email: testAccount.email,
-            password: testAccount.password,
-          }
-        }else{
-          cache = {
-            email: updateCacheData.email,
-            password: updateCacheData.password,
-          }
-        }
-        defaultLogin(cache.email, cache.password);
-      }else if(updateCacheData.isFirstLogin === true){
-        move = 'END_LOADING_FIRST_LOGIN';
-        dispatch({ type: move});
+    console.log(' 부팅 useEffect\n', prevUserData);
+    if(isProductDataReady && isUserLoadingFinished){
+      if(prevUserData.isExist === true){
+        if(prevUserData.isAutoLogin === true) controllContext.login({email: prevUserData.email, password: prevUserData.password});
+        else dispatch({ type: 'END_LOADING_LOGIN_PAGE'});
       }else{
-        move = 'END_LOADING_LOGIN_PAGE';
-        dispatch({ type: move});
+        dispatch({ type: 'END_LOADING_FIRST_LOGIN'});
       }
-    }}, [loadProductData, updateCacheData, loaded]);
+    }
+  }, [isProductDataReady, isUserLoadingFinished]);
 
   // 다이얼 백업함수
   const diaryBackupTrial = async () => {
@@ -457,7 +380,16 @@ export default function App() {
   // 백그라운드 및 Inactive 감지 함수
   const appState = useRef(AppState.currentState);
   const [appStateVisible, setAppStateVisible] = useState(appState.current);
-  useEffect(() => {
+  const _handleAppStateChange = (nextAppState) => { // 앱 상태 변화시 함수
+    if(appState.current.match(/inactive|background/) && nextAppState === "active"){
+      // console.log("App has come to the foreground!");
+    }
+
+    appState.current = nextAppState;
+    setAppStateVisible(appState.current);
+    // console.log("AppState", appState.current);
+  };
+  useEffect(() => { // 앱 상태변환감지 리스너
     AppState.addEventListener("change", _handleAppStateChange);
     //bootstrapAsync();
     return () => {
@@ -467,33 +399,6 @@ export default function App() {
   useEffect((appStateVisible) => { // 백그라운드 시 다이어리 서버에 저장함
     if(appState.current === 'background') diaryBackupTrial();
   }, [appStateVisible]);
-  const _handleAppStateChange = (nextAppState) => {
-    if(appState.current.match(/inactive|background/) && nextAppState === "active"){
-      console.log("App has come to the foreground!");
-    }
-
-    appState.current = nextAppState;
-    setAppStateVisible(appState.current);
-    console.log("AppState", appState.current);
-  };
-
-  // 자동 로그인 테스트 용
-  const updateFunction = async () => {
-    console.log('update Start');
-    bootstrapAsync();
-  };
-  const defaultLogin = async (email, password) => {
-    console.log('자동 로그인 ~');
-    const {signIn, login} = authContext;
-
-    let response = await signIn({email: email, password:password});
-    if(response.ok) {
-      login({token: response.data.token, username: response.data.username, email: email, password: password});
-    }else {
-      userData = _.cloneDeep(TestData.userTestData);
-      dispatch({ type: 'LOGIN', token:data.token });
-    }
-  };
 
   // 푸시메세지 띄우기
   const [pushContext, setPushContext] = useState({
@@ -504,7 +409,7 @@ export default function App() {
     lastPushed: Moment(),
     isPushShowed: false,
   });
-  const popupPushMessage = async (data, time) => {
+  const popupPushMessage = async (data, time) => { // time 초 만큼 이후에 푸시알림을 띄움
     let timer = time??800;
     setTimeout(() => {
       setPushContext(data??{
@@ -529,7 +434,7 @@ export default function App() {
       }, 4800);
     }, timer);
   }
-  const onPressPushNotification = () => {
+  const onPressPushNotification = () => { // 푸시 터치시 제거함수
     setPushContext({
       image: null,
       title: null,
@@ -897,6 +802,27 @@ export default function App() {
           userData.username = newUsername;
           return userData;
         });
+      },
+      bootload: async () => {
+        downloadProductData({debug:DEBUG_PRINT}).then(response => {
+          if(!response.ok) return Alert.alert('상품정보 로딩에 문제가 생겼습니다.', response.message);
+          setMyProductDataContext(response.data);
+          setIsProductDataReady(true);
+        });
+
+        loadLastUserData().then(prevUser => {
+          setPrevUserData(prevUser);
+          setIsUserLoadingFinished(true);
+        });
+      },
+      login: async ({email, password}) => {
+        let response = await stateUpdateList(email, password);
+        if(response.ok){
+            console.log('dispatch login');
+            dispatch({ type: 'LOGIN' });
+        }else{
+          Alert.alert('로그인에 실패하였습니다.', response.message);
+        }
       }
     };
 
@@ -951,50 +877,46 @@ export default function App() {
   };
 
   const updateUserDataContext = async (email, password) => {
-    let response = await loginTest({email:email, password:password, debug:DEBUG_PRINT});
+    let prevUserImg = await loadUserImg(email);
+    let response = await loginConnect({email:email, password:password, debug:DEBUG_PRINT});
     if(response.ok){
       setMyUserDataContext({
         token: response.data.token,
-        pushToken: 'EXP[TempPushToken]',
+        pushToken: null,
         email: email,
         password: password,
         username: response.data.username,
-        userImg: 0,
-      })
+        userImg: prevUserImg,
+      });
+      return response.data.token;
+    }else{
+      return null;
     }
-    return response.data.token;
-  }
-  const updateProductDataContext = async () => {
-    let response = await downloadProductDataTest({debug:DEBUG_PRINT});
-    if(response.ok){
-      setMyProductDataContext(response.data);
-    }
-    return response.data.map(obj => {return {
-      p_id: obj.p_id,
-      title: obj.title,
-    }});
   }
   const updateSubscribeContext = async (token) => {
     let response = await downloadSubscribeData({token: token, debug:DEBUG_PRINT});
     if(response.ok){
       setMySubscribeDataContext(response.data);
     }
+
     return response.data.map(obj => obj.p_id);
   }
-  const updateChatroomDataContext = async (subList) => {
-    let protoChatroomData = subList.map(p_id => {
+  const updateChatroomDataContext = async (email, subList) => {
+    let loadChatroom = await loadChatroomData(email);
+    let chatroomList = subList.map(p_id => {
+      if(loadChatroom.some(chatroom => chatroom.p_id === p_id)) return loadChatroom[loadChatroom.findIndex(chatroom => chatroom.p_id === p_id)];
       return {
         p_id: p_id, getPushAlarm: true, lastCheckedTime: Moment(), newItemCount: 0, chatMessageList: [],
         lastPushed: {pushTime: Moment(), q_id: 1, solved:true}
       }
     });
-    setMyChatroomDataContext(protoChatroomData);
+    setMyChatroomDataContext(chatroomList);
   }
-  const updateDiaryDataContext = async (subList, proList, token) => {
+  const updateDiaryDataContext = async (subList, token) => {
     let _pos = 0;
     let protoDiaryData = subList.map(p_id => {
       _pos += 1;
-      const title = proList[proList.findIndex(pro => pro.p_id === p_id)].title;
+      const title = myProductDataContext[myProductDataContext.findIndex(pro => pro.p_id === p_id)].title;
       return {
         p_id: p_id, d_id: p_id, title: title, color: _pos%10, pos: _pos, makeTime: Moment(), totalUpdateCount: 0,
         diarymessageList: []
@@ -1013,14 +935,20 @@ export default function App() {
   const updateInformDataContext = async () => {
 
   }
-  const stateUpdateList = async () => {
-    let email = testAccount.email, password = testAccount.password;
+  const stateUpdateList = async (email, password) => {
+    let reply = {ok:false, data: null, message:''};
     let token = await updateUserDataContext(email, password);
-    let proList = await updateProductDataContext();
-    let subList = await updateSubscribeContext(token);
-    await updateChatroomDataContext(subList);
-    await updateDiaryDataContext(subList, proList, token);
-    await updateInformDataContext();
+    if(token != null){
+      let subList = await updateSubscribeContext(token);
+      await updateChatroomDataContext(email, subList);
+      await updateDiaryDataContext(subList, token);
+      await updateInformDataContext();
+      reply.ok = true;
+    }else{
+      reply.message = "no token error";
+    }
+
+    return reply;
   };
 
   const resetState = async () => {
@@ -1037,35 +965,17 @@ export default function App() {
   return (
     <ThemeContext.Provider value={theme}>
     <AuthContext.Provider value={authContext}>
-      {state.devMode === true ? (
+      {state.testMode ? (
         <View style={{flex:1, marginTop:30, alignItems: 'center', justifyContent: 'center'}}>
-          <Text>스플래쉬 화면</Text>
-          <Text> 유저 정보 여부에 따라 다음으로 분기 </Text>
-          <TouchableOpacity style={{margin: 10}} onPress={() => defaultLogin(testAccount.email, testAccount.password)}>
-            <Text> - 저장된 계정 있음(자동 로그인)</Text>
+          <Text>테스트 화면</Text>
+          <TouchableOpacity style={{margin: 10}} onPress={() => controllContext.bootload()}>
+            <Text style={{color: 'green'}}>부팅테스트</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'END_LOADING_FIRST_LOGIN'})}}>
-            <Text> - 저장된 계정 있음(자동 X)</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={()=>{dispatch({ type: 'END_LOADING_LOGIN_PAGE'})}}>
-            <Text> - 저장된 계정 없음</Text>
-          </TouchableOpacity>
-          <Text style={{ padding:5, color:loadProductData?'blue':'red'}}>{'상품정보 로딩: ' + loadProductData}</Text>
-          <Text style={{ padding:5, color:updateCacheData?'blue':'red'}}>{'캐쉬정보 로딩: ' + updateCacheData}</Text>
-          <TouchableOpacity style={{margin: 10}} onPress={updateFunction}>
-            <Text>업데이트 상품정보</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={() => popupPushMessage(null)}>
-            <Text style={{color: 'green'}}>푸시 테스트</Text>
+          <TouchableOpacity style={{margin: 10}} onPress={() => controllContext.login(testAccount)}>
+            <Text style={{color: 'green'}}>로그인</Text>
           </TouchableOpacity>
           <TouchableOpacity style={{margin: 10}} onPress={() => showState()}>
-            <Text style={{color: 'green'}}>state display</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={() => stateUpdateList()}>
-            <Text style={{color: 'green'}}>state update</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={() => resetState()}>
-            <Text style={{color: 'green'}}>state reset</Text>
+            <Text style={{color: 'green'}}>상태표시</Text>
           </TouchableOpacity>
         </View>
       ) : state.nowLoading === true ? (
@@ -1110,10 +1020,10 @@ export default function App() {
 }
 
 function SplashScreen(){
-  const {loading} = useContext(AuthContext);
+  const { bootload } = useContext(ControllContext);
 
   useEffect(() => {
-    loading();
+    bootload();
   }, []);
 
   return (
