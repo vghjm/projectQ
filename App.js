@@ -51,46 +51,7 @@ const ASSUME_SAME_CHAT_TIME = 1; // 채팅 시 같은 메세지로 판정하는 
 const DEBUG_PRINT = true;
 const TEST_MODE = false;
 
-// 컨트롤 변수
-var global_p_id = 0;               // 채팅창 사이드 메뉴에서 다른 상품정보로 보내기 위한 상품 id 값
-var global_y = 0;         // 다이어리리스트 스크린의 스크롤 값
 
-// Notifications.setNotificationHandler({
-//   handleNotification: async () => ({
-//     shouldShowAlert: true,
-//     shouldPlaySound: false,
-//     shouldSetBadge: false,
-//   }),
-// });
-
-
-function getReply(data, popupPushMessage, navigation, updateF){
-  // console.log('getReply', data);
-  // setTimeout(() => {
-  //   let ansMessage = {
-  //     _id: uuid.v4(), text: data.product.ansList[data.chatroom.lastPushed.questIndex].content, createdAt: Moment(),
-  //     user: { _id:2, avatar: data.product.imageSet.avatarImg.uri?? data.product.imageSet.avatarImg},
-  //   };
-  //   data.chatroom.newItemCount += 1;
-  //   data.chatroom.lastMessageTime = Moment();
-  //   data.chatroom.chatmessageList.unshift(_.cloneDeep(ansMessage));
-  //   data.chatroom.lastMessage = ansMessage.text;
-  //   data.chatroom.lastPushed.ansMessage = _.cloneDeep(ansMessage);
-  //   popupPushMessage({
-  //     image: data.product.imageSet.thumbnailImg,
-  //     title: data.product.title,
-  //     text: ansMessage.text,
-  //     onPress: ()=>navigation.navigate('chatroom', {id: data.id, data:data}),
-  //     lastPushed: Moment(),
-  //     isPushShowed: true,
-  //   });
-  //   console.log('getReply ansMessage', ansMessage);
-  //   updateF();
-  //   return ansMessage;
-  //   //setMessages(previousMessages => GiftedChat.append(previousMessages, ansMessage));
-  // }, 5 * 1000);
-  // return 'aa';
-}
 
 async function warningPermission(){
   const push = await Permissions.askAsync(Permissions.NOTIFICATIONS);
@@ -124,6 +85,8 @@ import requestChatReply from './component/connect/requestChatReply';
 import loadUserImg from './component/storage/loadUserImg';
 import loadLastUserData from './component/storage/loadLastUserData';
 import loadChatroomData from './component/storage/loadChatroomData';
+
+import * as PresentVersion from './PresentVersion';
 
 export default function App() {
   const [state, dispatch] = React.useReducer(
@@ -319,7 +282,6 @@ export default function App() {
 
   const [isProductDataReady, setIsProductDataReady] = useState(false);
   const [isUserLoadingFinished, setIsUserLoadingFinished] = useState(false);
-  const [isCheckedPermissionWarn, setIsCheckedPermissionWarn] = useState(false);
   const [prevUserData, setPrevUserData] = useState({
     isExist: false,
     isAutoLogin: false,
@@ -327,78 +289,10 @@ export default function App() {
     password: null,
   });
   useEffect(() => {
-    if(isProductDataReady && isUserLoadingFinished && isCheckedPermissionWarn){
-      if(prevUserData.isExist === true){
-        if(prevUserData.isAutoLogin === true) controllContext.login({email: prevUserData.email, password: prevUserData.password});
-        else dispatch({ type: 'END_LOADING_LOGIN_PAGE'});
-      }else{
-        dispatch({ type: 'END_LOADING_FIRST_LOGIN'});
-      }
+    if(isProductDataReady && isUserLoadingFinished){
+      dispatch({ type: 'LOGIN'});
     }
-  }, [isProductDataReady, isUserLoadingFinished, isCheckedPermissionWarn]);
-
-  // 다이얼 백업함수
-  const diaryBackupTrial = async () => {
-    if(!state.login){
-      console.log('\n\n 로그인 없는 다이어리 저장시도, 캔슬!\n');
-      return;
-    }
-
-    let response = await diaryBackUp({
-      debug: DEBUG_PRINT,
-      token: myUserDataContext.token,
-      backupDiaryList: myDiaryDataContext.map(diary => {
-        return {
-          d_ID: diary.d_id,
-          p_ID: diary.p_id,
-          p_name: diary.title,
-          chatedperiod_start: diary.makeTime.format('YYYYMMDD'),
-          chatedperiod_end: Moment().format('YYYYMMDD'),
-          chatedamount: diary.totalUpdateCount,
-          linkname: 'nolink',
-          color: diary.color,
-          position: diary.pos,
-          diaryMessage: diary.diarymessageList.map(diaryMessage => {
-            return {
-              dm_ID: diaryMessage._id,
-              chatedtime: diaryMessage.createdAt,
-              chatcontent: diaryMessage.islagacy
-                ? diaryMessage.text
-                : diaryMessage.linkedMessageList.reduce((prevText, nowText, i) => {
-                  return prevText + ' ' + nowText;
-                }),
-            };
-          }),
-        }
-      })
-    });
-
-    if(response.ok) console.log('  다이어리 백업 성공');
-    else console.log('  다이어리 백업 실패', response.message);
-  };
-
-  // 백그라운드 및 Inactive 감지 함수
-  const appState = useRef(AppState.currentState);
-  const [appStateVisible, setAppStateVisible] = useState(appState.current);
-  const _handleAppStateChange = (nextAppState) => { // 앱 상태 변화시 함수
-    if(appState.current.match(/inactive|background/) && nextAppState === "active"){
-      // console.log("App has come to the foreground!");
-    }
-
-    appState.current = nextAppState;
-    setAppStateVisible(appState.current);
-    // console.log("AppState", appState.current);
-  };
-  useEffect(() => { // 앱 상태변환감지 리스너
-    AppState.addEventListener("change", _handleAppStateChange);
-    //bootstrapAsync();
-    return () => {
-      AppState.removeEventListener("change", _handleAppStateChange);
-    };
-  }, []);
-  useEffect((appStateVisible) => { // 백그라운드 시 다이어리 서버에 저장함
-    if(appState.current === 'background') diaryBackupTrial();
-  }, [appStateVisible]);
+  }, [isProductDataReady, isUserLoadingFinished]);
 
   // 푸시메세지 띄우기
   const [pushContext, setPushContext] = useState({
@@ -518,15 +412,7 @@ export default function App() {
         const p_id = diary.p_id;
 
         // 서버 다이어리 삭제 요청
-        let response = await deleteDiaryFromServer({
-          token: myUserDataContext.token,
-          d_id: diary.d_id,
-          debug: DEBUG_PRINT,
-        });
-        if(!response.ok){
-          Alert.alert('다이어리 삭제 에러', response.message);
-          return;
-        }
+
 
         //채팅방 제거
         controllContext.eraseChatroom(p_id);
@@ -541,51 +427,14 @@ export default function App() {
       },
       subscribeOffHandler: async (product, subscribe) => { // 구독 취소 함수
         // 서버에 구독취소 신청
-        let response = await subscribeSetting({
-          token: myUserDataContext.token,
-          title: product.title,
-          p_id: product.p_id,
-          s_id: subscribe.s_id,
-          pushStartTime: subscribe.pushStartTime,
-          pushEndTime: subscribe.pushEndTime,
-          pushType: product.pushType,
-          isSubscribe: false,
-          debug: DEBUG_PRINT
-        });
-        console.log(' 푸시 해제 \n', subscribe);
-        if(!response.ok){
-          Alert.alert('구독취소에 실패하였습니다.', 'ERROR: 서버연결 실패');
-          // return;
-        }
+
 
         // 구독상태 제거
         setMySubscribeDataContext(mySubscribeDataContext.filter(mySubscribe => mySubscribe.p_id!==subscribe.p_id));
       },
       subscribeOnHandler: async (product, startTime, endTime, navigation) => { // 구독 신청 함수
         // 서버에 구독 신청
-        let pushSet = await registerForPushNotificationsAsync();
-        if(!pushSet.ok){
-          Alert.alert('푸시권한이 필요합니다.');
-          return;
-        }
-
         let s_id = uuid.v4();
-        let response = await subscribeSetting({
-          token: myUserDataContext.token,
-          title: product.title,
-          p_id: product.p_id,
-          s_id: s_id,
-          pushStartTime: startTime,
-          pushEndTime: endTime,
-          pushType: product.pushType,
-          isSubscribe: true,
-          debug: DEBUG_PRINT
-        });
-        if(!response.ok){
-          Alert.alert('구독 등록에 실패하였습니다.', 'ERROR: 서버연결 실패');
-          return;
-        }
-
         // 구독상태 추가
         setMySubscribeDataContext(mySubscribeDataContext.concat({p_id: product.p_id, s_id: s_id, pushStartTime: startTime, pushEndTime: endTime}));
 
@@ -601,18 +450,6 @@ export default function App() {
       },
       changePushTime: async (p_id, startTime, endTime, pushType) => { // 구독 시간 변경
         // 서버에 푸시시간 변경요청
-        let response = await changePushTime({
-          token: myUserDataContext.token,
-          p_ID: p_id,
-          pushStartTime: startTime,
-          pushEndTime: endTime,
-          pushType: pushType,
-          debug: DEBUG_PRINT,
-        });
-        if(!response.ok) {
-          Alert.alert('푸시시간 변경 실패', response.message);
-          return ;
-        }
 
         // 푸시시간데이터 변경
         setMySubscribeDataContext(mySubscribeDataContext.map(subscribe => {
@@ -638,10 +475,10 @@ export default function App() {
           lastPushed: {pushTime: Moment(), q_id: questtion.q_ID, solved:false},
           chatMessageList: [
             { _id: uuid.v4(), text: questtion.content, createdAt: Moment(),
-              user: { _id:2, avatar: product.thumbnailImg},
+              user: { _id:2, avatar: product.thumbnailImg.uri},
             },
-            { _id: uuid.v4(), text: product.title + ' 채팅방 입니다.', createdAt: Moment(),
-              user: { _id:2, avatar: product.thumbnailImg},
+            { _id: uuid.v4(), text: '이제 ' + product.title + ' 구독이 시작됩니다.', createdAt: Moment(),
+              user: { _id:2, avatar: product.thumbnailImg.uri},
             },
         ]
         }));
@@ -650,7 +487,7 @@ export default function App() {
         popupPushMessage({
           image: product.thumbnailImg,
           title: product.title,
-          text: product.title + ' 채팅방 입니다.',
+          text: '이제 ' + product.title + ' 구독이 시작됩니다.',
           lastPushed: Moment(),
           isPushShowed: true,
         });
@@ -663,7 +500,7 @@ export default function App() {
             isPushShowed: true,
           });
           navigation.navigate('MyChatListScreen');
-        }, 1000);
+        }, 4500);
       },
       makeNewDiaryMessage: (message) => { // 다이어리 메시지 추가
         return {
@@ -706,13 +543,34 @@ export default function App() {
         }
       },
       userReplyed: async (p_id, d_id, message) => { // 채팅방에 답변하면 서버에 응답요청 보냄
-        // 서버에 답변요청 보냄
-        let response = await requestChatReply({token:myUserDataContext.token, p_id:p_id, d_id:d_id, message:message, debug:DEBUG_PRINT});
-        if(!response.ok){
-          Alert.alert('답변 전송 실패', response.message);
-          console.log(' app/userReplyed : ', response.message);
-          return;
-        }
+        // 답변 체크
+        setMyChatroomDataContext(myChatroomDataContext.map(chatroomInfo => {
+          if(chatroomInfo.p_id === p_id){
+            chatroomInfo.lastPushed.solved = true;
+          }
+          return chatroomInfo;
+        }));
+        console.log(myChatroomDataContext);
+
+        // 답변 예약
+        const product = myProductDataContext[myProductDataContext.findIndex(product => product.p_id === p_id)];
+        popupPushMessage({
+          image: product.thumbnailImg,
+          title: product.title,
+          text: message.content,
+          lastPushed: Moment(),
+          isPushShowed: true,
+        }, 1000*6*1.1);
+        setTimeout(() => setMyChatroomDataContext(myChatroomDataContext.map(chatroom => {
+          if(chatroom.p_id === p_id){
+            chatroom.lastCheckedTime = Moment();
+            chatroom.chatMessageList.unshift({
+              _id: uuid.v4(), text: message.content, createdAt: Moment(),
+              user: { _id:2, avatar: product.thumbnailImg.uri},
+            });
+          }
+          return chatroom;
+        })), 1000*6*1.1);
       },
       deleteDiaryMessageFromChatroom: (p_id, deleteId) => { // 채팅방에 메세지 삭제하면 다이어리에 해당하는 메세지 삭제
         // 다이어리에 삭제메시지가 있다면 제거함
@@ -816,19 +674,16 @@ export default function App() {
           setIsProductDataReady(true);
         });
 
-        loadLastUserData().then(prevUser => {
-          setPrevUserData(prevUser);
+        PresentVersion.loadUserData().then(result => {
+          setMyUserDataContext(result.user);
+          setMySubscribeDataContext(result.subscribe);
+          setMyChatroomDataContext(result.chatroom);
+          setMyDiaryDataContext(result.diary);
+          setMyInformDataContext(result.inform);
           setIsUserLoadingFinished(true);
         });
 
-        warningPermission().then(isNeedWarn => {
-          if(isNeedWarn){
-            setTimeout(() => {
-              setIsCheckedPermissionWarn(true);
-            }, 2500);
-          }
-          setIsCheckedPermissionWarn(true);
-        })
+
       },
       login: async ({email, password}) => {
         let response = await stateUpdateList(email, password);

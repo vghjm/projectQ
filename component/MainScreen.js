@@ -182,9 +182,6 @@ function MyChatListScreen({navigation, route}){
         closeOnRowPress={true}
         closeOnScroll={true}
       />
-      <TouchableHighlight onPress={()=>pushTestHandler()} style={{position:'absolute', width:60, height: 60, right:15, bottom: 15, borderWidth: 1, borderRadius: 30, backgroundColor: 'gray', alignItems: 'center', justifyContent: 'center'}}>
-        <Text style={{color: 'white', fontSize: 24}}>푸시</Text>
-      </TouchableHighlight>
     </View>
   );
 }
@@ -364,7 +361,6 @@ export default function MainPageScreen({navigation, route}){
       <Tab.Screen name="SubscribeListScreen"  component={SubscribeListScreen}/>
       <Tab.Screen name="MyChatListScreen"  component={MyChatListScreen}/>
       <Tab.Screen name="MyDiaryScreen"  component={MyDiaryScreen}/>
-      <Tab.Screen name="testScreen"  component={TestScreen}/>
     </Tab.Navigator>
   );
 }

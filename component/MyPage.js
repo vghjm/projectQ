@@ -244,7 +244,7 @@ export function ServiceCenterPage({navigation}) {
 export function ServiceIntroductionPage({navigation}) {
   return (
     <View style={{flex:1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
-      <Text>서비스 소개</Text>
+      <Text style={{fontSize: 20}}>소개페이지가 준비중입니다.</Text>
     </View>
   );
 }
@@ -278,6 +278,12 @@ export function HelpPage({navigation}) {
 
   return (
     <ScrollView style={{flex:1, flexDirection: 'column', marginTop: 10}}>
+      {
+        informData.help.length === 0 &&
+        <View style={{flexDirection: 'column', alignItems: 'center', marginTop:100}}>
+          <Text style={{fontSize: 20}}>도움말 메시지가 없습니다.</Text>
+        </View>
+      }
       {informData.help.map( message => {
         return <HelpContentComponent key={message.id} question={message.question} answer={message.answer}/>
       })}
@@ -314,6 +320,12 @@ export function NoticePage({navigation}) {
 
   return (
     <ScrollView style={{flex:1, flexDirection: 'column', marginTop: 10}}>
+      {
+        informData.notice.length === 0 &&
+        <View style={{flexDirection: 'column', alignItems: 'center', marginTop:100}}>
+          <Text style={{fontSize: 20}}>공지사항 메시지가 없습니다.</Text>
+        </View>
+      }
       {informData.notice.map( message => {
         return  <NoticeContentComponent key={message.id} title={message.title} date={message.date} message={message.message}/>
       })}
