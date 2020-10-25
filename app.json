@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "큐 모먼트",
+    "name": "큐 모먼트 시연용",
     "slug": "qmoment",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -23,7 +23,8 @@
       "favicon": "./assets/favicon.png"
     },
     "android": {
-      "useNextNotificationsApi": true,
-    }
+      "useNextNotificationsApi": true
+    },
+    "description": ""
   }
 }
