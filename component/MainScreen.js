@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Image, ScrollView, TouchableHighlight, Di
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import uuid from 'react-native-uuid';
 import Moment from 'moment';
-import { MaterialCommunityIcons, AntDesign, Feather }
+import { MaterialCommunityIcons, AntDesign }
 from '@expo/vector-icons'; // https://icons.expo.fyi/
 import { SwipeListView } from 'react-native-swipe-list-view'; // https://www.npmjs.com/package/react-native-swipe-list-view
 import * as Print from 'expo-print';
@@ -12,7 +12,7 @@ import * as FileSystem from 'expo-file-system';
 
 import { ThemeContext, ChatroomDataContext, ControllContext, ProductDataContext, SubscribeDataContext, DiaryDataContext } from './Context';
 import { chooseRandomIndex, chooseRandomly } from './utils/utils';
-import {priceTag, priceTagB} from './utils/loadAssets';
+import {priceTag, priceTagB, bellOn, bellOff} from './utils/loadAssets';
 import { DraggableDiary, BasicDiary } from './Diary';
 import makeLink from './connect/makeLink';
 
@@ -69,10 +69,10 @@ function HiddenLayer({chatroom, alarmSettingChanger}){
   const alarmData = chatroom.getPushAlarm;
   return (
     <TouchableOpacity onPress={() => alarmSettingChanger(p_id)}>
-      <View style={{backgroundColor: '#cffffe', padding:11, paddingLeft: 30, justifyContent: 'center'}}>
+      <View style={{backgroundColor: '#F0EEF6', padding:11, paddingLeft: 15, justifyContent: 'center'}}>
           {alarmData
-            ? <Feather name="bell-off" size={34} color="black" />
-            : <Feather name="bell" size={34} color="black" />
+            ? <Image source={bellOff} resizeMode={"cover"} style={{width:190/9, height:228/9}}/>
+            : <Image source={bellOn} resizeMode={"cover"} style={{width:190/9, height:228/9}}/>
           }
       </View>
     </TouchableOpacity>
@@ -136,31 +136,6 @@ function MyChatListScreen({navigation, route}){
     );
   }
 
-  // // 푸시
-  // const pushMessage = (p_id) => {
-  //   // 랜덤한 질문 메시지를 만들어 채팅방에 추가함
-  //   let data = dataList[dataList.findIndex(obj => obj.id===id)];
-  //   let product = data.product;
-  //   let chatroom = data.chatroom;
-  //   let avatar = product.imageSet.avatarImg.uri?? product.imageSet.avatarImg;
-  //   let randomIndex = chooseRandomIndex(product.questionList);
-  //   let newMessage = { _id: uuid.v4(), text: product.questionList[randomIndex].content, createdAt: Moment(),
-  //     user: { _id:2, avatar: avatar}
-  //   };
-  //   chatroom.newItemCount += 1;
-  //   chatroom.chatmessageList.unshift(_.cloneDeep(newMessage));
-  //   chatroom.lastMessageTime = Moment();
-  //   chatroom.lastMessage = newMessage.text;
-  //   chatroom.lastPushed = {pushTime: Moment(), questIndex: randomIndex, solved:false};
-  //   popupPushMessage({
-  //     image: product.imageSet.thumbnailImg,
-  //     title: product.title,
-  //     text: newMessage.text,
-  //     onPress: ()=>navigation.navigate('chatroom', {id: id, data:data}),
-  //     lastPushed: Moment(),
-  //     isPushShowed: true,
-  //   });
-  // }
   const pushTestHandler = () => {  // 간단한 푸시 테스트함수
     let pushTestId = chooseRandomly(chatroomList).p_id;
     if(pushTestId != null){
@@ -178,7 +153,7 @@ function MyChatListScreen({navigation, route}){
           <ChatroomContentLayout key={data.item.key} chatroom={data.item.chatroom} product={data.item.product} nav={navigation}/>
         )}
         onRowOpen={(rowKey, rowMap, toValue)=>setTimeout(()=>rowMap[rowKey].closeRow(), 2000)}
-        leftOpenValue={90}
+        leftOpenValue={50}
         closeOnRowPress={true}
         closeOnScroll={true}
       />

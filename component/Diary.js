@@ -8,7 +8,8 @@ from '@expo/vector-icons'; // https://icons.expo.fyi/
 import DateTimePicker from '@react-native-community/datetimepicker'; // https://github.com/react-native-community/datetimepicker
 
 import { ControllContext, GlobalDataContext, DiaryDataContext } from './Context';
-import { diaryImgList, downArrow } from './utils/loadAssets';
+import { diaryImgList, downArrowWhiteButton, clip, pdf } from './utils/loadAssets';
+import { deleteDiaryButton } from './utils/loadAssets';
 
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
@@ -112,18 +113,18 @@ function AnimatableDiaryComponent(props){ // 흔들리는 다이어리, 다이�
           <View style={{position:'absolute', left:3, top:5, height: 185, width:130, backgroundColor: '#CCC', borderBottomRightRadius: 8, borderTopRightRadius: 8}}/>
           <Image style={{height: 190, width: 130}} source={diaryImgList[diary.color]} resizeMode='contain'/>
           <View>
-            <Text adjustsFontSizeToFit={true} style={{width: 130, fontSize: 16,  color: 'black', fontWeight:'bold', alignSelf: 'center', marginBottom: 3, marginTop:3}}>{diary.title}</Text>
+            <Text adjustsFontSizeToFit={true} style={{fontFamily: "NanumMyeongjo_bold", width: 130, fontSize: 16,  color: 'black', alignSelf: 'center', marginBottom: 3, marginTop:3}}>{diary.title}</Text>
             <View style={{flexDirection: 'column', marginBottom: 5}}>
               {diary.makeTime.isSameOrAfter(Moment(), 'day')
-                ? <View><Text style={{fontSize: 8, color: 'gray'}}>오늘 생성한 다이어리</Text><Text style={{fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:62}}>총 {diary.totalUpdateCount}회 기록</Text></View>
-                : <View><Text style={{fontSize: 8, color: 'gray'}}>{diary.makeTime.format('L')} ~ {Moment().format('L')}</Text><Text style={{fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:30}}>총 {diary.totalUpdateCount}회 기록</Text></View>}
+                ? <View><Text style={{fontFamily: "NanumMyeongjo", fontSize: 8, color: 'gray'}}>오늘 생성한 다이어리</Text><Text style={{fontFamily: "NanumMyeongjo", fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:62}}>총 {diary.totalUpdateCount}회 기록</Text></View>
+                : <View><Text style={{fontFamily: "NanumMyeongjo", fontSize: 8, color: 'gray'}}>{diary.makeTime.format('L')} ~ {Moment().format('L')}</Text><Text style={{fontFamily: "NanumMyeongjo", fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:30}}>총 {diary.totalUpdateCount}회 기록</Text></View>}
             </View>
           </View>
     </View>
-    </Animatable.View>
-    <TouchableOpacity onPress={eraseDiaryAlertHandler} style={{position: 'absolute', left: 18, top:18, backgroundColor: '#DDD', height: 34, width: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center'}}>
-      <Text style={{fontWeight:'bold'}}>X</Text>
+    <TouchableOpacity onPress={eraseDiaryAlertHandler} style={{position: 'absolute', left: 7, top:0, alignItems: 'center', justifyContent: 'center'}}>
+      <Image source={deleteDiaryButton} style={{height: 30, width: 30}}/>
     </TouchableOpacity>
+    </Animatable.View>
   </View>
   );
 }
@@ -137,11 +138,11 @@ function DiaryComponent(props){ // 기본적인 다이어리, 다이어리 조�
         <View style={{position:'absolute', left:3, top:5, height: 185, width:130, backgroundColor: '#CCC', borderBottomRightRadius: 8, borderTopRightRadius: 8}}/>
         <Image style={{height: 190, width: 130}} source={diaryImgList[diary.color]} resizeMode='contain'/>
         <View>
-          <Text adjustsFontSizeToFit={true} style={{width: 130, fontSize: 16, color: 'black', fontWeight:'bold', alignSelf: 'center', marginBottom: 3, marginTop:3}}>{diary.title}</Text>
+          <Text adjustsFontSizeToFit={true} style={{fontFamily: "NanumMyeongjo_bold", width: 130, fontSize: 16, color: 'black', alignSelf: 'center', marginBottom: 3, marginTop:3}}>{diary.title}</Text>
           <View style={{flexDirection: 'column', marginBottom: 5}}>
             {diary.makeTime.isSameOrAfter(Moment(), 'day')
-              ? <View><Text style={{fontSize: 8, color: 'gray'}}>오늘 생성한 다이어리</Text><Text style={{fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:62}}>총 {diary.totalUpdateCount}회 기록</Text></View>
-              : <View><Text style={{fontSize: 8, color: 'gray'}}>{diary.makeTime.format('L')} ~ {Moment().format('L')}</Text><Text style={{fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:30}}>총 {diary.totalUpdateCount}회 기록</Text></View>}
+              ? <View><Text style={{fontFamily: "NanumMyeongjo", fontSize: 8, color: 'gray'}}>오늘 생성한 다이어리</Text><Text style={{fontFamily: "NanumMyeongjo", fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:62}}>총 {diary.totalUpdateCount}회 기록</Text></View>
+              : <View><Text style={{fontFamily: "NanumMyeongjo", fontSize: 8, color: 'gray'}}>{diary.makeTime.format('L')} ~ {Moment().format('L')}</Text><Text style={{fontFamily: "NanumMyeongjo", fontSize: 8, color: 'gray', alignSelf: 'flex-end', paddingRight:30}}>총 {diary.totalUpdateCount}회 기록</Text></View>}
           </View>
         </View>
       </View>
@@ -150,24 +151,24 @@ function DiaryComponent(props){ // 기본적인 다이어리, 다이어리 조�
 }
 function MyDropList(props){
   const downloadPDFHandler = () => {
-    Alert.alert('PDF 다운로드 버튼');
+    Alert.alert('PDF로 다운로드', '서비스 준비중 입니다.');
   };
   const shareWithLinkHandler = () => {
-    Alert.alert('링크로 공유하기 버튼');
+    Alert.alert('링크로 공유하기', '서비스 준비중 입니다.');
   }
 
   return (
     <View style={{position: 'absolute', left: 0, top:0, bottom:0, right:0, backgroundColor: '#AAA8'}}>
-      <View style={{height: 65, borderBottomWidth: 1, borderColor: '#AAA', backgroundColor: '#FFF', justifyContent: 'center'}}>
-        <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center', padding: 5}} onPress={downloadPDFHandler}>
-          <FontAwesome name="file-pdf-o" size={30} color="black" style={{marginLeft: 10}}/>
-          <Text style={{position: 'absolute', left: 50, fontSize: 23}}>PDF 다운로드</Text>
+      <View style={{height: 65, borderBottomWidth: 1, borderTopWidth: 1, borderColor: '#F4F4F4', backgroundColor: '#FFF', justifyContent: 'center'}}>
+        <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center'}} onPress={downloadPDFHandler}>
+          <Image source={pdf} resizeMode={'cover'} style={{width:435/20, height: 577/20, marginLeft: 14}}/>
+          <Text style={{fontFamily: "NanumMyeongjo_bold", position: 'absolute', left: 50, fontSize: 15}}>PDF 다운로드</Text>
         </TouchableOpacity>
       </View>
       <View style={{height: 65, backgroundColor: '#FFF', justifyContent: 'center'}}>
         <TouchableOpacity style={{flexDirection: 'row',  alignItems: 'center', padding: 5}} onPress={shareWithLinkHandler}>
-          <EvilIcons name="external-link" size={40} color="black" />
-          <Text style={{position: 'absolute', left: 50, fontSize: 23}}>링크로 공유하기</Text>
+          <Image source={clip} resizeMode={'cover'} style={{width:483/19, height: 451/19, marginLeft:10}}/>
+          <Text style={{fontFamily: "NanumMyeongjo_bold", position: 'absolute', left: 50, fontSize: 15}}>링크로 공유하기</Text>
         </TouchableOpacity>
       </View>
       <TouchableOpacity onPress={props.handler} style={{flex:1, flexDirection: 'column', backgroundColor: '#AAA7'}}/>
@@ -177,7 +178,7 @@ function MyDropList(props){
 function NoDataInDiary(){
   return (
     <View style={{flex:1, flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-      <Text style={{fontSize: 15}}>채팅방에서 글을 작성해보세요.</Text>
+      <Text style={{fontFamily: "NanumMyeongjo", fontSize: 15}}>채팅방에서 글을 작성해보세요.</Text>
     </View>
   );
 }
@@ -186,8 +187,8 @@ function DiaryYear(props){
 
   return (
     <View style={{paddingVertical: 5, marginBottom: 20}}>
-      <View style={{backgroundColor: '#999', borderRadius: 12, marginLeft: 20, width: 70}}>
-        <Text style={{color: 'white', fontSize: 20, marginVertical: 2, alignSelf: 'center'}}>{year}</Text>
+      <View style={{backgroundColor: '#B9C89C', borderRadius: 12, marginLeft: 20, width: 70}}>
+        <Text style={{fontFamily: "NanumMyeongjo", color: 'white', fontSize: 20, marginVertical: 2, alignSelf: 'center'}}>{year}</Text>
       </View>
     </View>
   );
@@ -197,9 +198,9 @@ function DiaryDate(props){
 
   return (
       <View style={{flexDirection: 'row', height: 40, alignItems: 'center'}}>
-        <View style={{width: 10, height: 10, borderRadius: 5, backgroundColor: '#CCC', marginLeft: 50, marginBottom:3}}/>
+        <View style={{width: 10, height: 10, borderRadius: 5, backgroundColor: '#B9C89C', marginLeft: 50, marginBottom:3}}/>
         <TouchableOpacity onPress={props.onPressHandler}>
-          <Text style={{marginLeft: 20, fontSize: 20, color: 'black', marginBottom:5}}>{date}</Text>
+          <Text style={{fontFamily: "NanumMyeongjo", marginLeft: 20, fontSize: 20, color: 'black', marginBottom:5}}>{date}</Text>
         </TouchableOpacity>
       </View>
   );
@@ -287,7 +288,7 @@ function DiaryTextWithDate(props){
       headerTitleAlign: 'left',
       headerRight: (props) => (
         <TouchableOpacity onPress={handler}>
-          <Image source={downArrow} style={{width:30, height:30, marginRight:20}}/>
+          <Image source={downArrowWhiteButton} style={{width:30, height:30, marginRight:20}}/>
         </TouchableOpacity>
       )
     });
@@ -311,126 +312,12 @@ function DiaryTextWithDate(props){
       </View>
       <View style={{marginBottom: 30, marginRight: 20, alignItems: 'flex-end'}}>
         <TouchableOpacity onPress={()=>setShowTimeChanger(true)}>
-          <Text style={{fontSize:10, color: '#AAA'}}>{diaryMessage.createdAt.format('LT')}</Text>
+          <Text style={{fontFamily: "NanumMyeongjo", fontSize:10, color: '#AAA'}}>{diaryMessage.createdAt.format('LT')}</Text>
         </TouchableOpacity>
       </View>
       {showTimeChanger && <DateTimePicker testID="DiaryTimePicker" value={diaryMessage.createdAt.toDate()} mode={'time'} is24Hour={true} display="default" onChange={timeChangerHandler}/>}
     </View>
   );
-}
-function LastDiaryTextWithDate(props){// 마지막 다이어리만위 위해 만들었음, 나중에 통합 필요
-  // // 옵션 셋팅 변수
-  // const showYear = props.options.first || !props.options.sameYear;
-  // const showDate = props.options.first || !props.options.sameDate;
-  // const last = props.options.last;
-  // const title = props.title;
-  // const [myMessage, setMyMessage] = useState(props.message.text); // 표시되는 메시지
-  // const [editMode, setEditMode] = useState(true);                 // 편집모드 확인
-  // let handler = props.handler;                                    // 우상단 기능 구현함수
-  // let minusHandler = props.minusHandler;                          // 마지막 항목의 크기를 측정해감
-  // const [saveLastMessage, setSaveLastMessage] = useState('');     // 초기 메시지 저장 & 변경 확인용
-  //
-  // // 시간 및 날짜 편집용 변수
-  // const [showTimeChanger, setShowTimeChanger] = useState(false);
-  // const [showDateChanger, setShowDateChanger] = useState(false);
-  //
-  // const timeChangerHandler = (event, selectedDate) => {
-  //   setShowTimeChanger(false);
-  //   if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
-  //
-  //   props.message.createdAt = Moment(selectedDate);
-  //   props.diarySort();
-  // }
-  // const dateChangerHandler = (event, selectedDate) => {
-  //   setShowDateChanger(false);
-  //   if(event.type === 'dismissed') return Alert.alert('취소하였습니다.');
-  //
-  //   props.message.createdAt = Moment(selectedDate);
-  //   props.diarySort();
-  // }
-  //
-  // const onFocusHandler = () => {
-  //   props.nav.setOptions({
-  //     headerTitle: '내 기록편집',
-  //     headerTitleAlign: 'center',
-  //     headerRight: (props) => (
-  //       <TouchableOpacity onPress={onEndEditingHandler}>
-  //         <Text style={{fontSize:20, marginRight: 20, justifyContent: 'center'}}>완료</Text>
-  //       </TouchableOpacity>
-  //     )
-  //   });
-  // };
-  // const onEndEditingHandler = () => { // 글쓰기 끝냄 처리
-  //   setEditMode(false);
-  //
-  //   if(myMessage === ''){
-  //     props.diary.diarymessageList.splice(props.diaryId, 1);
-  //     props.diarySort();
-  //   }else if(props.message.islagacy){
-  //     // 연동 아님
-  //     if(saveLastMessage != myMessage){
-  //       props.message.text = myMessage;
-  //     }
-  //   }else {
-  //     if(saveLastMessage != myMessage){
-  //       props.message.islagacy = true;
-  //       props.message.text = myMessage;
-  //     }
-  //   }
-  //
-  //   props.nav.setOptions({
-  //     headerTitle: title,
-  //     headerTitleAlign: 'left',
-  //     headerRight: (props) => (
-  //       <TouchableOpacity onPress={handler}>
-  //         <Image source={downArrow} style={{width:30, height:30, marginRight:20}}/>
-  //       </TouchableOpacity>
-  //     )
-  //   });
-  //   setTimeout(()=>{
-  //     setEditMode(true);
-  //   }, 500);
-  // };
-  //
-  // useEffect(() => {
-  //   if(!props.message.islagacy){
-  //     // 연동중
-  //     let sumMessage = '';
-  //     props.message.linkedMessageList.forEach(message => {
-  //       if(sumMessage === '') sumMessage = message.text;
-  //       else sumMessage += ' ' + message.text;
-  //     })
-  //     setMyMessage(sumMessage);
-  //     setSaveLastMessage(sumMessage);
-  //   }else{
-  //     setSaveLastMessage(props.message.text);
-  //   }
-  // }, []);
-  //
-  //
-  //
-  //
-  // return (
-  //   <View onLayout={(event) => {
-  //       var {x, y, width, height} = event.nativeEvent.layout;
-  //       if(last) minusHandler(y);
-  //   }}>
-  //     {showYear && <DiaryYear year={props.message.createdAt.format('YYYY')} />}
-  //     {showDate && <DiaryDate date={props.message.createdAt.format('MMDD')} onPressHandler={() => setShowDateChanger(true)} />}
-  //     {showDateChanger && <DateTimePicker testID="DiaryDatePicker" value={props.message.createdAt.toDate()} mode={'date'}  display="default" onChange={dateChangerHandler}/>}
-  //     <View style={{paddingLeft: 90, flexWrap:'wrap'}}>
-  //       <TouchableOpacity onPress={()=>setEditMode(true)}>
-  //         <TextInput editable={editMode} onFocus={onFocusHandler} onEndEditing={onEndEditingHandler} style={{fontFamily: 'UhBeeSeulvely', textAlign: 'center', marginLeft: -15, fontSize: 14, padding:3, borderRadius: 5,width:screenWidth *0.76}} multiline value={myMessage} onChangeText={text=>setMyMessage(text)}/>
-  //       </TouchableOpacity>
-  //     </View>
-  //     <View style={{marginBottom: 30, marginRight: 20, alignItems: 'flex-end'}}>
-  //       <TouchableOpacity onPress={()=>setShowTimeChanger(true)}>
-  //         <Text style={{fontSize:10, color: '#AAA'}}>{props.message.createdAt.format('LT')}</Text>
-  //       </TouchableOpacity>
-  //     </View>
-  //     {showTimeChanger && <DateTimePicker testID="DiaryTimePicker" value={props.message.createdAt.toDate()} mode={'time'} is24Hour={true} display="default" onChange={timeChangerHandler}/>}
-  //   </View>
-  // );
 }
 export function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 화면
   const p_id = route.params.p_id;
@@ -457,7 +344,7 @@ export function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 
         headerTitle: diary.title,
         headerRight: (props) => (
           <TouchableOpacity onPress={diaryOptionFocusHandler}>
-            <Image source={downArrow} style={{width:30, height:30, marginRight:20}}/>
+            <Image source={downArrowWhiteButton} style={{width:30, height:30, marginRight:20}}/>
           </TouchableOpacity>
         )
       });
@@ -469,7 +356,7 @@ export function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 
       navigation.setOptions({
         headerRight: (props) => (
           <TouchableOpacity onPress={diaryOptionBlurHandler}>
-            <Image source={downArrow} style={{width:30, height:30, marginRight:20}}/>
+            <Image source={downArrowWhiteButton} style={{width:30, height:30, marginRight:20}}/>
           </TouchableOpacity>
         )
       });
@@ -481,7 +368,7 @@ export function DynamicDiaryScreen({navigation, route}){ // 다이어리 생성 
       headerTitle: diary.title,
       headerRight: (props) => (
         <TouchableOpacity onPress={diaryOptionFocusHandler}>
-          <Image source={downArrow} style={{width:30, height:30, marginRight:20}}/>
+          <Image source={downArrowWhiteButton} style={{width:30, height:30, marginRight:20}}/>
         </TouchableOpacity>
       )
     });

@@ -88,7 +88,7 @@ function renderSend(props) {
       {...props}
     >
       <View style={{backgroundColor: theme.light[1],width:50, height:35, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight:5}}>
-        <Text style={{margin:3, fontSize:18}}>전송</Text>
+        <Text style={{margin:3, fontSize:18, fontFamily: 'NanumMyeongjo'}}>전송</Text>
       </View>
     </Send>
   );
@@ -115,7 +115,7 @@ function renderBubble(props) {
           borderRadius: 20,
         },
         left: {
-          backgroundColor: theme.default,
+          backgroundColor: theme.gray,
           marginVertical: 9,
           borderRadius: 20,
         }
@@ -182,7 +182,7 @@ function renderInputToolbar(props) {
       {...props}
       style={{borderWidth:1}}
       primaryStyle={{borderWidth: 1, borderColor: '#CCC', marginVertical: 3, marginHorizontal:9, borderRadius: 10, backgroundColor: 'white'}}
-      containerStyle={{borderWidth:0, borderColor: 'red', justifyContent: 'center'}}
+      containerStyle={{borderWidth:0, borderColor: 'red', justifyContent: 'center', fontFamily: 'NanumMyeongjo'}}
       textInputProps={{autoFocus: false, placeholder:'    메시지를 입력하세요'}}
     />
   );

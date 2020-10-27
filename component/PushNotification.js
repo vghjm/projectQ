@@ -28,7 +28,7 @@ export function PushMessage({pushData, onPressPushNotification}){
 
 const styles = StyleSheet.create({
   container: {
-    position:'absolute', top:30, backgroundColor: '#ededed', borderWidth: 0, borderColor:'#eee', borderRadius:0, width:WIDTH, height: 70,
+    position:'absolute', top:30, backgroundColor: '#ededed', borderRadius: 5, borderWidth: 0, borderColor:'#eee', borderRadius:0, width:WIDTH, height: 70,
     alignSelf: 'center', flexDirection: 'row',
   },
   image:{

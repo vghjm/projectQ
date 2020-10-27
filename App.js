@@ -38,7 +38,6 @@ var informData = {
   help: [],
   notice: [],
 };
-var pushList = [];
 var userData;
 var pushCount = 0;
 
@@ -48,7 +47,7 @@ import { testAccount } from './component/constant/TEST';
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
 const ASSUME_SAME_CHAT_TIME = 1; // 채팅 시 같은 메세지로 판정하는 시간간격 (단위 분)
-const DEBUG_PRINT = true;
+const DEBUG_PRINT = false;
 const TEST_MODE = false;
 
 
@@ -190,88 +189,13 @@ export default function App() {
       introSkip: () => dispatch({type: 'INTRO_SKIP'}),
     }; // 앱 상태변경 함수
 
-  const handleNotification1 = ({request}) => { // foreground 시 푸시 처리 / 푸시알림 받음!
-    const content = request.content;
-    const diaryID = content.data.diary_ID;
-    const productID = content.data.product_ID;
-    const question = content.data.question;
-    const questionID = content.data.question_ID;
-    const title = content.title;
-    console.log(`\n notify receive  content\n`, content);
-
-    // 푸시알림 받음 !
-    const productInfo = myProductDataContext[myProductDataContext.findIndex(product => product.p_id === productID)];
-    setMyChatroomDataContext(myChatroomDataContext.map(chatroom => {
-      if(chatroom.p_id === productID){
-        if(chatroomInfo.getPushAlarm){
-          popupPushMessage({
-            image: productInfo.thumbnailImg,
-            title: productInfo.title,
-            text: question,
-            lastPushed: Moment(),
-            isPushShowed: true,
-          });
-        }
-
-        chatroom.chatMessageList.unshift({ _id: uuid.v4(), text: question, createdAt: Moment(),
-          user: { _id:2, avatar: productInfo.thumbnailImg},
-        });
-        chatroom.newItemCount += 1;
-        chatroom.lastPushed = {
-          pushTime: Moment(),
-          q_id: questionID,
-          solved: true,
-        };
-      }
-
-      return chatroom;
-    }));
-  };
-  const handleNotification2 = (notify) => { // 푸시 알림 터치 시
-    console.log('푸시 알림 터치함', notify);
-  };
-  const registerForPushNotificationsAsync = async () => { // 푸시알림 등록
-    const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
-
-    if (status !== 'granted') {
-      const { _status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
-      if (_status !== 'granted') {
-        return {ok:false};
-      }
-    }
-
-    const pushtoken = await Notifications.getExpoPushTokenAsync();
-
-    Notifications.addNotificationReceivedListener(handleNotification1);
-    Notifications.addNotificationResponseReceivedListener(handleNotification2);
-    setMyUserDataContext(userData => {
-      userData.pushToken = pushtoken;
-      return userData;
-    });
-
-    return fetch(PUSH_REGISTRATION_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token: {
-          value: pushtoken,
-        },
-        user: {
-          email: myUserDataContext.email,
-          username: myUserDataContext.password,
-        },
-      }),
-    });
-  };
 
   // 데이터 로딩
   const [theme, setTheme] = useState({
     default: '#E6E5EB',
-    light: ['#e8efd9','#d7e4bd', '#b9c89c', '#7C9151', '#48375F'],
+    light: ['#e8efd9','#d7e4bd', '#b9c89c', '#7C9151', '#48375F', '#B9C89C'],
     red: '#5F5F5F',
+    gray: '#F0EEF6',
     logo: logo,
   });
   const [loaded, error] = Font.useFonts({
@@ -500,7 +424,7 @@ export default function App() {
             isPushShowed: true,
           });
           navigation.navigate('MyChatListScreen');
-        }, 4500);
+        }, 3500);
       },
       makeNewDiaryMessage: (message) => { // 다이어리 메시지 추가
         return {
@@ -692,6 +616,12 @@ export default function App() {
         }else{
           Alert.alert('로그인에 실패하였습니다.', response.message);
         }
+      },
+      changePassword: (newPassword) => {
+        setMyUserDataContext(userData => {
+          userData.password = newPassword;
+          return userData;
+        });
       }
     };
 

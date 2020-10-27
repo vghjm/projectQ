@@ -2,8 +2,6 @@ import React, { useContext } from 'react';
 import {TouchableOpacity, View, Text, Alert, Clipboard, ScrollView, Image, TouchableHighlight, Dimensions, TextInput} from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
-import { Octicons }
-from '@expo/vector-icons'; // https://icons.expo.fyi/
 import uuid from 'react-native-uuid'; // https://www.npmjs.com/package/react-native-uuid
 import Moment from 'moment';
 
@@ -13,6 +11,8 @@ import ChatroomScreen from './Chatroom';
 import SubscribeScreen from './Subsciribe';
 import * as MyPage from './MyPage';
 import MainScreen from './MainScreen';
+import { menuIcon } from './utils/loadAssets';
+
 
 const Stack = createStackNavigator();
 
@@ -112,7 +112,7 @@ export default function MainStackHomePage({navigation}) {
           headerTintColor: 'black',
           headerRight: (props) => (
             <TouchableOpacity onPress={() => chatSettingButtonHandler(navigation)}>
-              <Octicons name="three-bars" style={{marginRight:11, marginTop:2}} size={27} color="black" />
+              <Image source={menuIcon} resizeMode={'cover'} style={{marginRight:10, width:28, height: 28}}/>
             </TouchableOpacity>
           ),
         }}
