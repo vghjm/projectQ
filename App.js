@@ -190,6 +190,84 @@ export default function App() {
     }; // 앱 상태변경 함수
 
 
+    const handleNotification1 = ({request}) => { // foreground 시 푸시 처리 / 푸시알림 받음!
+      const content = request.content;
+      const diaryID = content.data.diary_ID;
+      const productID = content.data.product_ID;
+      const question = content.data.question;
+      const questionID = content.data.question_ID;
+      const title = content.title;
+      console.log(`\n notify receive  content\n`, content);
+
+      // 푸시알림 받음 !
+      const productInfo = myProductDataContext[myProductDataContext.findIndex(product => product.p_id === productID)];
+      setMyChatroomDataContext(myChatroomDataContext.map(chatroom => {
+        if(chatroom.p_id === productID){
+          if(chatroomInfo.getPushAlarm){
+            popupPushMessage({
+              image: productInfo.thumbnailImg,
+              title: productInfo.title,
+              text: question,
+              lastPushed: Moment(),
+              isPushShowed: true,
+            });
+          }
+
+          chatroom.chatMessageList.unshift({ _id: uuid.v4(), text: question, createdAt: Moment(),
+            user: { _id:2, avatar: productInfo.thumbnailImg},
+          });
+          chatroom.newItemCount += 1;
+          chatroom.lastPushed = {
+            pushTime: Moment(),
+            q_id: questionID,
+            solved: true,
+          };
+        }
+
+        return chatroom;
+      }));
+    };
+    const handleNotification2 = (notify) => { // 푸시 알림 터치 시
+      console.log('푸시 알림 터치함', notify);
+    };
+    const registerForPushNotificationsAsync = async ({email: email, username: username}) => { // 푸시알림 등록
+      const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
+
+      if (status !== 'granted') {
+        const { _status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+        if (_status !== 'granted') {
+          return;
+        }
+      }
+
+      const pushtoken = await Notifications.getExpoPushTokenAsync();
+
+      Notifications.addNotificationReceivedListener(handleNotification1);
+      Notifications.addNotificationResponseReceivedListener(handleNotification2);
+      setMyUserDataContext(userData => {
+        userData.pushToken = pushtoken;
+        return userData;
+      });
+      // console.log(`registerForPushNotificationsAsync\ntoken: ${token}\nemail: ${data.email}, username: ${data.username}`);
+
+      return fetch(PUSH_REGISTRATION_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: {
+            value: pushtoken,
+          },
+          user: {
+            email: email,
+            username: username,
+          },
+        }),
+      });
+    };
+
   // 데이터 로딩
   const [theme, setTheme] = useState({
     default: '#E6E5EB',
@@ -217,6 +295,81 @@ export default function App() {
       dispatch({ type: 'LOGIN'});
     }
   }, [isProductDataReady, isUserLoadingFinished]);
+
+  // useEffect(() => {
+  //   console.log(' 부팅 useEffect\n', prevUserData);
+  //   if(isProductDataReady && isUserLoadingFinished){
+  //     if(prevUserData.isExist === true){
+  //       if(prevUserData.isAutoLogin === true) controllContext.login({email: prevUserData.email, password: prevUserData.password});
+  //       else dispatch({ type: 'END_LOADING_LOGIN_PAGE'});
+  //     }else{
+  //       dispatch({ type: 'END_LOADING_FIRST_LOGIN'});
+  //     }
+  //   }
+  // }, [isProductDataReady, isUserLoadingFinished]);
+
+  // // 다이얼 백업함수
+  // const diaryBackupTrial = async () => {
+  //   if(!state.login){
+  //     console.log('\n\n 로그인 없는 다이어리 저장시도, 캔슬!\n');
+  //     return;
+  //   }
+  //
+  //   let response = await diaryBackUp({
+  //     debug: DEBUG_PRINT,
+  //     token: myUserDataContext.token,
+  //     backupDiaryList: myDiaryDataContext.map(diary => {
+  //       return {
+  //         d_ID: diary.d_id,
+  //         p_ID: diary.p_id,
+  //         p_name: diary.title,
+  //         chatedperiod_start: diary.makeTime.format('YYYYMMDD'),
+  //         chatedperiod_end: Moment().format('YYYYMMDD'),
+  //         chatedamount: diary.totalUpdateCount,
+  //         linkname: 'nolink',
+  //         color: diary.color,
+  //         position: diary.pos,
+  //         diaryMessage: diary.diarymessageList.map(diaryMessage => {
+  //           return {
+  //             dm_ID: diaryMessage._id,
+  //             chatedtime: diaryMessage.createdAt,
+  //             chatcontent: diaryMessage.islagacy
+  //               ? diaryMessage.text
+  //               : diaryMessage.linkedMessageList.reduce((prevText, nowText, i) => {
+  //                 return prevText + ' ' + nowText;
+  //               }),
+  //           };
+  //         }),
+  //       }
+  //     })
+  //   });
+  //
+  //   if(response.ok) console.log('  다이어리 백업 성공');
+  //   else console.log('  다이어리 백업 실패', response.message);
+  // };
+  //
+  // // 백그라운드 및 Inactive 감지 함수
+  // const appState = useRef(AppState.currentState);
+  // const [appStateVisible, setAppStateVisible] = useState(appState.current);
+  // const _handleAppStateChange = (nextAppState) => { // 앱 상태 변화시 함수
+  //   if(appState.current.match(/inactive|background/) && nextAppState === "active"){
+  //     // console.log("App has come to the foreground!");
+  //   }
+  //
+  //   appState.current = nextAppState;
+  //   setAppStateVisible(appState.current);
+  //   // console.log("AppState", appState.current);
+  // };
+  // useEffect(() => { // 앱 상태변환감지 리스너
+  //   AppState.addEventListener("change", _handleAppStateChange);
+  //   //bootstrapAsync();
+  //   return () => {
+  //     AppState.removeEventListener("change", _handleAppStateChange);
+  //   };
+  // }, []);
+  // useEffect((appStateVisible) => { // 백그라운드 시 다이어리 서버에 저장함
+  //   if(appState.current === 'background') diaryBackupTrial();
+  // }, [appStateVisible]);
 
   // 푸시메세지 띄우기
   const [pushContext, setPushContext] = useState({
@@ -336,7 +489,15 @@ export default function App() {
         const p_id = diary.p_id;
 
         // 서버 다이어리 삭제 요청
-
+        // let response = await deleteDiaryFromServer({
+        //   token: myUserDataContext.token,
+        //   d_id: diary.d_id,
+        //   debug: DEBUG_PRINT,
+        // });
+        // if(!response.ok){
+        //   Alert.alert('다이어리 삭제 에러', response.message);
+        //   return;
+        // }
 
         //채팅방 제거
         controllContext.eraseChatroom(p_id);
@@ -351,7 +512,22 @@ export default function App() {
       },
       subscribeOffHandler: async (product, subscribe) => { // 구독 취소 함수
         // 서버에 구독취소 신청
-
+        // let response = await subscribeSetting({
+        //   token: myUserDataContext.token,
+        //   title: product.title,
+        //   p_id: product.p_id,
+        //   s_id: subscribe.s_id,
+        //   pushStartTime: subscribe.pushStartTime,
+        //   pushEndTime: subscribe.pushEndTime,
+        //   pushType: product.pushType,
+        //   isSubscribe: false,
+        //   debug: DEBUG_PRINT
+        // });
+        // console.log(' 푸시 해제 \n', subscribe);
+        // if(!response.ok){
+        //   Alert.alert('구독취소에 실패하였습니다.', 'ERROR: 서버연결 실패');
+        //   // return;
+        // }
 
         // 구독상태 제거
         setMySubscribeDataContext(mySubscribeDataContext.filter(mySubscribe => mySubscribe.p_id!==subscribe.p_id));
@@ -359,6 +535,22 @@ export default function App() {
       subscribeOnHandler: async (product, startTime, endTime, navigation) => { // 구독 신청 함수
         // 서버에 구독 신청
         let s_id = uuid.v4();
+        // let response = await subscribeSetting({
+        //   token: myUserDataContext.token,
+        //   title: product.title,
+        //   p_id: product.p_id,
+        //   s_id: s_id,
+        //   pushStartTime: startTime,
+        //   pushEndTime: endTime,
+        //   pushType: product.pushType,
+        //   isSubscribe: true,
+        //   debug: DEBUG_PRINT
+        // });
+        // if(!response.ok){
+        //   Alert.alert('구독 등록에 실패하였습니다.', 'ERROR: 서버연결 실패');
+        //   return;
+        // }
+
         // 구독상태 추가
         setMySubscribeDataContext(mySubscribeDataContext.concat({p_id: product.p_id, s_id: s_id, pushStartTime: startTime, pushEndTime: endTime}));
 
@@ -374,6 +566,18 @@ export default function App() {
       },
       changePushTime: async (p_id, startTime, endTime, pushType) => { // 구독 시간 변경
         // 서버에 푸시시간 변경요청
+        // let response = await changePushTime({
+        //   token: myUserDataContext.token,
+        //   p_ID: p_id,
+        //   pushStartTime: startTime,
+        //   pushEndTime: endTime,
+        //   pushType: pushType,
+        //   debug: DEBUG_PRINT,
+        // });
+        // if(!response.ok) {
+        //   Alert.alert('푸시시간 변경 실패', response.message);
+        //   return ;
+        // }
 
         // 푸시시간데이터 변경
         setMySubscribeDataContext(mySubscribeDataContext.map(subscribe => {
@@ -467,6 +671,16 @@ export default function App() {
         }
       },
       userReplyed: async (p_id, d_id, message) => { // 채팅방에 답변하면 서버에 응답요청 보냄
+
+        // 서버에 답변요청 보냄
+        // let response = await requestChatReply({token:myUserDataContext.token, p_id:p_id, d_id:d_id, message:message, debug:DEBUG_PRINT});
+        // if(!response.ok){
+        //   Alert.alert('답변 전송 실패', response.message);
+        //   console.log(' app/userReplyed : ', response.message);
+        //   return;
+        // }
+
+
         // 답변 체크
         setMyChatroomDataContext(myChatroomDataContext.map(chatroomInfo => {
           if(chatroomInfo.p_id === p_id){
