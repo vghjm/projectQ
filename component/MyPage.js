@@ -356,7 +356,8 @@ export function NoticePage({navigation}) {
 
 const styles = StyleSheet.create({
   myShadow: {
-    borderWidth: 0,
+    borderWidth: 1,
+    borderColor: '#E6E5EB',
     shadowColor: "#000",
     shadowOffset: {
     	width: 0,

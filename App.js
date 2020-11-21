@@ -424,7 +424,7 @@ export default function App() {
             isPushShowed: true,
           });
           navigation.navigate('MyChatListScreen');
-        }, 3500);
+        }, 3000);
       },
       makeNewDiaryMessage: (message) => { // 다이어리 메시지 추가
         return {
@@ -484,7 +484,7 @@ export default function App() {
           text: message.content,
           lastPushed: Moment(),
           isPushShowed: true,
-        }, 1000*6*1.1);
+        }, 1000*2);
         setTimeout(() => setMyChatroomDataContext(myChatroomDataContext.map(chatroom => {
           if(chatroom.p_id === p_id){
             chatroom.lastCheckedTime = Moment();
@@ -494,7 +494,7 @@ export default function App() {
             });
           }
           return chatroom;
-        })), 1000*6*1.1);
+        })), 1000*2);
       },
       deleteDiaryMessageFromChatroom: (p_id, deleteId) => { // 채팅방에 메세지 삭제하면 다이어리에 해당하는 메세지 삭제
         // 다이어리에 삭제메시지가 있다면 제거함

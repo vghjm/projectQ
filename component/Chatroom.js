@@ -97,7 +97,7 @@ function renderComposer(props){ // textInput style
   return (
     <Composer
       {...props}
-      textInputStyle={{borderWidth: 0, marginTop:7, alignSelf: 'center', alignContent: 'center', justifyContent: 'center', paddingTop: 10, borderColor: 'green'}}
+      textInputStyle={{borderWidth: 0, marginTop:7, alignSelf: 'center',fontFamily: 'NanumMyeongjo', alignContent: 'center', justifyContent: 'center', paddingTop: 10, borderColor: 'green'}}
     />
   );
 }
@@ -182,7 +182,7 @@ function renderInputToolbar(props) {
       {...props}
       style={{borderWidth:1}}
       primaryStyle={{borderWidth: 1, borderColor: '#CCC', marginVertical: 3, marginHorizontal:9, borderRadius: 10, backgroundColor: 'white'}}
-      containerStyle={{borderWidth:0, borderColor: 'red', justifyContent: 'center', fontFamily: 'NanumMyeongjo'}}
+      containerStyle={{borderWidth:0, borderColor: 'red', justifyContent: 'center'}}
       textInputProps={{autoFocus: false, placeholder:'    메시지를 입력하세요'}}
     />
   );

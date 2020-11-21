@@ -188,7 +188,7 @@ function DiaryYear(props){
   return (
     <View style={{paddingVertical: 5, marginBottom: 20}}>
       <View style={{backgroundColor: '#B9C89C', borderRadius: 12, marginLeft: 20, width: 70}}>
-        <Text style={{fontFamily: "NanumMyeongjo", color: 'white', fontSize: 20, marginVertical: 2, alignSelf: 'center'}}>{year}</Text>
+        <Text style={{fontFamily: "UhBeeSeulvely", color: 'white', fontSize: 20, marginVertical: 2, alignSelf: 'center'}}>{year}</Text>
       </View>
     </View>
   );
@@ -200,7 +200,7 @@ function DiaryDate(props){
       <View style={{flexDirection: 'row', height: 40, alignItems: 'center'}}>
         <View style={{width: 10, height: 10, borderRadius: 5, backgroundColor: '#B9C89C', marginLeft: 50, marginBottom:3}}/>
         <TouchableOpacity onPress={props.onPressHandler}>
-          <Text style={{fontFamily: "NanumMyeongjo", marginLeft: 20, fontSize: 20, color: 'black', marginBottom:5}}>{date}</Text>
+          <Text style={{fontFamily: "UhBeeSeulvely", marginLeft: 20, fontSize: 20, color: 'black', marginBottom:5}}>{date}</Text>
         </TouchableOpacity>
       </View>
   );
@@ -312,7 +312,7 @@ function DiaryTextWithDate(props){
       </View>
       <View style={{marginBottom: 30, marginRight: 20, alignItems: 'flex-end'}}>
         <TouchableOpacity onPress={()=>setShowTimeChanger(true)}>
-          <Text style={{fontFamily: "NanumMyeongjo", fontSize:10, color: '#AAA'}}>{diaryMessage.createdAt.format('LT')}</Text>
+          <Text style={{fontFamily: "UhBeeSeulvely", fontSize:10, color: '#AAA'}}>{diaryMessage.createdAt.format('LT')}</Text>
         </TouchableOpacity>
       </View>
       {showTimeChanger && <DateTimePicker testID="DiaryTimePicker" value={diaryMessage.createdAt.toDate()} mode={'time'} is24Hour={true} display="default" onChange={timeChangerHandler}/>}

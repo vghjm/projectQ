@@ -71,8 +71,8 @@ function HiddenLayer({chatroom, alarmSettingChanger}){
     <TouchableOpacity onPress={() => alarmSettingChanger(p_id)}>
       <View style={{backgroundColor: '#F0EEF6', padding:11, paddingLeft: 15, justifyContent: 'center'}}>
           {alarmData
-            ? <Image source={bellOff} resizeMode={"cover"} style={{width:190/9, height:228/9}}/>
-            : <Image source={bellOn} resizeMode={"cover"} style={{width:190/9, height:228/9}}/>
+            ? <Image source={bellOff} resizeMode={"cover"} style={{width:190/12, height:228/12}}/>
+            : <Image source={bellOn} resizeMode={"cover"} style={{width:190/12, height:228/12}}/>
           }
       </View>
     </TouchableOpacity>
