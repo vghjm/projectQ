@@ -10,7 +10,6 @@ from '@expo/vector-icons'; // https://icons.expo.fyi/
 import Moment from 'moment';
 
 import { ThemeContext, AuthContext, UserDataContext, DiaryDataContext, ControllContext, InformDataContext } from './Context';
-import changepPassword from './connect/changePassword';
 import { defaultUserImg, pencil, paper, key, lock, info } from './utils/loadAssets';
 import InlineTextInput from './InlineTextInput';
 import { isPasswordValid } from './utils/utils';

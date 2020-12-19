@@ -1,11 +1,14 @@
 import React from "react";
-import Connection from "../../apiTemplate";
-import {PRODUCT_LOOKUP, FILE} from "../../URL";
+import ApiConnect from "../apiTemplate";
+import { PRODUCT_LOOKUP, FILE } from "../URL";
 import Moment from 'moment';
 
-async function convertProductType(serverType){
+function requestDataHandler(param){
+  return null;
+}
 
-  return await serverType.map(product => {
+function responseDataHandler(responseData){
+  return responseData.products.map(product => {
     let myQuestList = [];
     let myAnsList = [];
 
@@ -32,16 +35,11 @@ async function convertProductType(serverType){
   });
 }
 
-export default async function productLookup(){
-  const reply = {ok: false, data: null, message: ''};
-  const response = await Connection("GET", PRODUCT_LOOKUP);
-
-  if(response.ok){
-    reply.ok = true;
-    reply.data = await convertProductType(response.data.products);
-  }else{
-    reply.message = response.message;
-  }
-
-  return reply;
+export default async function lookup(param){
+  return await ApiConnect({
+    method: "GET",
+    url: PRODUCT_LOOKUP,
+    data: requestDataHandler(param),
+    responseDataHandler: responseData => responseDataHandler(responseData)
+  })
 }

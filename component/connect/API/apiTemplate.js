@@ -25,17 +25,17 @@ function connectionErrorMessage(statusCode){
   }
 }
 
-export default async function connection(method, url, data=null){
+export default async function ApiConnect({method, url, data=null, responseDataHandler}){
   const reply = {ok: false, data: null, message: ''};
   const response = await jsonFetch(method, url, data);
-
+  console.log(data);
   if(response.ok){
     const json = await response.json();
 
     reply.message = json.status_message;
     if(json.status === SUCCESS_RESPONSE_STATUS){
       reply.ok = true;
-      reply.data = json;
+      reply.data = responseDataHandler(json);
     }
   }else{
     reply.message = connectionErrorMessage(response.status);

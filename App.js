@@ -71,19 +71,21 @@ async function warningPermission(){
 }
 
 // 태스트 모듈
-import loginConnect from './component/connect/login';
-import downloadProductData from './component/connect/downloadProductData';
-import downloadSubscribeData from './component/connect/downloadSubscribeData';
-import downloadDiaryData from './component/connect/downloadDiaryData';
-import subscribeSetting from './component/connect/subscribeSetting';
-import deleteDiaryFromServer from './component/connect/deleteDiaryFromServer';
-import changePushTime from './component/connect/changePushTime';
-import diaryBackUp from './component/connect/diaryBackup';
-import requestChatReply from './component/connect/requestChatReply';
+// import loginConnect from './component/connect/login';
+// import downloadProductData from './component/connect/downloadProductData';
+// import downloadSubscribeData from './component/connect/downloadSubscribeData';
+// import downloadDiaryData from './component/connect/downloadDiaryData';
+// import subscribeSetting from './component/connect/subscribeSetting';
+// import deleteDiaryFromServer from './component/connect/deleteDiaryFromServer';
+// import changePushTime from './component/connect/changePushTime';
+// import diaryBackUp from './component/connect/diaryBackup';
+// import requestChatReply from './component/connect/requestChatReply';
 
 import loadUserImg from './component/storage/loadUserImg';
 import loadLastUserData from './component/storage/loadLastUserData';
 import loadChatroomData from './component/storage/loadChatroomData';
+
+import serverTest from './component/connect/test';
 
 import * as PresentVersion from './PresentVersion';
 
@@ -189,8 +191,12 @@ export default function App() {
       introSkip: () => dispatch({type: 'INTRO_SKIP'}),
     }; // 앱 상태변경 함수
 
+  serverTest({
+    email: '77eric@naver.com',
+    password: '!!gmltjd'
+  });
 
-    const handleNotification1 = ({request}) => { // foreground 시 푸시 처리 / 푸시알림 받음!
+  const handleNotification1 = ({request}) => { // foreground 시 푸시 처리 / 푸시알림 받음!
       const content = request.content;
       const diaryID = content.data.diary_ID;
       const productID = content.data.product_ID;
@@ -227,46 +233,46 @@ export default function App() {
         return chatroom;
       }));
     };
-    const handleNotification2 = (notify) => { // 푸시 알림 터치 시
-      console.log('푸시 알림 터치함', notify);
-    };
-    const registerForPushNotificationsAsync = async ({email: email, username: username}) => { // 푸시알림 등록
-      const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
+  const handleNotification2 = (notify) => { // 푸시 알림 터치 시
+    console.log('푸시 알림 터치함', notify);
+  };
+  const registerForPushNotificationsAsync = async ({email: email, username: username}) => { // 푸시알림 등록
+    const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
 
-      if (status !== 'granted') {
-        const { _status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
-        if (_status !== 'granted') {
-          return;
-        }
+    if (status !== 'granted') {
+      const { _status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+      if (_status !== 'granted') {
+        return;
       }
+    }
 
-      const pushtoken = await Notifications.getExpoPushTokenAsync();
+    const pushtoken = await Notifications.getExpoPushTokenAsync();
 
-      Notifications.addNotificationReceivedListener(handleNotification1);
-      Notifications.addNotificationResponseReceivedListener(handleNotification2);
-      setMyUserDataContext(userData => {
-        userData.pushToken = pushtoken;
-        return userData;
-      });
-      // console.log(`registerForPushNotificationsAsync\ntoken: ${token}\nemail: ${data.email}, username: ${data.username}`);
+    Notifications.addNotificationReceivedListener(handleNotification1);
+    Notifications.addNotificationResponseReceivedListener(handleNotification2);
+    setMyUserDataContext(userData => {
+      userData.pushToken = pushtoken;
+      return userData;
+    });
+    // console.log(`registerForPushNotificationsAsync\ntoken: ${token}\nemail: ${data.email}, username: ${data.username}`);
 
-      return fetch(PUSH_REGISTRATION_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
+    return fetch(PUSH_REGISTRATION_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        token: {
+          value: pushtoken,
         },
-        body: JSON.stringify({
-          token: {
-            value: pushtoken,
-          },
-          user: {
-            email: email,
-            username: username,
-          },
-        }),
-      });
-    };
+        user: {
+          email: email,
+          username: username,
+        },
+      }),
+    });
+  };
 
   // 데이터 로딩
   const [theme, setTheme] = useState({
@@ -290,11 +296,11 @@ export default function App() {
     email: null,
     password: null,
   });
-  useEffect(() => {
-    if(isProductDataReady && isUserLoadingFinished){
-      dispatch({ type: 'LOGIN'});
-    }
-  }, [isProductDataReady, isUserLoadingFinished]);
+  // useEffect(() => {
+  //   if(isProductDataReady && isUserLoadingFinished){
+  //     dispatch({ type: 'LOGIN'});
+  //   }
+  // }, [isProductDataReady, isUserLoadingFinished]);
 
   // useEffect(() => {
   //   console.log(' 부팅 useEffect\n', prevUserData);
@@ -984,60 +990,66 @@ export default function App() {
   };
 
   return (
-    <ThemeContext.Provider value={theme}>
-    <AuthContext.Provider value={authContext}>
-    <ControllContext.Provider value={controllContext}>
-      {state.testMode ? (
-        <View style={{flex:1, marginTop:30, alignItems: 'center', justifyContent: 'center'}}>
-          <Text>테스트 화면</Text>
-          <TouchableOpacity style={{margin: 10}} onPress={() => controllContext.bootload()}>
-            <Text style={{color: 'green'}}>부팅테스트</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={() => controllContext.login(testAccount)}>
-            <Text style={{color: 'green'}}>로그인</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{margin: 10}} onPress={() => showState()}>
-            <Text style={{color: 'green'}}>상태표시</Text>
-          </TouchableOpacity>
-        </View>
-      ) : state.nowLoading === true ? (
-        <SplashScreen/>
-      ) : state.noAuth === true ? (
-        <View style={{flex:1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
-          <Text style={{fontFamily: 'NanumMyeongjo',fontSize:20}}>권한이 필요합니다.</Text>
-        </View>
-      ): state.intro === true ? (
-        <IntroNavigation/>
-      ) : state.login === false ? (
-        <LoginNavigation/>
-      )
-      : (
-        <UserDataContext.Provider value={myUserDataContext}>
-        <ProductDataContext.Provider value={myProductDataContext}>
-        <SubscribeDataContext.Provider value={mySubscribeDataContext}>
-        <ChatroomDataContext.Provider value={myChatroomDataContext}>
-        <DiaryDataContext.Provider value={myDiaryDataContext}>
-        <InformDataContext.Provider value={myInformDataContext}>
-        <GlobalDataContext.Provider value={globalDataContext}>
-        <NavigationContainer>
-          <Drawer.Navigator drawerPosition='right' drawerStyle={{backgroundColor: '#CCC'}} drawerContent={props => <CustomDrawerContent {...props}/>}>
-            <Drawer.Screen name='sidebar' component={MainStackHomePage} options={{swipeEnabled: false}}/>
-          </Drawer.Navigator>
-        </NavigationContainer>
-        </GlobalDataContext.Provider>
-        </InformDataContext.Provider>
-        </DiaryDataContext.Provider>
-        </ChatroomDataContext.Provider>
-        </SubscribeDataContext.Provider>
-        </ProductDataContext.Provider>
-        </UserDataContext.Provider>
-
-      )}
-      {pushContext.isPushShowed && <PushNotification.PushMessage pushData={pushContext} onPressPushNotification={onPressPushNotification}/>}
-    </ControllContext.Provider>
-    </AuthContext.Provider>
-    </ThemeContext.Provider>
+    <View style={{flex:1, marginTop:30, alignItems: 'center', justifyContent: 'center'}}>
+      <Text>테스트 화면</Text>
+    </View>
   );
+
+  // return (
+  //   <ThemeContext.Provider value={theme}>
+  //   <AuthContext.Provider value={authContext}>
+  //   <ControllContext.Provider value={controllContext}>
+  //     {state.testMode ? (
+  //       <View style={{flex:1, marginTop:30, alignItems: 'center', justifyContent: 'center'}}>
+  //         <Text>테스트 화면</Text>
+  //         <TouchableOpacity style={{margin: 10}} onPress={() => controllContext.bootload()}>
+  //           <Text style={{color: 'green'}}>부팅테스트</Text>
+  //         </TouchableOpacity>
+  //         <TouchableOpacity style={{margin: 10}} onPress={() => controllContext.login(testAccount)}>
+  //           <Text style={{color: 'green'}}>로그인</Text>
+  //         </TouchableOpacity>
+  //         <TouchableOpacity style={{margin: 10}} onPress={() => showState()}>
+  //           <Text style={{color: 'green'}}>상태표시</Text>
+  //         </TouchableOpacity>
+  //       </View>
+  //     ) : state.nowLoading === true ? (
+  //       <SplashScreen/>
+  //     ) : state.noAuth === true ? (
+  //       <View style={{flex:1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+  //         <Text style={{fontFamily: 'NanumMyeongjo',fontSize:20}}>권한이 필요합니다.</Text>
+  //       </View>
+  //     ): state.intro === true ? (
+  //       <IntroNavigation/>
+  //     ) : state.login === false ? (
+  //       <LoginNavigation/>
+  //     )
+  //     : (
+  //       <UserDataContext.Provider value={myUserDataContext}>
+  //       <ProductDataContext.Provider value={myProductDataContext}>
+  //       <SubscribeDataContext.Provider value={mySubscribeDataContext}>
+  //       <ChatroomDataContext.Provider value={myChatroomDataContext}>
+  //       <DiaryDataContext.Provider value={myDiaryDataContext}>
+  //       <InformDataContext.Provider value={myInformDataContext}>
+  //       <GlobalDataContext.Provider value={globalDataContext}>
+  //       <NavigationContainer>
+  //         <Drawer.Navigator drawerPosition='right' drawerStyle={{backgroundColor: '#CCC'}} drawerContent={props => <CustomDrawerContent {...props}/>}>
+  //           <Drawer.Screen name='sidebar' component={MainStackHomePage} options={{swipeEnabled: false}}/>
+  //         </Drawer.Navigator>
+  //       </NavigationContainer>
+  //       </GlobalDataContext.Provider>
+  //       </InformDataContext.Provider>
+  //       </DiaryDataContext.Provider>
+  //       </ChatroomDataContext.Provider>
+  //       </SubscribeDataContext.Provider>
+  //       </ProductDataContext.Provider>
+  //       </UserDataContext.Provider>
+  //
+  //     )}
+  //     {pushContext.isPushShowed && <PushNotification.PushMessage pushData={pushContext} onPressPushNotification={onPressPushNotification}/>}
+  //   </ControllContext.Provider>
+  //   </AuthContext.Provider>
+  //   </ThemeContext.Provider>
+  // );
 }
 
 function SplashScreen(){

@@ -14,7 +14,8 @@ import { ThemeContext, ChatroomDataContext, ControllContext, ProductDataContext,
 import { chooseRandomIndex, chooseRandomly } from './utils/utils';
 import {priceTag, priceTagB, bellOn, bellOff} from './utils/loadAssets';
 import { DraggableDiary, BasicDiary } from './Diary';
-import makeLink from './connect/makeLink';
+//import makeLink from './connect/makeLink';
+const makeLink = a => {a};
 
 
 const screenHeight = Dimensions.get('window').height;
